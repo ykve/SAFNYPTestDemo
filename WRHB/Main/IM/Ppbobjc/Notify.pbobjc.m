@@ -123,6 +123,7 @@ typedef struct SessionMemberInfo__storage_ {
 @dynamic type;
 @dynamic packetRange;
 @dynamic membersArray, membersArray_Count;
+@dynamic initiator;
 
 typedef struct SNotifySessionAdd__storage_ {
   uint32_t _has_storage_[1];
@@ -136,6 +137,7 @@ typedef struct SNotifySessionAdd__storage_ {
   NSString *packetRange;
   NSMutableArray *membersArray;
   uint64_t sessionId;
+  uint64_t initiator;
 } SNotifySessionAdd__storage_;
 
 // This method is threadsafe because it is initially called
@@ -233,6 +235,15 @@ typedef struct SNotifySessionAdd__storage_ {
         .offset = (uint32_t)offsetof(SNotifySessionAdd__storage_, membersArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "initiator",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionAdd_FieldNumber_Initiator,
+        .hasIndex = 9,
+        .offset = (uint32_t)offsetof(SNotifySessionAdd__storage_, initiator),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -437,11 +448,31 @@ typedef struct SNotifySessionDel__storage_ {
 
 @dynamic sessionId;
 @dynamic addMembersArray, addMembersArray_Count;
+@dynamic sessionVer;
+@dynamic name;
+@dynamic desc;
+@dynamic avatar;
+@dynamic playType;
+@dynamic numberLimit;
+@dynamic type;
+@dynamic packetRange;
+@dynamic membersArray, membersArray_Count;
+@dynamic initiator;
 
 typedef struct SNotifySessionMemberAdd__storage_ {
   uint32_t _has_storage_[1];
+  uint32_t sessionVer;
+  int32_t playType;
+  int32_t type;
   NSMutableArray *addMembersArray;
+  NSString *name;
+  NSString *desc;
+  NSString *avatar;
+  NSString *numberLimit;
+  NSString *packetRange;
+  NSMutableArray *membersArray;
   uint64_t sessionId;
+  uint64_t initiator;
 } SNotifySessionMemberAdd__storage_;
 
 // This method is threadsafe because it is initially called
@@ -467,6 +498,96 @@ typedef struct SNotifySessionMemberAdd__storage_ {
         .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, addMembersArray),
         .flags = GPBFieldRepeated,
         .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "sessionVer",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_SessionVer,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, sessionVer),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt32,
+      },
+      {
+        .name = "name",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_Name,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, name),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "desc",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_Desc,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, desc),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "avatar",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_Avatar,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, avatar),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "playType",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_PlayType,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, playType),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "numberLimit",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_NumberLimit,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, numberLimit),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "type",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_Type,
+        .hasIndex = 7,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, type),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+      {
+        .name = "packetRange",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_PacketRange,
+        .hasIndex = 8,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, packetRange),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "membersArray",
+        .dataTypeSpecific.className = GPBStringifySymbol(SessionMemberInfo),
+        .number = SNotifySessionMemberAdd_FieldNumber_MembersArray,
+        .hasIndex = GPBNoHasBit,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, membersArray),
+        .flags = GPBFieldRepeated,
+        .dataType = GPBDataTypeMessage,
+      },
+      {
+        .name = "initiator",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifySessionMemberAdd_FieldNumber_Initiator,
+        .hasIndex = 9,
+        .offset = (uint32_t)offsetof(SNotifySessionMemberAdd__storage_, initiator),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
       },
     };
     GPBDescriptor *localDescriptor =
@@ -956,6 +1077,95 @@ typedef struct SNotifyPush__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(SNotifyPush__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - SNotifyTransferStatus
+
+@implementation SNotifyTransferStatus
+
+@dynamic sessionId;
+@dynamic transferId;
+@dynamic sender;
+@dynamic operator_p;
+@dynamic status;
+
+typedef struct SNotifyTransferStatus__storage_ {
+  uint32_t _has_storage_[1];
+  int32_t status;
+  uint64_t sessionId;
+  uint64_t transferId;
+  uint64_t sender;
+  uint64_t operator_p;
+} SNotifyTransferStatus__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "sessionId",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifyTransferStatus_FieldNumber_SessionId,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(SNotifyTransferStatus__storage_, sessionId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
+      },
+      {
+        .name = "transferId",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifyTransferStatus_FieldNumber_TransferId,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(SNotifyTransferStatus__storage_, transferId),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
+      },
+      {
+        .name = "sender",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifyTransferStatus_FieldNumber_Sender,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(SNotifyTransferStatus__storage_, sender),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
+      },
+      {
+        .name = "operator_p",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifyTransferStatus_FieldNumber_Operator_p,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(SNotifyTransferStatus__storage_, operator_p),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
+      },
+      {
+        .name = "status",
+        .dataTypeSpecific.className = NULL,
+        .number = SNotifyTransferStatus_FieldNumber_Status,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(SNotifyTransferStatus__storage_, status),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt32,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[SNotifyTransferStatus class]
+                                     rootClass:[NotifyRoot class]
+                                          file:NotifyRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(SNotifyTransferStatus__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     #if defined(DEBUG) && DEBUG
       NSAssert(descriptor == nil, @"Startup recursed!");

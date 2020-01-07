@@ -1,6 +1,6 @@
 //
 //  SendRPNumTableViewCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/3/1.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -96,11 +96,11 @@
     }];
     
     
-    CGFloat itemWidth = ([UIScreen mainScreen].bounds.size.width -kTableViewMarginWidth*2 - kSendRPTitleCellWidth - kBtnWidth - (kColumn + 1) * kSpacingWidth) / kColumn;
+//    CGFloat itemWidth = ([UIScreen mainScreen].bounds.size.width -kTableViewMarginWidth*2 - kSendRPTitleCellWidth - kBtnWidth - (kColumn + 1) * kSpacingWidth) / kColumn;
     
-    CGFloat height = itemWidth * 1 + kSpacingWidth * 2;
-    CGFloat frameHeight = (CD_Scal(70, 812) - height) / 2;
-    SendRPCollectionView *sendRPCollectionView = [[SendRPCollectionView alloc] initWithFrame:CGRectMake(kSendRPTitleCellWidth, frameHeight-7, [UIScreen mainScreen].bounds.size.width -kTableViewMarginWidth*2 -kSendRPTitleCellWidth - 30, height)];
+//    CGFloat height = itemWidth * 1 + kSpacingWidth * 2;
+//    CGFloat frameHeight = (CD_Scal(70, 812) - height) / 2;
+    SendRPCollectionView *sendRPCollectionView = [[SendRPCollectionView alloc] initWithFrame:CGRectMake(kSendRPTitleCellWidth, 0,[UIScreen mainScreen].bounds.size.width -kTableViewMarginWidth*2 -kSendRPTitleCellWidth - 30 , self.height)];
 //    sendRPCollectionView.backgroundColor = [UIColor redColor];
     sendRPCollectionView.collectionView.allowsMultipleSelection = NO;
     sendRPCollectionView.selectNumCollectionViewBlock = ^{
@@ -110,6 +110,12 @@
     };
     [backView addSubview:sendRPCollectionView];
     _sendRPCollectionView = sendRPCollectionView;
+    [sendRPCollectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(backView.mas_top);
+        make.left.mas_equalTo(kSendRPTitleCellWidth);
+        make.width.equalTo(@([UIScreen mainScreen].bounds.size.width -kTableViewMarginWidth*2 -kSendRPTitleCellWidth - 30));
+        make.bottom.equalTo(backView.mas_bottom);
+    }];
     
     
 }

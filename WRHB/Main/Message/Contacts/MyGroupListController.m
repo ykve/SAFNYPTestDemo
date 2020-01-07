@@ -7,7 +7,7 @@
 //
 
 #import "MyGroupListController.h"
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "ChatViewController.h"
 #import "MessageItem.h"
 #import "EasyOperater.h"
@@ -38,13 +38,11 @@
 @interface MyGroupListController ()<UITableViewDelegate,UITableViewDataSource>
 
 @property (nonatomic, strong) UITableView *tableView;
-@property (nonatomic, strong) MessageNet *model;
+@property (nonatomic, strong) SessionSingle *model;
 @property (nonatomic, strong) NSMutableArray *menuItems;
 //
 @property (nonatomic, assign) BOOL isFirst;
 @property (nonatomic, assign) BOOL isCurrentController;
-/// 客服|好友会话|我加入的群组
-@property (nonatomic ,strong) NSMutableArray *myChatsDataList;
 @property (nonatomic, strong) NSMutableArray *groupArray;
 
 @end
@@ -60,12 +58,51 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
     
-    [self getSessionData];
+    [self getGroupData];
     [self setupSubViews];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(action_reload) name:kReloadMyMessageGroupList object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getSessionData) name:kSessionUpdateNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getGroupData) name:kReloadMyMessageGroupList object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getGroupData) name:kSessionListUpdateNotification object:nil];
     
+}
+
+
+- (void)getGroupData {
+    self.groupArray = nil;
+    for (NSDictionary *dict in [SessionSingle sharedInstance].mySessionListData) {
+        ChatsModel *model = [ChatsModel mj_objectWithKeyValues:dict];
+        if (model.sessionType == ChatSessionType_ManyPeople_NormalChat) {
+            [self.groupArray addObject:model];
+            continue;
+        }
+    }
+  
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.tableView reloadData];
+        [self.tableView.mj_header endRefreshing];
+        
+        if (self.groupArray.count == 0) {
+            self.tableView.tableFooterView = [self setFootView];
+        } else {
+            self.tableView.tableFooterView = nil;
+        }
+    });
+    
+}
+
+
+
+- (void)getMySessionData {
+    
+    __weak __typeof(self)weakSelf = self;
+    [[SessionSingle sharedInstance] getMyJoinedSessionListSuccessBlock:^(NSDictionary *success) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [strongSelf getGroupData];
+    } failureBlock:^(NSError *error) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+        [strongSelf reloadTableState];
+    }];
 }
 
 - (void)setupSubViews {
@@ -85,13 +122,13 @@
     
     _tableView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        [strongSelf getSessionData];
+        [strongSelf getMySessionData];
         
     }];
     
     _tableView.StateView = [StateView StateViewWithHandle:^{
         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        [strongSelf getSessionData];
+        [strongSelf getGroupData];
     }];
     
     [_tableView mas_remakeConstraints:^(MASConstraintMaker *make) {
@@ -107,78 +144,6 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-}
-
-- (void)action_reload {
-    [self getSessionData];
-}
-
-#pragma mark - 获取我加入的群组数据
-- (void)getSessionData {
-    BADataEntity *entity = [BADataEntity new];
-    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/mines"];
-    entity.needCache = NO;
-    
-    __weak __typeof(self)weakSelf = self;
-    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-        __strong __typeof(weakSelf)strongSelf = weakSelf;
-        [MBProgressHUD hideHUD];
-        
-        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            [strongSelf handleGroupListData:response[@"data"] andIsChatsList:YES];
-        } else {
-            [strongSelf delayReload];
-            if (!strongSelf.isFirst) {
-                strongSelf.isFirst = YES;
-            }
-        }
-    } failureBlock:^(NSError *error) {
-        __strong __typeof(weakSelf)strongSelf = weakSelf;
-        [[AFHttpError sharedInstance] handleFailResponse:error];
-        [strongSelf reloadTableState];
-    } progressBlock:nil];
-    
-}
-
-- (NSMutableArray *)myChatsDataList {
-    if (!_myChatsDataList) {
-        _myChatsDataList = [NSMutableArray array];
-    }
-    return _myChatsDataList;
-}
-
-
-
--(void)handleGroupListData:(NSArray *)dataArray andIsChatsList:(BOOL)isChatsList {
-    if (dataArray != NULL && [dataArray isKindOfClass:[NSArray class]]) {
-        
-        [self.groupArray removeAllObjects];
-        self.groupArray = nil;
-        [AppModel sharedInstance].unReadAllCount = 0;
-        //        NSMutableArray *marray = [NSMutableArray array];
-        for (NSDictionary *dict in dataArray) {
-            ChatsModel *model = [ChatsModel mj_objectWithKeyValues:dict];
-            if (model.sessionType == ChatSessionType_ManyPeople_NormalChat) {
-                [self.groupArray addObject:model];
-                continue;
-            }
-        }
-        
-    } else {
-        if ([AppModel sharedInstance].unReadAllCount > 0) {
-            [AppModel sharedInstance].unReadAllCount = 0;
-            [[NSNotificationCenter defaultCenter] postNotificationName:kUnreadMessageNumberChange object:@"ChatspListNotification"];
-        }
-    }
-    
-    [self.tableView reloadData];
-    [self.tableView.mj_header endRefreshing];
-    
-    if (self.groupArray.count == 0) {
-        self.tableView.tableFooterView = [self setFootView];
-    } else {
-        self.tableView.tableFooterView = nil;
-    }
 }
 
 

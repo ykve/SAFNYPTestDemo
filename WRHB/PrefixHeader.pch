@@ -37,6 +37,7 @@
 
 #import "AppModel.h"
 #import "UserInfo.h"
+#import "UnreadMessagesNumSingle.h"
 #import "BaseUserModel.h"
 #import "FunctionManager.h"
 #import "YPUserStateModel.h"

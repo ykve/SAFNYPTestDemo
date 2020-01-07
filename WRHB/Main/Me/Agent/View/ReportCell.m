@@ -1,6 +1,6 @@
 //
 //  ReportCell.m
-//  Project
+//  WRHB
 //
 //  Created AFan on 2019/9/9.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -102,7 +102,7 @@
     }];
     
     UILabel *ddsLabel = [[UILabel alloc] init];
-    ddsLabel.text = @"*点击可查看详情";
+//    ddsLabel.text = @"*点击可查看详情";
     ddsLabel.hidden = YES;
     ddsLabel.textColor = [UIColor colorWithHex:@"#FF4444"];
     ddsLabel.font = [UIFont systemFontOfSize:11];

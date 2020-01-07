@@ -96,11 +96,11 @@
         if (image) {
             self.headView.image = [UIImage imageNamed:[NSString stringWithFormat:@"group_av_%@", model.avatar]];
         } else {
-            self.headView.image = [UIImage imageNamed:@"pay_avatar"];
+            self.headView.image = [UIImage imageNamed:@"cm_default_avatar"];
         }
         
     } else {
-        [self.headView cd_setImageWithURL:[NSURL URLWithString:model.avatar] placeholderImage:[UIImage imageNamed:@"pay_avatar"]];
+        [self.headView cd_setImageWithURL:[NSURL URLWithString:model.avatar] placeholderImage:[UIImage imageNamed:@"cm_default_avatar"]];
     }
     
     self.vipLabel.text = [NSString stringWithFormat:@"VIP%zd", model.level_id];
@@ -249,23 +249,40 @@
     }];
     
     
-    UIButton *submitBtn = [[UIButton alloc] init];
-    [submitBtn setTitle:@"充值" forState:UIControlStateNormal];
-    submitBtn.titleLabel.font = [UIFont systemFontOfSize:17];
-    [submitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [submitBtn addTarget:self action:@selector(onSubmitBtn) forControlEvents:UIControlEventTouchUpInside];
-    submitBtn.backgroundColor = [UIColor colorWithHex:@"#EF7060"];
-    submitBtn.layer.cornerRadius = 5;
-    submitBtn.layer.masksToBounds = YES;
-    submitBtn.tag = 3330;
-    [backView addSubview:submitBtn];
-    [submitBtn delayEnable];
+    UILabel *cczLabel = [[UILabel alloc] init];
+    cczLabel.text = @"充值";
+    cczLabel.font = [UIFont systemFontOfSize:16];
+    cczLabel.textAlignment = NSTextAlignmentCenter;
+    cczLabel.textColor = [UIColor whiteColor];
+    cczLabel.layer.cornerRadius = 5;
+    cczLabel.backgroundColor = [UIColor colorWithHex:@"#EF7060"];
+    cczLabel.layer.masksToBounds = YES;
+    [backView addSubview:cczLabel];
     
-    [submitBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+    [cczLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.equalTo(headView.mas_bottom);
         make.right.equalTo(backView.mas_right).offset(-10);
         make.size.mas_equalTo(CGSizeMake(70, 30));
     }];
+    
+    
+//    UIButton *submitBtn = [[UIButton alloc] init];
+//    [submitBtn setTitle:@"充值" forState:UIControlStateNormal];
+//    submitBtn.titleLabel.font = [UIFont systemFontOfSize:17];
+//    [submitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+//    [submitBtn addTarget:self action:@selector(onSubmitBtn) forControlEvents:UIControlEventTouchUpInside];
+//    submitBtn.backgroundColor = [UIColor colorWithHex:@"#EF7060"];
+//    submitBtn.layer.cornerRadius = 5;
+//    submitBtn.layer.masksToBounds = YES;
+//    submitBtn.tag = 3330;
+//    [backView addSubview:submitBtn];
+//    [submitBtn delayEnable];
+//
+//    [submitBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.bottom.equalTo(headView.mas_bottom);
+//        make.right.equalTo(backView.mas_right).offset(-10);
+//        make.size.mas_equalTo(CGSizeMake(70, 30));
+//    }];
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {

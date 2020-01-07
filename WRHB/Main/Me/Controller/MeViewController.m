@@ -34,6 +34,9 @@
 #import "BillViewController.h"
 #import "RedPacketDetListController.h"
 #import "ShareDetailViewController.h"
+#import "GameFeedbackController.h"
+
+#import "PayTopUpTypeController.h"
 
 
 #define kSTRefreshHeaderHeight  60
@@ -78,11 +81,11 @@
 
 
 
-/// 账户余额
-@property (nonatomic, strong) MeTopViewTowLabel * topView0;
 /// 今日充值
-@property (nonatomic, strong) MeTopViewTowLabel *topView1;
+@property (nonatomic, strong) MeTopViewTowLabel * topView0;
 /// 今日提现
+@property (nonatomic, strong) MeTopViewTowLabel *topView1;
+/// 今日优惠
 @property (nonatomic, strong) MeTopViewTowLabel *topView2;
 /// 今日盈利
 @property (nonatomic, strong) MeTopViewTowLabel *topView3;
@@ -155,6 +158,39 @@
     aaBackView.model = aaArray;
 }
 
+
+#pragma mark - Top View 点击
+- (void)onLabelViewClickEvent:(UITapGestureRecognizer *)gesture {
+    if ([gesture view].tag == 1000) {
+
+        PayTopUpTypeController *vc = [[PayTopUpTypeController alloc] init];
+        vc.isHidTabBar = YES;
+        [self.navigationController pushViewController:vc animated:YES];
+    } else if ([gesture view].tag == 1001) {
+        [self onWithdrawal];
+    } else if ([gesture view].tag == 1002) {
+        BillTypeModel *model = [[BillTypeModel alloc] init];
+        model = [[BillTypeModel alloc] init];
+        model.icon = @"me_bill_jiangli";
+        model.title = @"奖励记录";
+        model.category = 10;
+        model.tag = 1;
+        
+        [self selectItemModel:model];
+    } else if ([gesture view].tag == 1003) {
+        
+        BillTypeModel *model = [[BillTypeModel alloc] init];
+        model = [[BillTypeModel alloc] init];
+        model.icon = @"me_bill_all";
+        model.title = @"盈亏记录";
+        model.category = 13;
+        model.tag = 0;
+        
+        [self selectItemModel:model];
+    }
+   
+}
+
 #pragma mark -  A选择的 item
 - (void)selectItemString:(NSString *)title {
     if ([title isEqualToString:@"提现中心"]) {
@@ -185,7 +221,9 @@
     } else if ([title isEqualToString:@"帮助中心"]) {
         NSLog(@"me111111111帮助中心");
     } else if ([title isEqualToString:@"游戏反馈"]) {
-        NSLog(@"me1111111游戏反馈11");
+        GameFeedbackController *vc = [[GameFeedbackController alloc] init];
+        [self.navigationController pushViewController:vc animated:YES];
+        return;
     } else {
         NSLog(@"未知 title");
     }
@@ -550,9 +588,7 @@
         
     } else if ([dict[@"title"] isEqualToString:@"提现中心"]) {
         
-        PayWithdrawalCenterController *vc = [[PayWithdrawalCenterController alloc] init];
-        vc.hidesBottomBarWhenPushed = YES;
-        [self.navigationController pushViewController:vc animated:YES];
+        [self onWithdrawal];
     } else if ([dict[@"title"] isEqualToString:@"账单记录"]) {
         
         BillTypeViewController *vc = [[BillTypeViewController alloc] init];
@@ -564,6 +600,12 @@
         vc.hidesBottomBarWhenPushed = YES;
         [self.navigationController pushViewController:vc animated:YES];
     }
+}
+
+- (void)onWithdrawal {
+    PayWithdrawalCenterController *vc = [[PayWithdrawalCenterController alloc] init];
+    vc.hidesBottomBarWhenPushed = YES;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 - (void)onCopyBtn {
     NSString *s = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].user_info.userId];
@@ -717,7 +759,7 @@
     [moneyImageView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.equalTo(moneyBackBtn.mas_centerX);
         make.top.equalTo(moneyBackBtn.mas_top);
-        make.size.mas_equalTo(CGSizeMake(36, 25));
+        make.size.mas_equalTo(CGSizeMake(48, 32));
     }];
 
     UILabel *moneyLabel = [[UILabel alloc] init];
@@ -760,7 +802,14 @@
      topView0.valueLabel.textColor = [UIColor colorWithHex:@"#666666"];
      topView0.valueLabel.font = [UIFont systemFontOfSize:12];
     [topStackView addArrangedSubview: topView0];
+    topView0.tag = 1000;
     _topView0 =  topView0;
+    //添加手势事件
+    UITapGestureRecognizer *tapGesture0 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLabelViewClickEvent:)];
+    //将手势添加到需要相应的view中去
+    [topView0 addGestureRecognizer:tapGesture0];
+    //选择触发事件的方式（默认单机触发）
+    [tapGesture0 setNumberOfTapsRequired:1];
     
     MeTopViewTowLabel *topView1 = [[MeTopViewTowLabel alloc] init];
 //    topView1.backgroundColor = [UIColor greenColor];
@@ -771,7 +820,14 @@
     topView1.valueLabel.textColor = [UIColor colorWithHex:@"#666666"];
     topView1.valueLabel.font = [UIFont systemFontOfSize:12];
     [topStackView addArrangedSubview:topView1];
+    topView1.tag = 1001;
     _topView1 = topView1;
+    //添加手势事件
+    UITapGestureRecognizer *tapGesture1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLabelViewClickEvent:)];
+    //将手势添加到需要相应的view中去
+    [topView1 addGestureRecognizer:tapGesture1];
+    //选择触发事件的方式（默认单机触发）
+    [tapGesture1 setNumberOfTapsRequired:1];
 
     
     UIStackView *bottomStackView = [[UIStackView alloc] init];
@@ -798,7 +854,14 @@
     topView2.valueLabel.textColor = [UIColor colorWithHex:@"#666666"];
     topView2.valueLabel.font = [UIFont systemFontOfSize:12];
     [bottomStackView addArrangedSubview:topView2];
+    topView2.tag = 1002;
     _topView2 = topView2;
+    //添加手势事件
+    UITapGestureRecognizer *tapGesture2 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLabelViewClickEvent:)];
+    //将手势添加到需要相应的view中去
+    [topView2 addGestureRecognizer:tapGesture2];
+    //选择触发事件的方式（默认单机触发）
+    [tapGesture2 setNumberOfTapsRequired:1];
 
     MeTopViewTowLabel *topView3 = [[MeTopViewTowLabel alloc] init];
     topView3.titleLabel.text = @"-";
@@ -808,7 +871,14 @@
     topView3.valueLabel.textColor = [UIColor colorWithHex:@"#666666"];
     topView3.valueLabel.font = [UIFont systemFontOfSize:12];
     [bottomStackView addArrangedSubview:topView3];
+    topView3.tag = 1003;
     _topView3 = topView3;
+    //添加手势事件
+    UITapGestureRecognizer *tapGesture3 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onLabelViewClickEvent:)];
+    //将手势添加到需要相应的view中去
+    [topView3 addGestureRecognizer:tapGesture3];
+    //选择触发事件的方式（默认单机触发）
+    [tapGesture3 setNumberOfTapsRequired:1];
     
 }
 

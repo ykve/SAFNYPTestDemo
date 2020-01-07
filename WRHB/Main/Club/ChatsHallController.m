@@ -25,8 +25,8 @@
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     
-    if ([ClubManager sharedInstance].isClickTabBar) {
-        [ClubManager sharedInstance].isClickTabBar = NO;
+    if ([ClubManager sharedInstance].isClickTabBarInChat) {
+        [ClubManager sharedInstance].isClickTabBarInChat = NO;
         [self goto_Chat];
     }
 }

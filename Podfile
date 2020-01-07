@@ -40,6 +40,9 @@ pod 'FLAnimatedImage', '~> 1.0'
 pod 'SocketRocket'
 # 类型JSON 格式传输的协议
 pod 'Protobuf'
+pod 'libPusher', '~> 1.6.3'
+
+
 
 #pod 'MBProgressHUD', '~> 1.1.0'
 pod 'MBProgressHUD', '~> 0.9.2'

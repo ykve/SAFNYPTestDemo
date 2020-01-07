@@ -20,9 +20,9 @@
 
 @optional;
 // 点击头像 didSelectRowAtIndexPath
--(void)didTapCellChatHeaderImg:(UserInfo *)user_info;
+-(void)didTapCellChatHeaderImg:(BaseUserModel *)user_info;
 // 长按头像
--(void)didLongPressCellChatHeaderImg:(UserInfo *)user_info;
+-(void)didLongPressCellChatHeaderImg:(BaseUserModel *)user_info;
 
 // 点击Cell消息背景视图
 - (void)didTapMessageCell:(YPMessage *)model;

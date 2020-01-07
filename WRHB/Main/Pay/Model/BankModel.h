@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface BankModel : NSObject
+@interface WithdrawBankModel : NSObject
 
 /// 银行卡号
 @property (nonatomic, copy) NSString *card;

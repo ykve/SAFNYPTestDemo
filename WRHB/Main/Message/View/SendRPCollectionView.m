@@ -1,6 +1,6 @@
 //
 //  SendRPCollectionView.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/3/1.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -48,7 +48,6 @@ static NSString * const kCellSendRPCollectionViewId = @"SelectMineNumCell";
     CGFloat itemWidth = (self.frame.size.width - (kColumn +1)*kSpacingWidth) / kColumn;
     // 设置每个item的大小
     layout.itemSize = CGSizeMake(itemWidth, itemWidth);
-    
     // 设置列间距
     layout.minimumInteritemSpacing = kSpacingWidth;
     
@@ -59,9 +58,10 @@ static NSString * const kCellSendRPCollectionViewId = @"SelectMineNumCell";
     layout.sectionInset = UIEdgeInsetsMake(kSpacingWidth, kSpacingWidth, kSpacingWidth, kSpacingWidth);
 
     _collectionView = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 0,self.frame.size.width, self.frame.size.height) collectionViewLayout:layout];
-    
+    _collectionView.contentInset = UIEdgeInsetsMake(0, 0, 0, 0);
     /** mainCollectionView 的布局(必须实现的) */
     _collectionView.collectionViewLayout = layout;
+    _collectionView.showsVerticalScrollIndicator = false;
     
     //mainCollectionView 的背景色
     _collectionView.backgroundColor = [UIColor clearColor];
@@ -77,6 +77,10 @@ static NSString * const kCellSendRPCollectionViewId = @"SelectMineNumCell";
     [_collectionView registerClass:[SendRPCollectionViewCell class] forCellWithReuseIdentifier:kCellSendRPCollectionViewId];
     
     [self addSubview:self.collectionView];
+    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.top.right.bottom.mas_equalTo(0);
+        
+    }];
     //    self.collectionView.backgroundColor = [UIColor redColor];
 }
 

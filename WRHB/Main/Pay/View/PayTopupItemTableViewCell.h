@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)cellWithTableView:(UITableView *)tableView
                        reusableId:(NSString *)ID;
 
+@property (nonatomic, strong) NSIndexPath *selectedIndexPath;
 @property (strong, nonatomic) NSMutableArray *dataArray;
 @property (strong, nonatomic) PayTopupModel *model;
 

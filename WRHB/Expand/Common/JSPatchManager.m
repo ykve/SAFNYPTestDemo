@@ -1,6 +1,6 @@
 //
 //  JSPatchManager.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/9/13.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -45,7 +45,7 @@ static BOOL _async;
     
     
     NSString *resultStr = kJSPatchURL;
-    NSString *requestUrl = [NSString stringWithFormat:@"%@/appLoad/iOSPatch/%@%@/patchVersion.js",resultStr,projectName,appVersion];
+    NSString *requestUrl = [NSString stringWithFormat:@"服务器文件地址%@%@%@",resultStr,projectName,appVersion];
     [JSPatchManager patchVersionCheck:requestUrl];
     
 }

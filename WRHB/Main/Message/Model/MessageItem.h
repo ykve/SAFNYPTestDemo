@@ -1,6 +1,6 @@
 //
 //  MessageItem.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -74,7 +74,7 @@
 
 @property (nonatomic ,assign) RedPacketType redpacketType;
 
-@property (nonatomic ,assign) BOOL isChatsList;
+@property (nonatomic ,assign) BOOL isJoinChatsList;
 
 
 @property (nonatomic ,copy) NSString *localImg;

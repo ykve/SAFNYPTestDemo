@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) UILabel *titleLabel;
 /// strong注释
 @property (nonatomic, strong) UILabel *contentLabel;
+///单双倍牛牛
+@property (nonatomic, strong) UIImageView *imgType;
 /// strong注释
 //@property (nonatomic, strong) UILabel *titleLabel;
 

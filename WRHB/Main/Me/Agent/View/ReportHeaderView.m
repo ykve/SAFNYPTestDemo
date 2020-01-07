@@ -1,6 +1,6 @@
 //
 //  BillHeadView.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/14.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -84,7 +84,7 @@
     
     [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(imgView.mas_right).offset(5);
-        make.top.equalTo(imgView.mas_top).offset(5);
+        make.top.equalTo(imgView.mas_top).offset(8);
     }];
     
     UILabel *dateLabel = [UILabel new];
@@ -98,7 +98,7 @@
     
     [dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(imgView.mas_right).offset(5);
-        make.bottom.equalTo(imgView.mas_bottom).offset(-5);
+        make.bottom.equalTo(imgView.mas_bottom).offset(-8);
     }];
     
     return btn;

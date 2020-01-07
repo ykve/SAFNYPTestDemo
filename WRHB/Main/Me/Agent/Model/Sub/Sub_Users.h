@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// 佣金
 @property (nonatomic, copy) NSString *commission;
 /// 流水
-@property (nonatomic, copy) NSString *capitals;
+@property (nonatomic, copy) NSString *capital;
 
 
 /// 提现

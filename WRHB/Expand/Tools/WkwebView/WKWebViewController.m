@@ -16,6 +16,7 @@
 typedef enum{
     loadWebURLString = 0,
     loadWebHTMLString,
+    loadWebFormHTMLString,
     POSTWebURLString,
 }wkWebLoadType;
 
@@ -48,18 +49,22 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    //加载web页面
     [self webViewloadURLType];
-    
-    //添加到主控制器上
     [self.view addSubview:self.wkWebView];
-    
-    //添加进度条
     [self.view addSubview:self.progressView];
-    
-    //添加右边刷新按钮
     UIBarButtonItem *roadLoad = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(roadLoadClicked)];
     self.navigationItem.rightBarButtonItem = roadLoad;
+}
+
+- (instancetype)init {
+    if (self = [super init]) {
+        [self initialize];
+    }
+    return self;
+}
+
+- (void)initialize {
+    _isLoadWebTitle = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated{
@@ -67,11 +72,8 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
     
     if (_isNavHidden == YES) {
         self.navigationController.navigationBarHidden = YES;
-        //创建一个高20的假状态栏
         UIView *statusBarView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 20)];
-        //设置成绿色
         statusBarView.backgroundColor=[UIColor whiteColor];
-        // 添加到 navigationBar 上
         [self.view addSubview:statusBarView];
     }else{
         self.navigationController.navigationBarHidden = NO;
@@ -99,9 +101,7 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
 - (void)webViewloadURLType{
     switch (self.loadType) {
         case loadWebURLString:{
-            //创建一个NSURLRequest 的对象
             NSURLRequest * Request_zsj = [NSURLRequest requestWithURL:[NSURL URLWithString:self.URLString] cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
-            //加载网页
             [self.wkWebView loadRequest:Request_zsj];
             break;
         }
@@ -109,30 +109,34 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
             [self loadHostPathURL:self.URLString];
             break;
         }
+        case loadWebFormHTMLString:{
+            [self loadHostHTMLString:self.URLString];
+            break;
+        }
+            
         case POSTWebURLString:{
-            // JS发送POST的Flag，为真的时候会调用JS的POST方法
             self.needLoadJSPOST = YES;
-            //POST使用预先加载本地JS方法的html实现，请确认WKJSPOST存在
-            [self loadHostPathURL:@"WKJSPOST"];
+            [self loadHostPathURL:@"AFSPOST"];
             break;
         }
     }
 }
 
 - (void)loadHostPathURL:(NSString *)url{
-    //获取JS所在的路径
     NSString *path = [[NSBundle mainBundle] pathForResource:url ofType:@"html"];
-    //获得html内容
     NSString *html = [[NSString alloc] initWithContentsOfFile:path encoding:NSUTF8StringEncoding error:nil];
-    //加载js
     [self.wkWebView loadHTMLString:html baseURL:[[NSBundle mainBundle] bundleURL]];
 }
 
-// 调用JS发送POST请求
+- (void)loadHostHTMLString:(NSString *)string {
+    NSString *basePath = [[NSBundle mainBundle] bundlePath];
+    NSURL *baseURL = [NSURL fileURLWithPath:basePath];
+    [self.wkWebView loadHTMLString:string baseURL:baseURL];
+}
+
+
 - (void)postRequestWithJS {
-    // 拼装成调用JavaScript的字符串
     NSString *jscript = [NSString stringWithFormat:@"post('%@',{%@});", self.URLString, self.postData];
-    // 调用JS代码
     [self.wkWebView evaluateJavaScript:jscript completionHandler:^(id object, NSError * _Nullable error) {
     }];
 }
@@ -147,46 +151,17 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
     self.URLString = string;
     self.loadType = loadWebHTMLString;
 }
-
+- (void)loadWebFormHTMLSring:(NSString *)string{
+    self.URLString = string;
+    self.loadType = loadWebFormHTMLString;
+}
 - (void)POSTWebURLSring:(NSString *)string postData:(NSString *)postData{
     self.URLString = string;
     self.postData = postData;
     self.loadType = POSTWebURLString;
 }
 
-//#pragma mark   ============== URL pay 开始支付 ==============
-//
-//- (void)payWithUrlOrder:(NSString*)urlOrder
-//{
-//    if (urlOrder.length > 0) {
-//        __weak XFWkwebView* wself = self;
-//        [[AlipaySDK defaultService] payUrlOrder:urlOrder fromScheme:@"giftcardios" callback:^(NSDictionary* result) {
-//            // 处理支付结果
-//            NSLog(@"===============%@", result);
-//            // isProcessUrlPay 代表 支付宝已经处理该URL
-//            if ([result[@"isProcessUrlPay"] boolValue]) {
-//                // returnUrl 代表 第三方App需要跳转的成功页URL
-//                NSString* urlStr = result[@"returnUrl"];
-//                [wself loadWithUrlStr:urlStr];
-//            }
-//        }];
-//    }
-//}
-//
-//- (void)WXPayWithParam:(NSDictionary *)WXparam{
-//
-//}
-////url支付成功回调地址
-//- (void)loadWithUrlStr:(NSString*)urlStr
-//{
-//    if (urlStr.length > 0) {
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            NSURLRequest *webRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:urlStr] cachePolicy:NSURLRequestReturnCacheDataElseLoad
-//                                                    timeoutInterval:15];
-//            [self.wkWebView loadRequest:webRequest];
-//        });
-//    }
-//}
+
 
 #pragma mark ================ 自定义返回/关闭按钮 ================
 
@@ -234,8 +209,11 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
         // 将Flag置为NO（后面就不需要加载了）
         self.needLoadJSPOST = NO;
     }
-    // 获取加载网页的标题
-    self.title = self.wkWebView.title;
+    if (self.isLoadWebTitle) {
+        // 获取加载网页的标题
+        self.title = self.wkWebView.title;
+    }
+    
     
     [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
     [self updateNavigationItems];
@@ -255,35 +233,7 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
 
 //服务器开始请求的时候调用
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
-//    NSString* orderInfo = [[AlipaySDK defaultService]fetchOrderInfoFromH5PayUrl:[navigationAction.request.URL absoluteString]];
-//    if (orderInfo.length > 0) {
-//        [self payWithUrlOrder:orderInfo];
-//    }
-//    //拨打电话
-//    //兼容安卓的服务器写法:<a class = "mobile" href = "tel://电话号码"></a>
-//    NSString *mobileUrl = [[navigationAction.request URL] absoluteString];
-//    mobileUrl = [mobileUrl stringByRemovingPercentEncoding];
-//    NSArray *urlComps = [mobileUrl componentsSeparatedByString:@"://"];
-//    if ([urlComps count]){
-//        
-//        if ([[urlComps objectAtIndex:0] isEqualToString:@"tel"]) {
-//            
-//            UIAlertController *mobileAlert = [UIAlertController alertControllerWithTitle:nil message:[NSString stringWithFormat:@"拨号给 %@ ？",urlComps.lastObject] preferredStyle:UIAlertControllerStyleAlert];
-//            UIAlertAction *suerAction = [UIAlertAction actionWithTitle:@"拨号" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-//                
-//                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:mobileUrl]];
-//            }];
-//            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-//                return ;
-//            }];
-//            
-//            [mobileAlert addAction:suerAction];
-//            [mobileAlert addAction:cancelAction];
-//            
-//            [self presentViewController:mobileAlert animated:YES completion:nil];
-//        }
-//    }
-    
+
     
     switch (navigationAction.navigationType) {
         case WKNavigationTypeLinkActivated: {
@@ -354,6 +304,17 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
 // 交互。可输入的文本。
 -(void)webView:(WKWebView *)webView runJavaScriptTextInputPanelWithPrompt:(NSString *)prompt defaultText:(NSString *)defaultText initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSString * _Nullable))completionHandler{
     
+    NSError *err = nil;
+    NSData *dataFromString = [prompt dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *payload = [NSJSONSerialization JSONObjectWithData:dataFromString options:NSJSONReadingMutableContainers error:&err];
+    if (!err){
+        NSString *type = [payload objectForKey:@"type"];
+        if (type && [type isEqualToString:@"JSbridge"]){
+            completionHandler([self getReturnValueWithPayload:payload]);
+        }
+    }
+    
+    
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"textinput" message:@"JS调用输入框" preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.textColor = [UIColor redColor];
@@ -363,6 +324,9 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
     }]];
     
     [self presentViewController:alert animated:YES completion:NULL];
+    
+    
+   
     
 }
 
@@ -399,7 +363,13 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
         NSLog(@"%@", message.body);
         //调用微信支付方法
 //        [self WXPayWithParam:message.body];
+    } else if ([message.name isEqualToString:@"auth"]) {
+        NSString *jscript = [NSString stringWithFormat:@"auth('%@')", [AppModel sharedInstance].token];
+        [self.wkWebView evaluateJavaScript:jscript completionHandler:^(id object, NSError * _Nullable error) {
+        }];
     }
+    
+    
 }
 
 #pragma mark ================ 懒加载 ================
@@ -420,6 +390,8 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
         WKUserContentController * UserContentController = [[WKUserContentController alloc]init];
         // 添加消息处理，注意：self指代的对象需要遵守WKScriptMessageHandler协议，结束时需要移除
         [UserContentController addScriptMessageHandler:self name:@"WXPay"];
+        // 添加消息处理，注意：self指代的对象需要遵守WKScriptMessageHandler协议，结束时需要移除
+        [UserContentController addScriptMessageHandler:self name:@"auth"];
         // 是否支持记忆读取
         Configuration.suppressesIncrementalRendering = YES;
         // 允许用户更改网页的设置
@@ -500,4 +472,24 @@ static void *WkwebBrowserContext = &WkwebBrowserContext;
     [self.wkWebView removeObserver:self forKeyPath:NSStringFromSelector(@selector(estimatedProgress))];
 }
 
+
+
+
+// 拦截JS调用原生核心方法
+
+// 自定义方法
+- (NSString *)getReturnValueWithPayload:(NSDictionary *)payload{
+    NSString *returnValue = @"";
+//    NSString *functionName = [payload objectForKey:@"functionName"];
+//    NSDictionary *args = [payload objectForKey:@"arguments"]; // JS传入的值
+//    if ([functionName isEqualToString:@"getUserData"]) {
+//        NSDictionary *dictionary = @{@"userCode":@"1231231231" };
+//        returnValue = [self toJsonWithDictionary:dictionary];
+//    }
+    return returnValue;
+}
+
 @end
+
+//JS
+//https://blog.csdn.net/FlyingKuiKui/article/details/98619845

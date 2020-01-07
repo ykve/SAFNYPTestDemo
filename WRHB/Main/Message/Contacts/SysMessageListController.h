@@ -6,11 +6,14 @@
 //  Copyright © 2019 AFan. All rights reserved.
 //
 
-#import "BaseContactsController.h"
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SysMessageListController : BaseContactsController
+@interface SysMessageListController : UIViewController
+
+///
+@property (nonatomic, assign) BOOL isShowSelectImg;
 
 @end
 

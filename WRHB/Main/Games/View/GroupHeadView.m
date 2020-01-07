@@ -1,6 +1,6 @@
 //
 //  GroupHeadView.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/16.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -8,7 +8,7 @@
 
 #import "GroupHeadView.h"
 #import "UserCollectionViewCell.h"
-#import "SessionInfoModel.h"
+#import "SessionInfoModels.h"
 
 
 @interface GroupHeadView()<UICollectionViewDelegate,UICollectionViewDataSource>{
@@ -26,7 +26,7 @@
 /// model   数据模型
 /// showRow  0 默认3行
 /// isGroupLord  是否群主
-+ (GroupHeadView *)headViewWithModel:(SessionInfoModel *)model showRow:(NSInteger)showRow isGroupLord:(BOOL)isGroupLord {
++ (GroupHeadView *)headViewWithModel:(SessionInfoModels *)model showRow:(NSInteger)showRow isGroupLord:(BOOL)isGroupLord {
    
     
     NSInteger lorow = 0;
@@ -65,7 +65,7 @@
     
 }
 
-- (void)updateList:(SessionInfoModel *)model showRow:(NSInteger)showRow {
+- (void)updateList:(SessionInfoModels *)model showRow:(NSInteger)showRow {
      _dataList = model.group_users;
     [_collectionView reloadData];
     

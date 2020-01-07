@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@class SessionInfoModel;
+@class SessionInfoModels;
 @class ChatsModel;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) ChatsModel *model;
 /// 会话信息
-@property (nonatomic, strong) SessionInfoModel *sessionModel;
+@property (nonatomic, strong) SessionInfoModels *sessionModel;
 
 @end
 

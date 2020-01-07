@@ -13,7 +13,6 @@ MJCodingImplementation
 
 + (ClubManager *)sharedInstance
 {
-//    NSAssert(0, @"这是一个单例对象，请使用+(ClubManager *)sharedInstance方法");
     static id sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -22,6 +21,10 @@ MJCodingImplementation
     return sharedInstance;
 }
 
++(instancetype)alloc{
+    NSAssert(0, @"这是一个单例对象，请使用+(ClubManager *)sharedInstance方法");
+    return nil;
+}
 + (instancetype)allocWithZone:(struct _NSZone *)zone
 {
     return [self sharedInstance];

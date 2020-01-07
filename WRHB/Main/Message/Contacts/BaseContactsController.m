@@ -1,6 +1,6 @@
 //
 //  YPContactsController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/6/20.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -26,6 +26,8 @@
 #import "AddMemberController.h"
 #import "ChatsModel.h"
 #import "CSAskFormController.h"
+#import "SessionSingle.h"
+#import "FriendHeadImageController.h"
 
 
 
@@ -87,7 +89,7 @@
     
 }
 
--(void)setSelectedItemIndex:(NSInteger)selectedItemIndex {
+-(void)setSelectedItemIndex:(TopIndexType)selectedItemIndex {
     _selectedItemIndex = selectedItemIndex;
     [self onClick_topBtn:nil selectedItemIndex:selectedItemIndex];
 }
@@ -105,9 +107,6 @@
     
     
     self.topIndex = index;
-    if (index == 4) {
-        [AppModel sharedInstance].sysMessageNum = 0;
-    }
     
     // 空数据处理
     if (index == 0) {
@@ -271,6 +270,9 @@
         [self.haoyouArray addObject:requestArraytemp];
         [self.indexTitles addObject:@"好友申请"]; // 好友申请
 //        [self.haoyouArray addObject:[NSArray array]];  // 因为本身它也有索引 title  现在多了一个推荐， 所以添加一个空的
+        [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum = requestArraytemp.count;
+    } else {
+         [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum = 0;
     }
     
     // ****** 我邀请的好友 ******
@@ -303,9 +305,9 @@
 //    [self subordinateDataArray:friendsArraytemp];
     
     
-    if ([AppModel sharedInstance].sysMessageNum > 0) {
+    if ([UnreadMessagesNumSingle sharedInstance].myFriendMessageNum > 0) {
         self.messageMumLabel.hidden = NO;
-        self.messageMumLabel.text = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].sysMessageNum];
+        self.messageMumLabel.text = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum];
     } else {
         self.messageMumLabel.hidden = YES;
     }
@@ -396,7 +398,10 @@
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [MBProgressHUD showTipMessageInWindow:response[@"message"]];
-            [strongSelf queryContactsData];
+            [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum -= 1;
+            // 通讯录会话变更更新
+            [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUpdateNotification object: nil];
+            [strongSelf performSelector:@selector(queryContactsData) withObject:nil afterDelay:1];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
@@ -569,7 +574,7 @@
         chatModel.sessionType = ChatSessionType_CustomerService;
         
         CSAskFormController *vc = [[CSAskFormController alloc] init];
-        vc.model = chatModel;
+        vc.chatsModel = chatModel;
         [self.navigationController pushViewController:vc animated:YES];
         return;
     } else if (self.topIndex == TopIndexType_MyFriend) {
@@ -587,9 +592,6 @@
     [self goto_groupChat:model];
 }
 
-
-
-
 #pragma mark - goto好友聊天界面
 - (void)goto_groupChat:(YPContacts *)model {
     
@@ -598,9 +600,23 @@
     chatModel.avatar = model.avatar;
     chatModel.sessionType = ChatSessionType_Private;
     chatModel.userId = model.user_id;
+
+    /// 这里需要查询 会话列表
+    for (ChatsModel *myModel in [SessionSingle sharedInstance].mySessionListData) {
+        if (model.user_id == myModel.userId) {
+            chatModel.sessionId = myModel.sessionId;
+            chatModel.play_type = myModel.play_type;
+            break;
+        }
+    }
+//
+//    ChatViewController *vc = [ChatViewController chatsFromModel:chatModel];
+//    vc.hidesBottomBarWhenPushed = YES;
+//    [self.navigationController pushViewController:vc animated:YES];
     
-    ChatViewController *vc = [ChatViewController chatsFromModel:chatModel];
-    vc.hidesBottomBarWhenPushed = YES;
+    FriendHeadImageController *vc = [[FriendHeadImageController alloc] init];
+    vc.userId = chatModel.userId;
+    vc.chatsModel = chatModel;
     [self.navigationController pushViewController:vc animated:YES];
 }
 

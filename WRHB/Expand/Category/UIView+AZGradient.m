@@ -6,7 +6,7 @@
 //  Copyright © 2017年 Alfred Zhang. All rights reserved.
 //
 
-#import "UIView+AZGradient.h"
+#import "UIView+AZGradient.h"  // 渐变色
 #import <objc/runtime.h>
 
 @implementation UIView (AZGradient)

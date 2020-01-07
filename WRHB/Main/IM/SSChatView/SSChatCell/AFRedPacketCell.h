@@ -1,6 +1,6 @@
 //
 //  EnvelopeCollectionViewCell.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/8.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -28,5 +28,6 @@
 /// 雷号
 @property (nonatomic, strong) UILabel *mineLabel;
 
+-(void)reloadRedPackTimeOver:(ChatMessagelLayout*)model;
 
 @end

@@ -32,9 +32,9 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
 
 /// 退群使用
 ///
-@property (nonatomic, strong) GamesTypeModel *exitGamesTypeModel;
+@property (nonatomic, strong) GamesTypeModel *gamesTypeModel;
 ///
-@property (nonatomic, strong) ChatsModel *exitChatsModel;
+@property (nonatomic, strong) ChatsModel *chatsModel;
 
 @property(nonatomic, strong) TFPopupParam *popupParam;
 
@@ -319,7 +319,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        [MBProgressHUD hideHUD];
+        
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             ClubInfo* model = [ClubInfo mj_objectWithKeyValues:response[@"data"]];
@@ -328,6 +328,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
             // 俱乐部公告
 //            strongSelf.scorllTextLable.text = [ClubManager sharedInstance].clubInfo.notice;
         } else {
+            [MBProgressHUD hideHUD];
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
         
@@ -346,6 +347,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
     
     ClubTabBarController *ccTab = [[ClubTabBarController alloc]init];
     [self.navigationController pushViewController:ccTab animated:YES];
+    [MBProgressHUD hideHUD];
 }
 
 #pragma mark - 首先创建一个collectionView

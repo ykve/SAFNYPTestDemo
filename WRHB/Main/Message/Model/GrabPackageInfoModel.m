@@ -9,5 +9,7 @@
 #import "GrabPackageInfoModel.h"
 
 @implementation GrabPackageInfoModel
-
++ (NSDictionary *)mj_replacedKeyFromPropertyName {
+    return @{@"grab_at": @"grab_time"};
+}
 @end

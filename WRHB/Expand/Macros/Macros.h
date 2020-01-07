@@ -1,6 +1,6 @@
 //
 //  Macros.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/9/13.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -15,6 +15,11 @@ static NSString * const kWXSecret = @"3da5d9957cbc82685512002aac39e3f0";
 static NSString * const kTenant = @"af_pig_test";
 static NSString * const kMTAKey = @"IKAM6P7U2J7C";
 static NSString * const kBaseKey = @"YXBwOmFwcA==";
+
+/// Pusher 正式
+static NSString * const kPusherKey = @"5b4078897a54dfcec98e";
+/// Pusher 测试
+static NSString * const kPusherKeyTest = @"1de35942831b786afc4d";
 
 
 /// WS 正式

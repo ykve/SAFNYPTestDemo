@@ -1,13 +1,13 @@
 //
 //  RecommendCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/2.
 //  Copyright © 2018年 AFan. All rights reserved.
 //
 
 #import "SubUserCell.h"
-#import "UIView+AZGradient.h"
+#import "UIView+AZGradient.h"  // 渐变色
 #import "Sub_Users.h"
 #import "Sub_Recharge.h"
 
@@ -80,7 +80,7 @@
     UILabel *label3 = [view3 viewWithTag:2];
     
     label1.text = model.recharge.number ? model.recharge.number : @"0";
-    label2.text = model.capitals ? model.capitals : @"0";
+    label2.text = model.capital ? model.capital : @"0";
     label3.text = model.commission ? model.commission : @"0";
 }
 

@@ -7,6 +7,8 @@
 //
 
 #import "YPChatKeyBoardInputView.h"
+#import "UIButton+GraphicBtn.h"
+#import "YSReplyModel.h"
 
 @implementation YPChatKeyBoardInputView
 
@@ -14,118 +16,301 @@
     if(self = [super init]){
         self.backgroundColor =  YPChatCellColor;
         self.frame = CGRectMake(0, YPSCREEN_Height-YPChatKeyBoardInputViewH-kiPhoneX_Bottom_Height, YPSCREEN_Width, YPChatKeyBoardInputViewH);
-        
-        _keyBoardStatus = YPChatKeyBoardStatusDefault;
-        _keyBoardHieght = 0;
-        _changeTime = 0.25;
-        _textH = YPChatTextHeight;
-        
-        _topLine = [[UIView alloc]initWithFrame:CGRectMake(0, 0, YPSCREEN_Width, 0.5)];
-        _topLine.backgroundColor = CellLineColor;
-        [self addSubview:_topLine];
-        
-        //左侧按钮
-        _mLeftBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        _mLeftBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
-        _mLeftBtn.left    = YPChatBtnDistence;
-        _mLeftBtn.bottom  = self.height - YPChatBBottomDistence;
-        _mLeftBtn.tag  = 10;
-        [self addSubview:_mLeftBtn];
-        [_mLeftBtn setBackgroundImage:[UIImage imageNamed:@"icon_yuying"] forState:UIControlStateNormal];
-        [_mLeftBtn setBackgroundImage:[UIImage imageNamed:@"icon_shuru"] forState:UIControlStateSelected];
-        _mLeftBtn.selected = NO;
-        [_mLeftBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
-        
-        
-        //添加按钮
-        _mAddBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        _mAddBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
-        _mAddBtn.right = YPSCREEN_Width - YPChatBtnDistence;
-        _mAddBtn.bottom  = self.height - YPChatBBottomDistence;
-        _mAddBtn.tag  = 12;
-        _mAddBtn.selected = NO;
-        [self addSubview:_mAddBtn];
-        
-        [_mAddBtn setBackgroundImage:[UIImage imageNamed:@"icon_tianjia"] forState:UIControlStateNormal];
-        [_mAddBtn setBackgroundImage:[UIImage imageNamed:@"icon_tianjia"] forState:UIControlStateSelected];
-        _mAddBtn.selected = NO;
-        [_mAddBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
-        
-        //表情按钮
-        _mSymbolBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        _mSymbolBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
-        _mSymbolBtn.right = _mAddBtn.left - YPChatBtnDistence;
-        _mSymbolBtn.bottom  = self.height - YPChatBBottomDistence;
-        _mSymbolBtn.backgroundColor = [UIColor whiteColor];
-        _mSymbolBtn.tag  = 11;
-        [self addSubview:_mSymbolBtn];
-        [_mSymbolBtn setBackgroundImage:[UIImage imageNamed:@"icon_biaoqing"] forState:UIControlStateNormal];
-        [_mSymbolBtn setBackgroundImage:[UIImage imageNamed:@"icon_shuru"] forState:UIControlStateSelected];
-        _mSymbolBtn.selected = NO;
-        [_mSymbolBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
-        
-        // 语音按钮   输入框
-        _mTextBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-        _mTextBtn.bounds = CGRectMake(0, 0, YPChatTextWidth, YPChatTextHeight);
-        _mTextBtn.left = _mLeftBtn.right+YPChatBtnDistence;
-//        _mTextBtn.left = YPChatBtnDistence;
-        _mTextBtn.bottom = self.height - YPChatTBottomDistence;
-        _mTextBtn.backgroundColor = [UIColor whiteColor];
-        _mTextBtn.layer.borderWidth = 0.5;
-        _mTextBtn.layer.borderColor = CellLineColor.CGColor;
-        _mTextBtn.clipsToBounds = YES;
-        _mTextBtn.layer.cornerRadius = 3;
-        [self addSubview:_mTextBtn];
-        _mTextBtn.userInteractionEnabled = YES;
-        _mTextBtn.titleLabel.font = [UIFont boldSystemFontOfSize:14];
-        [_mTextBtn setTitleColor:makeColorRgb(100, 100, 100) forState:UIControlStateNormal];
-        [_mTextBtn setTitle:@"按住 说话" forState:UIControlStateNormal];
-        [_mTextBtn setTitle:@"松开 结束" forState:UIControlStateHighlighted];
-        [_mTextBtn addTarget:self action:@selector(beginRecordVoice:) forControlEvents:UIControlEventTouchDown];
-        
-        [_mTextBtn addTarget:self action:@selector(endRecordVoice:) forControlEvents:UIControlEventTouchUpInside];
-        
-        [_mTextBtn addTarget:self action:@selector(cancelRecordVoice:) forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel];
-        [_mTextBtn addTarget:self action:@selector(RemindDragExit:) forControlEvents:UIControlEventTouchDragExit];
-        [_mTextBtn addTarget:self action:@selector(RemindDragEnter:) forControlEvents:UIControlEventTouchDragEnter];
-        
-        
-        _mTextView = [[UITextView alloc]init];
-        _mTextView.frame = _mTextBtn.bounds;
-        _mTextView.textContainerInset = UIEdgeInsetsMake(7.5, 5, 5, 5);
-        _mTextView.delegate = self;
-        [_mTextBtn addSubview:_mTextView];
-        _mTextView.backgroundColor = [UIColor whiteColor];
-        _mTextView.returnKeyType = UIReturnKeySend;
-        _mTextView.font = [UIFont systemFontOfSize:15];
-        _mTextView.showsHorizontalScrollIndicator = NO;
-        _mTextView.showsVerticalScrollIndicator = NO;
-        _mTextView.enablesReturnKeyAutomatically = YES;
-        _mTextView.scrollEnabled = NO;
-        
-        
-        _mKeyBordView = [[YPChatKeyBordView alloc]initWithFrame:CGRectMake(0, self.height, YPSCREEN_Width, YPChatKeyBordHeight)];
-        _mKeyBordView.delegate = self;
-        [self addSubview:_mKeyBordView];
-        
-        
-        //键盘显示 回收的监听
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillShowNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillHideNotification object:nil];
-        
+        _initKefuViewHeight = 0;
+        _initViewHeight = self.frame.size.height;
+        [self setupUI];
     }
     return self;
 }
 
+-(instancetype)initWithFrame:(CGRect)frame {
+    if(self = [super initWithFrame:frame]) {
+        self.backgroundColor =  YPChatCellColor;
+        _initKefuViewHeight = YPChatKeyBoardInputUpViewH;
+        _initViewHeight = self.frame.size.height;
+        [self setupUI];
+    }
+    return self;
+}
 
+/// 点击客服视图充值类型
+- (void)onClickViewBtn:(UIButton *)sender {
+    if(_delegate && [_delegate respondsToSelector:@selector(didChatKeFuTopupTypeSelectedIndex:)]){
+        [_delegate didChatKeFuTopupTypeSelectedIndex:sender.tag - 6000];
+    }
+}
+
+- (void)setYsReplyModelArray:(NSArray *)ysReplyModelArray {
+    _ysReplyModelArray = ysReplyModelArray;
+    
+    for (NSInteger index= 0; index < ysReplyModelArray.count; index++) {
+        YSReplyModel *ysReplyModel = (YSReplyModel *)ysReplyModelArray[index];
+        
+        CGFloat height = 30;
+        
+        UIButton *viewBtn = [UIButton new];
+        //        [viewBtn setTitle:@"-" forState:UIControlStateNormal];
+        viewBtn.titleLabel.font = [UIFont systemFontOfSize:10];
+        [viewBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [viewBtn setImage:[UIImage imageNamed:@"me_bill_arrow_right"] forState:UIControlStateNormal];
+        [viewBtn addTarget:self action:@selector(onClickViewBtn:) forControlEvents:UIControlEventTouchUpInside];
+        [viewBtn setImagePosition:WPGraphicBtnTypeLeft spacing:1];
+        viewBtn.layer.cornerRadius = height/2;
+        viewBtn.layer.masksToBounds = YES;
+        viewBtn.tag = 6000 + index;
+        [self.payBgView addSubview:viewBtn];
+        
+        CGFloat widht = self.topBackView.frame.size.width/4;
+        CGFloat widhtss = widht * index;
+        
+        [viewBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.right.equalTo(self.payBgView.mas_right).offset(-widhtss);
+            make.width.mas_equalTo(widht-2);
+            make.height.mas_equalTo(height);
+            make.bottom.equalTo(self.payBgView).offset(-5);
+        }];
+        
+        if (ysReplyModel.type == 1) {    /// 支付宝
+            [viewBtn setTitle:ysReplyModel.type_name forState:UIControlStateNormal];
+            [viewBtn setImage:[UIImage imageNamed:@"pay_chat_alipay"] forState:UIControlStateNormal];
+            viewBtn.backgroundColor = [UIColor colorWithHex:@"#00AAEE"];
+        } else if (ysReplyModel.type == 2) {  /// 微信
+            [viewBtn setTitle:ysReplyModel.type_name forState:UIControlStateNormal];
+            [viewBtn setImage:[UIImage imageNamed:@"pay_chat_wechat"] forState:UIControlStateNormal];
+            viewBtn.backgroundColor = [UIColor colorWithHex:@"#24AF41"];
+        } else {
+            [viewBtn setTitle:ysReplyModel.type_name forState:UIControlStateNormal];
+            [viewBtn setImage:[UIImage imageNamed:@"pay_chat_bankcard"] forState:UIControlStateNormal];
+            viewBtn.backgroundColor = [UIColor colorWithHex:@"#004889"];
+        }
+        
+    }
+}
+
+- (void)setIsNoSpeak:(BOOL)isNoSpeak {
+    _isNoSpeak = isNoSpeak;
+    if (isNoSpeak) {
+        self.mTextView.text = @"您已被禁言";
+        self.mTextView.textColor = [UIColor colorWithHex:@"#DDDDDD"];
+        self.mTextView.textAlignment = NSTextAlignmentCenter;
+        //        [self.mTextView endEditing:YES];
+        self.userInteractionEnabled = NO;
+    } else {
+        self.mTextView.text = @"";
+        self.mTextView.textColor = [UIColor colorWithHex:@"#333333"];
+        self.mTextView.textAlignment = NSTextAlignmentLeft;
+        //        [self.mTextView endEditing:NO];
+        self.userInteractionEnabled = YES;
+    }
+}
+- (void)setIsDisconnect:(BOOL)isDisconnect {
+    _isDisconnect = isDisconnect;
+    if (isDisconnect) {
+        self.textBgView.hidden = NO;
+        self.payBgView.userInteractionEnabled = NO;
+        _mLeftBtn.userInteractionEnabled = NO;
+        _mAddBtn.userInteractionEnabled = NO;
+        _mSymbolBtn.userInteractionEnabled = NO;
+        _mTextView.userInteractionEnabled = NO;
+        _mTextBtn.userInteractionEnabled = NO;
+    }
+}
+
+- (void)goto_kefu {
+    if(_delegate && [_delegate respondsToSelector:@selector(didChatGoto_kefu)]){
+        [_delegate didChatGoto_kefu];
+    }
+}
+- (void)goto_feedbackBtn {
+    if(_delegate && [_delegate respondsToSelector:@selector(didChatGoto_feedbackBtn)]){
+        [_delegate didChatGoto_feedbackBtn];
+    }
+}
+
+- (void)setupUI {
+    
+    if (self.initKefuViewHeight > 0) {
+        UIView *topBackView = [[UIView alloc] initWithFrame:CGRectMake(15, 0, kSCREEN_WIDTH -15*2, self.initKefuViewHeight)];
+        //        topBackView.backgroundColor = [UIColor lightGrayColor];
+        [self addSubview:topBackView];
+        _topBackView = topBackView;
+        
+        UIView *payBgView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, topBackView.frame.size.width, topBackView.frame.size.height)];
+//        payBgView.backgroundColor = [UIColor lightGrayColor];
+        [topBackView addSubview:payBgView];
+        _payBgView = payBgView;
+        
+        UIView *textBgView = [[UIView alloc] init];
+        //        textBgView.backgroundColor = [UIColor greenColor];
+        textBgView.hidden = YES;
+        [topBackView addSubview:textBgView];
+        _textBgView = textBgView;
+        
+        [textBgView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.left.right.equalTo(topBackView);
+            make.height.mas_equalTo(20);
+        }];
+        
+        CGFloat fontsizeb = 13;
+        
+        UILabel *tit1Label = [[UILabel alloc] init];
+        tit1Label.text = @"对话已结束，问题没解决?";
+        tit1Label.font = [UIFont systemFontOfSize:fontsizeb];
+        tit1Label.textColor = [UIColor colorWithHex:@"#666666"];
+        [textBgView addSubview:tit1Label];
+        
+        [tit1Label mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerX.equalTo(textBgView.mas_centerX).offset(-50);
+            make.centerY.equalTo(textBgView.mas_centerY);
+        }];
+        
+        UIButton *tt2Btn = [[UIButton alloc] init];
+        [tt2Btn setTitle:@"转客服" forState:UIControlStateNormal];
+        tt2Btn.titleLabel.font = [UIFont systemFontOfSize:fontsizeb];
+        [tt2Btn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [tt2Btn addTarget:self action:@selector(goto_kefu) forControlEvents:UIControlEventTouchUpInside];
+        tt2Btn.tag = 60100;
+        [textBgView addSubview:tt2Btn];
+        
+        [tt2Btn mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(tit1Label.mas_centerY);
+            make.left.equalTo(tit1Label.mas_right);
+            make.size.mas_equalTo(CGSizeMake(45, 16));
+        }];
+        
+        UILabel *tit3Label = [[UILabel alloc] init];
+        tit3Label.text = @"或";
+        tit3Label.font = [UIFont systemFontOfSize:fontsizeb];
+        tit3Label.textColor = [UIColor colorWithHex:@"#666666"];
+        [textBgView addSubview:tit3Label];
+        
+        [tit3Label mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(tit1Label.mas_centerY);
+            make.left.equalTo(tt2Btn.mas_right).offset(0);
+        }];
+        
+        UIButton *tt4Btn = [[UIButton alloc] init];
+        [tt4Btn setTitle:@"去留言" forState:UIControlStateNormal];
+        tt4Btn.titleLabel.font = [UIFont systemFontOfSize:fontsizeb];
+        [tt4Btn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
+        [tt4Btn addTarget:self action:@selector(goto_feedbackBtn) forControlEvents:UIControlEventTouchUpInside];
+        tt4Btn.tag = 60101;
+        [textBgView addSubview:tt4Btn];
+        
+        [tt4Btn mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(tit1Label.mas_centerY);
+            make.left.equalTo(tit3Label.mas_right);
+            make.size.mas_equalTo(CGSizeMake(45, 16));
+        }];
+    }
+    
+    _keyBoardStatus = YPChatKeyBoardStatusDefault;
+    _keyBoardHieght = 0;
+    _changeTime = 0.25;
+    _textH = YPChatTextHeight;
+    
+    _topLine = [[UIView alloc]initWithFrame:CGRectMake(0, self.initKefuViewHeight, YPSCREEN_Width, 0.5)];
+    _topLine.backgroundColor = CellLineColor;
+    [self addSubview:_topLine];
+    
+    //左侧按钮
+    _mLeftBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    _mLeftBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
+    _mLeftBtn.left    = YPChatBtnDistence;
+    _mLeftBtn.bottom  = self.height - YPChatBBottomDistence;
+    _mLeftBtn.tag  = 10;
+    [self addSubview:_mLeftBtn];
+    [_mLeftBtn setBackgroundImage:[UIImage imageNamed:@"icon_yuying"] forState:UIControlStateNormal];
+    [_mLeftBtn setBackgroundImage:[UIImage imageNamed:@"icon_shuru"] forState:UIControlStateSelected];
+    _mLeftBtn.selected = NO;
+    [_mLeftBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
+    
+    
+    //添加按钮
+    _mAddBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    _mAddBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
+    _mAddBtn.right = YPSCREEN_Width - YPChatBtnDistence;
+    _mAddBtn.bottom  = self.height - YPChatBBottomDistence;
+    _mAddBtn.tag  = 12;
+    _mAddBtn.selected = NO;
+    [self addSubview:_mAddBtn];
+    
+    [_mAddBtn setBackgroundImage:[UIImage imageNamed:@"icon_tianjia"] forState:UIControlStateNormal];
+    [_mAddBtn setBackgroundImage:[UIImage imageNamed:@"icon_tianjia"] forState:UIControlStateSelected];
+    _mAddBtn.selected = NO;
+    [_mAddBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
+    
+    //表情按钮
+    _mSymbolBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    _mSymbolBtn.bounds = CGRectMake(0, 0, YPChatBtnSize, YPChatBtnSize);
+    _mSymbolBtn.right = _mAddBtn.left - YPChatBtnDistence;
+    _mSymbolBtn.bottom  = self.height - YPChatBBottomDistence;
+    _mSymbolBtn.backgroundColor = [UIColor clearColor];
+    _mSymbolBtn.tag  = 11;
+    [self addSubview:_mSymbolBtn];
+    [_mSymbolBtn setBackgroundImage:[UIImage imageNamed:@"icon_biaoqing"] forState:UIControlStateNormal];
+    [_mSymbolBtn setBackgroundImage:[UIImage imageNamed:@"icon_shuru"] forState:UIControlStateSelected];
+    _mSymbolBtn.selected = NO;
+    [_mSymbolBtn addTarget:self action:@selector(btnPressed:) forControlEvents:UIControlEventTouchUpInside];
+    
+    // 语音按钮   输入框
+    _mTextBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    _mTextBtn.bounds = CGRectMake(0, 0, YPChatTextWidth, YPChatTextHeight);
+    _mTextBtn.left = _mLeftBtn.right+YPChatBtnDistence;
+    //        _mTextBtn.left = YPChatBtnDistence;
+    _mTextBtn.bottom = self.height - YPChatTBottomDistence;
+    _mTextBtn.backgroundColor = [UIColor whiteColor];
+    _mTextBtn.layer.borderWidth = 0.5;
+    _mTextBtn.layer.borderColor = CellLineColor.CGColor;
+    _mTextBtn.clipsToBounds = YES;
+    _mTextBtn.layer.cornerRadius = 3;
+    [self addSubview:_mTextBtn];
+    _mTextBtn.userInteractionEnabled = YES;
+    _mTextBtn.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+    [_mTextBtn setTitleColor:makeColorRgb(100, 100, 100) forState:UIControlStateNormal];
+    [_mTextBtn setTitle:@"按住 说话" forState:UIControlStateNormal];
+    [_mTextBtn setTitle:@"松开 结束" forState:UIControlStateHighlighted];
+    [_mTextBtn addTarget:self action:@selector(beginRecordVoice:) forControlEvents:UIControlEventTouchDown];
+    
+    [_mTextBtn addTarget:self action:@selector(endRecordVoice:) forControlEvents:UIControlEventTouchUpInside];
+    
+    [_mTextBtn addTarget:self action:@selector(cancelRecordVoice:) forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel];
+    [_mTextBtn addTarget:self action:@selector(RemindDragExit:) forControlEvents:UIControlEventTouchDragExit];
+    [_mTextBtn addTarget:self action:@selector(RemindDragEnter:) forControlEvents:UIControlEventTouchDragEnter];
+    
+    
+    _mTextView = [[UITextView alloc]init];
+    _mTextView.frame = _mTextBtn.bounds;
+    _mTextView.textContainerInset = UIEdgeInsetsMake(7.5, 5, 5, 5);
+    _mTextView.delegate = self;
+    [_mTextBtn addSubview:_mTextView];
+    _mTextView.backgroundColor = [UIColor whiteColor];
+    _mTextView.returnKeyType = UIReturnKeySend;
+    _mTextView.font = [UIFont systemFontOfSize:15];
+    _mTextView.showsHorizontalScrollIndicator = NO;
+    _mTextView.showsVerticalScrollIndicator = NO;
+    _mTextView.enablesReturnKeyAutomatically = YES;
+    _mTextView.scrollEnabled = NO;
+    
+    
+    _mKeyBordView = [[YPChatKeyBordView alloc]initWithFrame:CGRectMake(0, self.height, YPSCREEN_Width, YPChatKeyBordBottomHeight)];
+    _mKeyBordView.delegate = self;
+    [self addSubview:_mKeyBordView];
+    
+    
+    //键盘显示 回收的监听
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillShowNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChange:) name:UIKeyboardWillHideNotification object:nil];
+    
+}
 //开始布局就把底部的表情和多功能放在输入框底部了 这里需要对点击界外事件做处理
 -(UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event{
     
-    if(point.y>YPChatKeyBoardInputViewH){
+    if(point.y>self.initViewHeight){
         UIView *hitView = [super hitTest:point withEvent:event];
         
         NSMutableArray *array = [NSMutableArray new];
-
+        
         if(_mKeyBordView.type == KeyBordViewFouctionAdd){
             for(UIView * view in _mKeyBordView.functionView.mScrollView.subviews){
                 [array addObjectsFromArray:view.subviews];
@@ -134,12 +319,12 @@
         else if(_mKeyBordView.type == KeyBordViewFouctionSymbol){
             
             CGPoint buttonPoint = [_mKeyBordView.symbolView.footer.sendButton convertPoint:point fromView:self];
-        if(CGRectContainsPoint(_mKeyBordView.symbolView.footer.sendButton.bounds, buttonPoint)) {
+            if(CGRectContainsPoint(_mKeyBordView.symbolView.footer.sendButton.bounds, buttonPoint)) {
                 [array addObject:_mKeyBordView.symbolView.footer.sendButton];
             }
             else{
                 CGPoint footerPoint = [_mKeyBordView.symbolView.footer.emojiFooterScrollView convertPoint:point fromView:self];
-            if(CGRectContainsPoint(_mKeyBordView.symbolView.footer.emojiFooterScrollView.bounds, footerPoint)) {
+                if(CGRectContainsPoint(_mKeyBordView.symbolView.footer.emojiFooterScrollView.bounds, footerPoint)) {
                     [array addObjectsFromArray: _mKeyBordView.symbolView.footer.emojiFooterScrollView.subviews];
                 }
                 else{
@@ -156,7 +341,7 @@
                 break;
             }
         }
-      
+        
         return hitView;
     }
     else{
@@ -169,12 +354,12 @@
     
     _changeTime  = [[noti userInfo][UIKeyboardAnimationDurationUserInfoKey] doubleValue];
     CGFloat height = [[[noti userInfo] objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height;
-
+    
     if(noti.name == UIKeyboardWillHideNotification){
         height = kiPhoneX_Bottom_Height;
         if(_keyBoardStatus == YPChatKeyBoardStatusSymbol ||
            _keyBoardStatus == YPChatKeyBoardStatusAdd){
-            height = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+            height = kiPhoneX_Bottom_Height+self.initViewHeight + YPChatKeyBordBottomHeight;
         }
     }else{
         
@@ -196,7 +381,7 @@
     
     _keyBoardHieght = keyBoardHieght;
     [self setNewSizeWithController];
-
+    
     [UIView animateWithDuration:_changeTime animations:^{
         if(self.keyBoardStatus == YPChatKeyBoardStatusDefault ||
            self.keyBoardStatus == YPChatKeyBoardStatusVoice){
@@ -233,9 +418,9 @@
 
 //语音10  表情11  其他功能12
 -(void)btnPressed:(UIButton *)sender{
-   
+    
     [[UUAVAudioPlayer sharedInstance]stopSound];
-
+    
     switch (self.keyBoardStatus) {
             
             //默认在底部状态
@@ -257,7 +442,7 @@
                 _mKeyBordView.mCoverView.hidden = YES;
                 _mKeyBordView.type = KeyBordViewFouctionSymbol;
                 [self.mTextView resignFirstResponder];
-                self.keyBoardHieght = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+                self.keyBoardHieght = kiPhoneX_Bottom_Height + YPChatKeyBordBottomHeight;
                 [self setNewSizeWithBootm:_textH];
             }else{
                 self.keyBoardStatus = YPChatKeyBoardStatusAdd;
@@ -265,7 +450,7 @@
                 self.currentBtn.selected = YES;
                 _mKeyBordView.type = KeyBordViewFouctionAdd;
                 _mKeyBordView.mCoverView.hidden = YES;
-                self.keyBoardHieght = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+                self.keyBoardHieght = kiPhoneX_Bottom_Height + YPChatKeyBordBottomHeight;
                 [self setNewSizeWithBootm:_textH];
             }
         }
@@ -289,7 +474,7 @@
                 _mKeyBordView.mCoverView.hidden = YES;
                 self.mTextView.hidden = NO;
                 _mKeyBordView.type = KeyBordViewFouctionSymbol;
-                self.keyBoardHieght = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+                self.keyBoardHieght = kiPhoneX_Bottom_Height + YPChatKeyBordBottomHeight;
                 [self setNewSizeWithBootm:_textH];
             }else{
                 self.keyBoardStatus = YPChatKeyBoardStatusAdd;
@@ -299,7 +484,7 @@
                 _mKeyBordView.mCoverView.hidden = YES;
                 self.mTextView.hidden = NO;
                 _mKeyBordView.type = KeyBordViewFouctionAdd;
-                self.keyBoardHieght = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+                self.keyBoardHieght = kiPhoneX_Bottom_Height + YPChatKeyBordBottomHeight;
                 [self setNewSizeWithBootm:_textH];
             }
             [self textViewDidChange:self.mTextView];
@@ -324,7 +509,7 @@
                 self.currentBtn.selected = YES;
                 _mKeyBordView.mCoverView.hidden = YES;
                 [self.mTextView resignFirstResponder];
-                self.keyBoardHieght = kiPhoneX_Bottom_Height+YPChatKeyBordHeight;
+                self.keyBoardHieght = kiPhoneX_Bottom_Height + YPChatKeyBordBottomHeight;
                 _mKeyBordView.type = KeyBordViewFouctionSymbol;
                 
             }else{
@@ -350,7 +535,7 @@
                 _mKeyBordView.mCoverView.hidden = NO;
                 self.mTextView.hidden = YES;
                 self.keyBoardHieght = kiPhoneX_Bottom_Height;
-
+                
                 [self setNewSizeWithBootm:YPChatTextHeight];
             }else if (sender.tag==11){
                 self.keyBoardStatus = YPChatKeyBoardStatusEdit;
@@ -380,7 +565,7 @@
                 _mKeyBordView.mCoverView.hidden = NO;
                 self.mTextView.hidden = YES;
                 self.keyBoardHieght = kiPhoneX_Bottom_Height;
-
+                
                 [self setNewSizeWithBootm:YPChatTextHeight];
             }else if (sender.tag==11){
                 self.keyBoardStatus = YPChatKeyBoardStatusSymbol;
@@ -430,12 +615,12 @@
 
 //设置所有控件新的尺寸位置
 -(void)setNewSizeWithBootm:(CGFloat)height{
-   
+    
     [self setNewSizeWithController];
     
     [UIView animateWithDuration:0.25 animations:^{
         self.mTextView.height = height;
-        self.height = 8 + 8 + self.mTextView.height;
+        self.height = 8 + self.mTextView.height+ 8 +self.initKefuViewHeight;
         
         self.mTextBtn.height = self.mTextView.height;
         self.mTextBtn.bottom = self.height-YPChatTBottomDistence;
@@ -464,7 +649,7 @@
     if(self.mTextView.hidden == YES) changeTextViewH = 0;
     CGFloat changeH = _keyBoardHieght + changeTextViewH;
     
-//    SSDeviceDefault *device = [SSDeviceDefault shareCKDeviceDefault];
+    //    SSDeviceDefault *device = [SSDeviceDefault shareCKDeviceDefault];
     if(kiPhoneX_Bottom_Height != 0 && _keyBoardHieght!=0){
         changeH -= kiPhoneX_Bottom_Height;
     }
@@ -496,7 +681,7 @@
     NSString *message = [_mTextView.attributedText string];
     NSString *newMessage = [message stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if(message.length==0){
-       
+        
     }
     else if(_delegate && [_delegate respondsToSelector:@selector(onChatKeyBoardInputViewSendText:)]){
         [_delegate onChatKeyBoardInputViewSendText:newMessage];
@@ -526,11 +711,11 @@
     }else{
         _mKeyBordView.symbolView.footer.sendButton.enabled = YES;
     }
-
+    
     
     //获取到textView的最佳高度
     NSInteger height = ceilf([textView sizeThatFits:CGSizeMake(textView.width, MAXFLOAT)].height);
-
+    
     if(height>YPChatTextMaxHeight){
         height = YPChatTextMaxHeight;
         textView.scrollEnabled = YES;
@@ -542,7 +727,7 @@
     else{
         textView.scrollEnabled = NO;
     }
-
+    
     if(_textH != height){
         _textH = height;
         [self setNewSizeWithBootm:height];
@@ -578,20 +763,20 @@
     _audioSession = [AVAudioSession sharedInstance];
     [_audioSession setCategory :AVAudioSessionCategoryPlayAndRecord error:nil];
     [_audioSession setActive:YES error:nil];
-
+    
     NSDictionary *recordSetting = @{AVEncoderAudioQualityKey : [NSNumber numberWithInt:AVAudioQualityMin],
                                     AVFormatIDKey : [NSNumber numberWithInt:kAudioFormatLinearPCM],
-                                    AVSampleRateKey : [NSNumber numberWithFloat:8000],
+                                    AVSampleRateKey : [NSNumber numberWithFloat:44100],
                                     AVEncoderBitRateKey : [NSNumber numberWithInt:16],
                                     AVNumberOfChannelsKey : @1,
                                     AVLinearPCMBitDepthKey : @16
                                     };
     NSError *error = nil;
-   
+    
     NSString *cdPath = [CDFunction recordPath];
     //设置文件保存路径和名称
     NSString *fileName = [NSString stringWithFormat:@"/voice-%5.2f.caf", [[NSDate date] timeIntervalSince1970]];
-     _docmentFilePath = [cdPath stringByAppendingPathComponent:fileName];
+    _docmentFilePath = [cdPath stringByAppendingPathComponent:fileName];
     NSURL *pathURL = [NSURL fileURLWithPath:_docmentFilePath];
     
     _recorder = [[AVAudioRecorder alloc] initWithURL:pathURL settings:recordSetting error:&error];
@@ -663,7 +848,7 @@
 - (void)endConvertWithData:(NSData *)voiceData
 {
     if(![self recordFileCanBeSend:self.docmentFilePath]){
-//        [MBProgressHUD showTipMessageInWindow:@"录音时间太短"];
+        //        [MBProgressHUD showTipMessageInWindow:@"录音时间太短"];
         [UUProgressHUD dismissWithError:@"录音时间太短"];
     } else {
         
@@ -685,7 +870,7 @@
 
 - (void)failRecord
 {
-//    [UUProgressHUD dismissWithSuccess:@"Too short"];
+    //    [UUProgressHUD dismissWithSuccess:@"Too short"];
     
     //缓冲消失时间 (最好有block回调消失完成)
     self.btnVoiceRecord.enabled = NO;

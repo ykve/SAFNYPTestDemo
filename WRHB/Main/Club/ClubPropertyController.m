@@ -31,6 +31,8 @@
 /// 聊天大厅
 @property (nonatomic, strong) UISwitch *chatHallShow;
 
+@property (nonatomic, strong) UIButton *iconViewBtn;
+@property (nonatomic, strong) UIButton *iconView2Btn;
 
 @end
 
@@ -48,7 +50,7 @@
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     
-    if ([self.navigationController.viewControllers indexOfObject:self] == NSNotFound) {
+    if ([self.navigationController.viewControllers indexOfObject:self] == NSNotFound && [ClubManager sharedInstance].clubInfo.role != 1) {
         [self updateClubInfo];
     }
     
@@ -57,9 +59,23 @@
 
 
 - (void)setData {
+    
+    if ([ClubManager sharedInstance].clubInfo.role == 1) {
+        self.iconViewBtn.hidden = YES;
+        self.iconView2Btn.hidden = YES;
+        
+        self.selectedIconBtn1.userInteractionEnabled = NO;
+        self.selectedIconBtn2.userInteractionEnabled = NO;
+        self.selectedIconBtn3.userInteractionEnabled = NO;
+        self.selectedIconBtn4.userInteractionEnabled = NO;
+        
+        self.noSpeakSwitch.userInteractionEnabled = NO;
+        self.chatHallShow.userInteractionEnabled = NO;
+    }
+    
     self.clubNameTextField.text = [ClubManager sharedInstance].clubInfo.title;
     self.IDLabel.text = [NSString stringWithFormat:@"%zd", [ClubManager sharedInstance].clubInfo.ID];
-
+    
     if ([ClubManager sharedInstance].clubInfo.who_create_room == 1) { // 所有用户
         [self.selectedIconBtn1 setImage:[UIImage imageNamed:@"club_selected"] forState:UIControlStateNormal];
         [self.selectedIconBtn2 setImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
@@ -108,11 +124,11 @@
 }
 
 - (void)onNoSpeakSwitch:(UISwitch *)sw {
-    self.noSpeakSwitch.on = sw.on == NO ? YES : NO;
+//    sw.on = !sw.on;
     [ClubManager sharedInstance].clubInfo.can_speak = sw.on == YES ? 2 : 1;
 }
 - (void)onChatHallShow:(UISwitch *)sw {
-    self.chatHallShow.on = sw.on == NO ? YES : NO;
+//    sw.on = !sw.on;
     [ClubManager sharedInstance].clubInfo.show_alliance = sw.on == YES ? 1 : 2;
 }
 // 俱乐部名称可写
@@ -121,7 +137,7 @@
     if (sendder.selected) {
         self.clubNameTextField.userInteractionEnabled = YES;
     } else {
-       self.clubNameTextField.userInteractionEnabled = NO;
+        self.clubNameTextField.userInteractionEnabled = NO;
     }
 }
 // 公告可写
@@ -162,21 +178,21 @@
     entity.needCache = NO;
     entity.parameters = parameters;
     
-//    [MBProgressHUD showActivityMessageInView:@"正在保存"];
-//    __weak __typeof(self)weakSelf = self;
+    //    [MBProgressHUD showActivityMessageInView:@"正在保存"];
+    //    __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-//        [MBProgressHUD hideHUD];
-//        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        //        [MBProgressHUD hideHUD];
+        //        __strong __typeof(weakSelf)strongSelf = weakSelf;
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-//            [MBProgressHUD showTipMessageInWindow:@"更新俱乐部信息成功"];
+            //            [MBProgressHUD showTipMessageInWindow:@"更新俱乐部信息成功"];
             [[NSNotificationCenter defaultCenter] postNotificationName:kClubInfoUpdateNotification object:nil];
             
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
     } failureBlock:^(NSError *error) {
-//        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        //        __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         [[AFHttpError sharedInstance] handleFailResponse:error];
     } progressBlock:nil];
@@ -213,6 +229,7 @@
     UIButton *iconView = [[UIButton alloc] init];
     [iconView setBackgroundImage:[UIImage imageNamed:@"club_write_update"] forState:UIControlStateNormal];
     [iconView addTarget:self action:@selector(onClubNameBtn:) forControlEvents:UIControlEventTouchUpInside];
+    _iconViewBtn = iconView;
     
     [backView1 addSubview:iconView];
     
@@ -223,14 +240,14 @@
     }];
     
     UITextField *clubNameTextField = [[UITextField alloc] init];
-//    clubNameTextField.backgroundColor = [UIColor yellowColor];
+    //    clubNameTextField.backgroundColor = [UIColor yellowColor];
     //    textField.tag = 100;
     // textField.backgroundColor = [UIColor greenColor];  // 更改背景颜色
     clubNameTextField.borderStyle = UITextBorderStyleNone;  //边框类型
     clubNameTextField.font = [UIFont systemFontOfSize:15];  // 字体
     clubNameTextField.textColor = [UIColor colorWithHex:@"#666666"];  // 字体颜色
-//    clubNameTextField.clearButtonMode = UITextFieldViewModeAlways; // 清空按钮
-//    clubNameTextField.clearsOnBeginEditing = YES; // 当编辑时清空
+    //    clubNameTextField.clearButtonMode = UITextFieldViewModeAlways; // 清空按钮
+    //    clubNameTextField.clearsOnBeginEditing = YES; // 当编辑时清空
     clubNameTextField.delegate = self;
     //textField.keyboardAppearance = UIKeyboardAppearanceAlert; // 键盘样式
     clubNameTextField.keyboardType = UIKeyboardTypeDefault; // 键盘类型
@@ -339,29 +356,29 @@
         make.size.mas_equalTo(CGSizeMake(90, 30));
     }];
     
-//    UIButton *selectedIconBtn2= [[UIButton alloc] init];
-//    [selectedIconBtn2 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
-//    [selectedIconBtn2 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
-//    selectedIconBtn2.tag = 1001;
-//    [backView3 addSubview:selectedIconBtn2];
-//    _selectedIconBtn2 = selectedIconBtn2;
-//
-//    [selectedIconBtn2 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView3.mas_centerY);
-//        make.left.equalTo(backView3.mas_centerX).offset(50);
-//        make.size.mas_equalTo(16);
-//    }];
-//
-//    UILabel *tit32 = [[UILabel alloc] init];
-//    tit32.text = @"权限管理";
-//    tit32.font = [UIFont systemFontOfSize:15];
-//    tit32.textColor = [UIColor colorWithHex:@"#343434"];
-//    [backView3 addSubview:tit32];
-//
-//    [tit32 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView3.mas_centerY);
-//        make.left.equalTo(selectedIconBtn2.mas_right).offset(8);
-//    }];
+    //    UIButton *selectedIconBtn2= [[UIButton alloc] init];
+    //    [selectedIconBtn2 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
+    //    [selectedIconBtn2 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
+    //    selectedIconBtn2.tag = 1001;
+    //    [backView3 addSubview:selectedIconBtn2];
+    //    _selectedIconBtn2 = selectedIconBtn2;
+    //
+    //    [selectedIconBtn2 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView3.mas_centerY);
+    //        make.left.equalTo(backView3.mas_centerX).offset(50);
+    //        make.size.mas_equalTo(16);
+    //    }];
+    //
+    //    UILabel *tit32 = [[UILabel alloc] init];
+    //    tit32.text = @"权限管理";
+    //    tit32.font = [UIFont systemFontOfSize:15];
+    //    tit32.textColor = [UIColor colorWithHex:@"#343434"];
+    //    [backView3 addSubview:tit32];
+    //
+    //    [tit32 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView3.mas_centerY);
+    //        make.left.equalTo(selectedIconBtn2.mas_right).offset(8);
+    //    }];
     
     
     
@@ -425,53 +442,53 @@
     }];
     
     
-//    UIButton *selectedIconBtn3= [[UIButton alloc] init];
-//    [selectedIconBtn3 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
-//    [selectedIconBtn3 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
-//    selectedIconBtn3.tag = 1002;
-//    [backView4 addSubview:selectedIconBtn3];
-//    _selectedIconBtn3 = selectedIconBtn3;
-//
-//    [selectedIconBtn3 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView4.mas_centerY);
-//        make.left.equalTo(self.view.mas_left).offset(nSWidht);
-//        make.size.mas_equalTo(16);
-//    }];
-//
-//    UILabel *tit4 = [[UILabel alloc] init];
-//    tit4.text = @"发包支付";
-//    tit4.font = [UIFont systemFontOfSize:15];
-//    tit4.textColor = [UIColor colorWithHex:@"#343434"];
-//    [backView4 addSubview:tit4];
-//
-//    [tit4 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView4.mas_centerY);
-//        make.left.equalTo(selectedIconBtn3.mas_right).offset(8);
-//    }];
-//
-//    UIButton *selectedIconBtn4= [[UIButton alloc] init];
-//    [selectedIconBtn4 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
-//    [selectedIconBtn4 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
-//    selectedIconBtn4.tag = 1003;
-//    [backView3 addSubview:selectedIconBtn4];
-//    _selectedIconBtn4 = selectedIconBtn4;
-//
-//    [selectedIconBtn4 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView4.mas_centerY);
-//        make.left.equalTo(backView4.mas_centerX).offset(50);
-//        make.size.mas_equalTo(16);
-//    }];
-//
-//    UILabel *tit42 = [[UILabel alloc] init];
-//    tit42.text = @"抢包支付";
-//    tit42.font = [UIFont systemFontOfSize:15];
-//    tit42.textColor = [UIColor colorWithHex:@"#343434"];
-//    [backView4 addSubview:tit42];
-//
-//    [tit42 mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.centerY.equalTo(backView4.mas_centerY);
-//        make.left.equalTo(selectedIconBtn4.mas_right).offset(8);
-//    }];
+    //    UIButton *selectedIconBtn3= [[UIButton alloc] init];
+    //    [selectedIconBtn3 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
+    //    [selectedIconBtn3 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
+    //    selectedIconBtn3.tag = 1002;
+    //    [backView4 addSubview:selectedIconBtn3];
+    //    _selectedIconBtn3 = selectedIconBtn3;
+    //
+    //    [selectedIconBtn3 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView4.mas_centerY);
+    //        make.left.equalTo(self.view.mas_left).offset(nSWidht);
+    //        make.size.mas_equalTo(16);
+    //    }];
+    //
+    //    UILabel *tit4 = [[UILabel alloc] init];
+    //    tit4.text = @"发包支付";
+    //    tit4.font = [UIFont systemFontOfSize:15];
+    //    tit4.textColor = [UIColor colorWithHex:@"#343434"];
+    //    [backView4 addSubview:tit4];
+    //
+    //    [tit4 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView4.mas_centerY);
+    //        make.left.equalTo(selectedIconBtn3.mas_right).offset(8);
+    //    }];
+    //
+    //    UIButton *selectedIconBtn4= [[UIButton alloc] init];
+    //    [selectedIconBtn4 setBackgroundImage:[UIImage imageNamed:@"club_notselected"] forState:UIControlStateNormal];
+    //    [selectedIconBtn4 addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
+    //    selectedIconBtn4.tag = 1003;
+    //    [backView3 addSubview:selectedIconBtn4];
+    //    _selectedIconBtn4 = selectedIconBtn4;
+    //
+    //    [selectedIconBtn4 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView4.mas_centerY);
+    //        make.left.equalTo(backView4.mas_centerX).offset(50);
+    //        make.size.mas_equalTo(16);
+    //    }];
+    //
+    //    UILabel *tit42 = [[UILabel alloc] init];
+    //    tit42.text = @"抢包支付";
+    //    tit42.font = [UIFont systemFontOfSize:15];
+    //    tit42.textColor = [UIColor colorWithHex:@"#343434"];
+    //    [backView4 addSubview:tit42];
+    //
+    //    [tit42 mas_makeConstraints:^(MASConstraintMaker *make) {
+    //        make.centerY.equalTo(backView4.mas_centerY);
+    //        make.left.equalTo(selectedIconBtn4.mas_right).offset(8);
+    //    }];
     
     
     // ************ View5 ************
@@ -502,6 +519,7 @@
     [iconView2 addTarget:self action:@selector(onNoticeBtn:) forControlEvents:UIControlEventTouchUpInside];
     
     [backView5 addSubview:iconView2];
+    _iconView2Btn = iconView2;
     
     [iconView2 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(backView5.mas_centerY);
@@ -510,14 +528,14 @@
     }];
     
     UITextField *noticeTextField = [[UITextField alloc] init];
-//    noticeTextField.backgroundColor = [UIColor yellowColor];
+    //    noticeTextField.backgroundColor = [UIColor yellowColor];
     //    textField.tag = 100;
     // textField.backgroundColor = [UIColor greenColor];  // 更改背景颜色
     noticeTextField.borderStyle = UITextBorderStyleNone;  //边框类型
     noticeTextField.font = [UIFont systemFontOfSize:15];  // 字体
     noticeTextField.textColor = [UIColor colorWithHex:@"#666666"];  // 字体颜色
-//    noticeTextField.clearButtonMode = UITextFieldViewModeAlways; // 清空按钮
-//    noticeTextField.clearsOnBeginEditing = YES; // 当编辑时清空
+    //    noticeTextField.clearButtonMode = UITextFieldViewModeAlways; // 清空按钮
+    //    noticeTextField.clearsOnBeginEditing = YES; // 当编辑时清空
     noticeTextField.delegate = self;
     //textField.keyboardAppearance = UIKeyboardAppearanceAlert; // 键盘样式
     noticeTextField.keyboardType = UIKeyboardTypeDefault; // 键盘类型
@@ -570,7 +588,7 @@
     [noSpeakSwitch addTarget:self action:@selector(onNoSpeakSwitch:) forControlEvents:UIControlEventValueChanged];
     [backView6 addSubview:noSpeakSwitch];
     _noSpeakSwitch = noSpeakSwitch;
-
+    
     [noSpeakSwitch mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(backView6.mas_right).offset(-15);
         make.centerY.equalTo(backView6.mas_centerY);

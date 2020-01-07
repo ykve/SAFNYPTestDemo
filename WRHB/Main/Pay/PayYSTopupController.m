@@ -15,12 +15,11 @@
 #import "ClubMemberManageController.h"
 #import "ClubBillController.h"
 #import "YSTopupListModel.h"
+#import "CServiceChatController.h"
+#import "ChatsModel.h"
 
 @interface PayYSTopupController ()<UITableViewDataSource, UITableViewDelegate>
-/// 表单
-@property (nonatomic, strong) UITableView *tableView;
-/// 数据源
-@property (nonatomic, strong) NSArray *dataArray;
+
 
 @end
 
@@ -33,17 +32,16 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
- 
-    [self getDataList];
-    [self.view addSubview:self.tableView];
-    
+    self.dataArray = [NSMutableArray array];
     [self.tableView registerClass:[YSTopupListCell class] forCellReuseIdentifier:@"YSTopupListCell"];
-    
+    [self tableViewInit];
+    [self.view addSubview:self.tableView];
     // 下拉刷新
     __weak __typeof(self) weakSelf = self;
     self.tableView.mj_header= [MJRefreshNormalHeader headerWithRefreshingBlock:^{
         [weakSelf getDataList];
     }];
+     [self getDataList];
 }
 
 
@@ -53,18 +51,19 @@
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/business"];
     entity.needCache = NO;
     
-    id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:nil];
-    if (cacheJson) {
-        NSArray *array = [YSTopupListModel mj_objectArrayWithKeyValuesArray:cacheJson];
-        self.dataArray = [array copy];
-        [self.tableView reloadData];
-    } else {
+//    id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:nil];
+//    if (cacheJson) {
+//        NSArray *array = [YSTopupListModel mj_objectArrayWithKeyValuesArray:cacheJson];
+//        self.dataArray = [array copy];
+//        [self.tableView reloadData];
+//    } else {
         [MBProgressHUD showActivityMessageInWindow:nil];
-    }
+//    }
     
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
+        strongSelf.dataArray = [NSMutableArray array];
         [MBProgressHUD hideHUD];
         // 结束刷新
         [strongSelf.tableView.mj_header endRefreshing];
@@ -73,19 +72,25 @@
             strongSelf.dataArray = [array copy];
             [strongSelf.tableView reloadData];
             
-
-            [XHNetworkCache save_asyncJsonResponseToCacheFile:response[@"data"] andURL:entity.urlString params:nil completed:^(BOOL result) {
-                NSLog(@"1");
-            }];
+//            if (strongSelf.dataArray.count > 0) {
+//                [XHNetworkCache save_asyncJsonResponseToCacheFile:response[@"data"] andURL:entity.urlString params:nil completed:^(BOOL result) {
+//                    NSLog(@"1");
+//                }];
+//            }
+            
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
+        [self showPlaceholderDefaultView];
     } failureBlock:^(NSError *error) {
-                __strong __typeof(weakSelf)strongSelf = weakSelf;
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
+        strongSelf.dataArray = [NSMutableArray array];
         // 结束刷新
         [strongSelf.tableView.mj_header endRefreshing];
         [[AFHttpError sharedInstance] handleFailResponse:error];
+        
+        [self showPlaceholderDefaultView];
     } progressBlock:nil];
     
 }
@@ -107,14 +112,14 @@
 
 
 #pragma mark - vvUITableView
-- (UITableView *)tableView {
-    if (!_tableView) {
+- (void)tableViewInit {
+    if (!self.tableView) {
         
         CGFloat height = kSCREEN_HEIGHT- Height_NavBar -Height_TabBar - 50;
         if (self.isHidTabBar) {
             height = kSCREEN_HEIGHT- Height_NavBar - 50;
         }
-        _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, height) style:UITableViewStylePlain];
+        UITableView *_tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, height) style:UITableViewStylePlain];
         _tableView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
         _tableView.dataSource = self;
         _tableView.delegate = self;
@@ -130,8 +135,8 @@
         _tableView.estimatedRowHeight = 0;
         _tableView.estimatedSectionHeaderHeight = 0;
         _tableView.estimatedSectionFooterHeight = 0;
+        self.tableView = _tableView;
     }
-    return _tableView;
 }
 
 
@@ -160,8 +165,53 @@
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-//    NSDictionary *dict = self.dataArray[indexPath.row];
-   
+    YSTopupListModel *model = self.dataArray[indexPath.row];
+    
+    [self createServiceSession:model];
+}
+
+#pragma mark -  盈商客服会话创建
+/**
+ 客服会话创建
+ */
+- (void)createServiceSession:(YSTopupListModel *)model {
+    
+    NSDictionary *parameters = @{@"id":@(model.ID)};
+    
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/createBusiness"];
+    entity.needCache = NO;
+    entity.parameters = parameters;
+    
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        
+        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            ChatsModel *chatsModel = [[ChatsModel alloc] init];
+            chatsModel.sessionId = [response[@"data"][@"session"] integerValue];;
+            chatsModel.name = response[@"data"][@"title"];
+            chatsModel.avatar = model.avatar;
+            chatsModel.userId = model.ID;
+            chatsModel.kefuType = 1;
+            chatsModel.sessionType = ChatSessionType_YSCustomerService;
+            
+            [strongSelf goto_CServiceChat:chatsModel ysModel:model];
+            
+        } else {
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+    } failureBlock:^(NSError *error) {
+        [MBProgressHUD hideHUD];
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
+
+- (void)goto_CServiceChat:(ChatsModel *)chatsModel ysModel:(YSTopupListModel *)ysModel {
+    CServiceChatController *vc = [CServiceChatController chatsFromModel:chatsModel];
+    vc.ysTopupListModel = ysModel;
+    vc.hidesBottomBarWhenPushed = YES;
+    [self.navigationController pushViewController:vc animated:YES];
 }
 
 - (void)exitClub:(NSString *)string {
@@ -189,7 +239,7 @@
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [MBProgressHUD showSuccessMessage:response[@"message"]];
-            // 可以延时调用方法
+            //  
             [strongSelf performSelector:@selector(exitAnimation) withObject:nil afterDelay:1.5];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
@@ -207,6 +257,7 @@
     //    [self.navigationController popToRootViewControllerAnimated:YES];
     [self.tabBarController.navigationController popToRootViewControllerAnimated:YES];
 }
+
 
 
 @end

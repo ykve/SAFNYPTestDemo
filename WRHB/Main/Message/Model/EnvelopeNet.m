@@ -1,8 +1,8 @@
 //
 //  EnvelopeNet.m
-//  Project
+//  WRHB
 //
-//  Created by mac on 2019/11/20.
+//  Created by AFan on 2019/11/20.
 //  Copyright © 2018年 AFan. All rights reserved.
 //
 
@@ -55,7 +55,7 @@ static dispatch_once_t predicate;
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        //        [weakSelf handleGroupListData:response[@"data"] andIsChatsList:YES];
+        //        [weakSelf handleGroupListData:response[@"data"] andIsJoinChatsList:YES];
         //        successBlock(response);
         [strongSelf analysisData:response];
         successBlock(response);
@@ -223,6 +223,22 @@ static dispatch_once_t predicate;
         predicate = 0;
         instance =nil;
     }
+}
+
+-(void)gamesChatsClearSuccessBlock:(void (^)(NSDictionary *))successBlock
+             failureBlock:(void (^)(NSError *))failureBlock {
+    
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/clear"];
+    entity.needCache = NO;
+    
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+//        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        successBlock(response);
+    } failureBlock:^(NSError *error) {
+        failureBlock(error);
+    } progressBlock:nil];
 }
 
 - (void)destroyData {

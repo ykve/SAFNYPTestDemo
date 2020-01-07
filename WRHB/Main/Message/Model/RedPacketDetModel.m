@@ -23,6 +23,14 @@
              };
 }
 
+-(void)setGraber:(GrabPackageInfoModel *)graber
+{
+    _graber = graber;
+    if (graber!=nil) {
+        self.grab_logs = @[graber];
+    }
+}
+
 
 - (void)setBanker_info:(SenderModel *)banker_info {
     _banker_info = banker_info;

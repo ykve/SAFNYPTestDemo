@@ -1,6 +1,6 @@
 //
 //  YPMessage.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/4/1.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class BaseUserModel;
 @class TeamMessageReceipt;
 @class SingleMineSettleModel;
+@class TransferModel;
 
 /**
  *  消息结构
@@ -29,20 +30,24 @@ NS_ASSUME_NONNULL_BEGIN
 @interface YPMessage : NSObject<NSCopying>
 
 /**
- *  消息类型
+ 数据库消息ID,唯一标识
  */
-@property (nonatomic, assign) MessageType messageType;
+@property (nonatomic, copy) NSString *uniqeid;
 
+/// 用户ID  自己的
+@property (nonatomic, assign) NSInteger userId;
 /**
  *  会话ID,如果当前session为team,则sessionId为teamId,如果是P2P则为对方帐号
  */
-@property (nonatomic, assign)         NSInteger sessionId;
+@property (nonatomic, assign) NSInteger sessionId;
 /**
  消息ID,唯一标识
  */
-@property (nonatomic, assign) NSInteger    messageId;
-
-
+@property (nonatomic, assign) NSInteger messageId;
+/**
+ *  消息类型
+ */
+@property (nonatomic, assign) MessageType messageType;
 /**
  *  消息投递状态 仅针对发送的消息
  */
@@ -126,7 +131,10 @@ NS_ASSUME_NONNULL_BEGIN
  单雷结算红包信息
  */
 @property (nonatomic, strong) SingleMineSettleModel    *singleMineModel;
-
+/**
+ 转账信息
+ */
+@property (nonatomic, strong) TransferModel    *transferModel;
 /**
  消息是否标记为已删除  为本地自己的
  */

@@ -123,17 +123,28 @@
     if (maxX2 < -3) {
         frame2.origin.x = _width;
     }
-    
-    self.label1.frame = frame1;
-    self.label2.frame = frame2;
-    
+
+    if (frame1.origin.x - self.label1.frame.origin.x < 20) {
+        [UIView animateWithDuration:0.25 animations:^{
+           self.label1.frame = frame1;
+        }];
+    }else{
+        self.label1.frame = frame1;
+    }
+    if (frame2.origin.x - self.label2.frame.origin.x < 20) {
+        [UIView animateWithDuration:0.25 animations:^{
+           self.label2.frame = frame2;
+        }];
+    }else{
+        self.label2.frame = frame2;
+    }
 }
 
 #pragma mark -- timer
 - (void)start {
     if (!_timer) {
         __weak typeof(self) weakSelf = self;
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.1 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.05 repeats:YES block:^(NSTimer * _Nonnull timer) {
             [weakSelf labelChange];
         }];
         return;

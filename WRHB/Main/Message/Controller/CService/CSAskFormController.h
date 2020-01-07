@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface CSAskFormController : UIViewController
 ///
-@property (nonatomic, strong) ChatsModel *model;
+@property (nonatomic, strong) ChatsModel *chatsModel;
 
 @end
 

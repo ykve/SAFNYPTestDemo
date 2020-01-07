@@ -125,6 +125,9 @@ typedef GPB_ENUM(Cmd) {
   /** 删除消息确认 */
   Cmd_CmsgDelMessageAck = 43,
 
+  /** 重新登录 */
+  Cmd_SmsgAgainLogin = 44,
+
   /** 通知 */
   Cmd_SmsgNotifyStateChange = 100,
 
@@ -160,6 +163,9 @@ typedef GPB_ENUM(Cmd) {
 
   /** 通用通知 */
   Cmd_SmsgNotifyPush = 111,
+
+  /** 转账状态通知 */
+  Cmd_SmsgNotifyTransferStatus = 112,
 
   /** 注意：以后新增的通知协议，旧客户端没有办法处理的，直接返回通知确认 */
   Cmd_CmsgNotifyAck = 199,

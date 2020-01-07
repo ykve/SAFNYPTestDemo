@@ -21,7 +21,13 @@
 #import "TopupBankCardDetailsVC.h"
 #import "NSString+RegexCategory.h"
 #import "PayTopupModels.h"
-
+#import "PayBankcardController.h"
+#import "TopupDetailsModel.h"
+#import "PayAlipayController.h"
+#import "PayWeChatController.h"
+#import "PayThirdModel.h"
+#import "BAWebViewController.h"
+#import "WKWebViewController.h"
 
 #define COLOR_WITH_RGB(R,G,B,A) [UIColor colorWithRed:R green:G blue:B alpha:A]
 
@@ -29,9 +35,8 @@ static const float WKJTopUpViewControllerFontOfSize = 15;
 static const float WKJTopUpViewControllerBackViewHeight = 145;
 @interface PayTopUpController () <UITableViewDataSource,UITableViewDelegate,UITextFieldDelegate,NSURLSessionDataDelegate>
 
-@property (nonatomic, strong) UITableView *tableView;
 
-@property (strong, nonatomic) NSMutableArray *dataArray;
+
 /// 充值额度数组
 @property (strong, nonatomic) NSMutableArray *quotaArray;
 /// 网关充值数据
@@ -55,6 +60,13 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
 
 /// 充值金额
 @property (copy, nonatomic) NSString *topupMoney;
+/// 充值详情数据
+@property (nonatomic, strong) TopupDetailsModel *detailsModel;
+/// 第三方充值详情数据
+@property (nonatomic, strong) PayThirdModel *payThirdModel;
+///
+@property (nonatomic, strong) NSIndexPath *selectedIndexPath;
+
 
 
 @end
@@ -81,7 +93,8 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
-    
+    self.dataArray = [[NSMutableArray alloc] init];
+    [self tableViewInit];
     [self.view addSubview:self.tableView];
     
     _failureRetryCount = 3;
@@ -95,13 +108,14 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
                                              selector:@selector(textFieldDidChangeValue:)
                                                  name:UITextFieldTextDidChangeNotification
                                                object:nil];
-    [self.tableView registerClass:[PayTopupItemTableViewCell class] forCellReuseIdentifier:@"PayTopupItemTableViewCell"];
+//    [self.tableView registerClass:[PayTopupItemTableViewCell class] forCellReuseIdentifier:@"PayTopupItemTableViewCell"];
     
     // 下拉刷新
     __weak __typeof(self) weakSelf = self;
     self.tableView.mj_header= [MJRefreshNormalHeader headerWithRefreshingBlock:^{
         [weakSelf getTopupData];
     }];
+    
 }
 
 
@@ -111,7 +125,9 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
     // 充值Item选中
     if ([eventName isEqualToString:@"PayItemCellSelected"]) {
         PayTopupModel *model = user_info[@"model"];
+        NSIndexPath *indexPath = user_info[@"indexPath"];
         self.selectPayModel = model;
+        self.selectedIndexPath = indexPath;
         
         NSIndexPath *ip=[NSIndexPath indexPathForRow:1 inSection:0];
         [self.tableView reloadRowsAtIndexPaths:[NSArray arrayWithObjects:ip,nil] withRowAnimation:UITableViewRowAnimationNone];
@@ -120,6 +136,7 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
         NSInteger money = [user_info[@"money"] integerValue];
         self.topupMoney = [NSString stringWithFormat:@"%zd", money];
     } else if ([eventName isEqualToString:@"PayTopupQuotaTableViewCellBtnClick"]) {  // 前往支付
+        
         [self topupBtnClick:nil];
     }
     
@@ -128,14 +145,14 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
 
 
 #pragma mark - vvUITableView
-- (UITableView *)tableView {
-    if (!_tableView) {
+- (void)tableViewInit {
+    if (!self.tableView) {
         
         CGFloat height = kSCREEN_HEIGHT- Height_NavBar -Height_TabBar - 50;
         if (self.isHidTabBar) {
             height = kSCREEN_HEIGHT- Height_NavBar - 50;
         }
-        _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, height) style:UITableViewStylePlain];
+        UITableView *_tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, height) style:UITableViewStylePlain];
         _tableView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
         //        _tableView.backgroundColor = [UIColor whiteColor];
         _tableView.dataSource = self;
@@ -147,13 +164,15 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
             // Fallback on earlier versions
         }
         
-        //        _tableView.rowHeight = 44;   // 行高
+        _tableView.rowHeight = 192;   // 行高
+       
         _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;  // 去掉分割线
-        _tableView.estimatedRowHeight = 0;
+        // 预估行高
+        _tableView.estimatedRowHeight = 192;
         _tableView.estimatedSectionHeaderHeight = 0;
         _tableView.estimatedSectionFooterHeight = 0;
+        self.tableView = _tableView;
     }
-    return _tableView;
 }
 
 
@@ -168,12 +187,13 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     if (indexPath.row == 0) {
-        
+       
         PayTopupItemTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"PayTopupItemTableViewCell"];
         if(cell == nil) {
             cell = [PayTopupItemTableViewCell cellWithTableView:tableView reusableId:@"PayTopupItemTableViewCell"];
         }
         
+        cell.selectedIndexPath = self.selectedIndexPath;
         cell.dataArray = self.dataArray;
         return cell;
         
@@ -188,19 +208,23 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
         
         //        cell.backgroundColor = [UIColor yellowColor];
         return cell;
-    } else {
+    } else if (indexPath.row == 2) {
         
         PayTopupWebViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"PayTopupWebViewCell"];
         if(cell == nil) {
             cell = [PayTopupWebViewCell cellWithTableView:tableView reusableId:@"PayTopupWebViewCell"];
         }
-        //        cell.dataArray = self.dataArray[indexPath.row];
-//        [cell.webView loadHTMLString:self.selectPayModels.tips baseURL:nil];
-        [cell.webView ba_web_loadHTMLString:self.selectPayModels.tips];
+//        NSString *example = @"</body></head></html><body><head><p>body 元素的内容会显示在浏览器中。</p><p>title 元素的内容会显示在浏览器的标题栏中。</p><title>我的第一个 HTML 页面</title>";
         
-//        cell.backgroundColor = [UIColor cyanColor];
+        NSString *headerString = @"<header><meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no'><style>img{max-width:100%}</style></header>";
+        NSString *stringHtml = [headerString stringByAppendingString:self.selectPayModels.tips];
+    
+        [cell.webView loadHTMLString:stringHtml baseURL:nil];
         return cell;
     }
+    
+    UITableViewCell *cell = [UITableViewCell new];
+    return cell;
     
 }
 
@@ -210,10 +234,10 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
     
     if (indexPath.row == 0 && self.dataArray.count > 0) {
         NSInteger yuNum = self.dataArray.count % 3 == 0 ? 0 : 1;
-        CGFloat height = (self.dataArray.count / 3 + yuNum) * 80 + 30;
+        CGFloat height = (self.dataArray.count / 3 + yuNum) * 81 + 30;
         return height;
     } else if (indexPath.row == 1 && self.dataArray.count > 0) {
-        PayTopupModel *model = self.dataArray.firstObject;
+        PayTopupModel *model = self.selectPayModel;
         NSInteger yuNum = model.amounts.count % 3 == 0 ? 0 : 1;
         CGFloat height = (model.amounts.count / 3 + yuNum) * 50 + 180;
         return height;
@@ -221,7 +245,7 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
         return kTopupWebCellHeight;
     }
     
-    return 0;
+    return 192;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -273,84 +297,86 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"recharge/channel"];
     entity.needCache = NO;
     
-    id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:nil];
-    if (cacheJson) {
-        NSArray *payArray = [PayTopupModels mj_objectArrayWithKeyValuesArray:cacheJson];
-        
-        for (NSInteger index = 0; index < payArray.count; index++) {
-            PayTopupModels *models = (PayTopupModels *)payArray[index];
-            if (models.type == 1 && self.controllerIndex == 1) {  // 官方充值
-                self.selectPayModels = models;
-                self.dataArray = [models.items copy];
-                PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
-                self.selectPayModel = model;
-                break;
-            } else if (models.type == 2 && self.controllerIndex == 0) {  // 网关充值
-                self.selectPayModels = models;
-                self.dataArray = [models.items copy];
-                PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
-                self.selectPayModel = model;
-                break;
-            } else if (models.type == 3) {  //盈商充值
-                
-            }
-        }
-        
-        [self.tableView reloadData];
-    } else {
+//    id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:nil];
+//    if (cacheJson) {
+//        NSArray *payArray = [PayTopupModels mj_objectArrayWithKeyValuesArray:cacheJson];
+//
+//        for (NSInteger index = 0; index < payArray.count; index++) {
+//            PayTopupModels *models = (PayTopupModels *)payArray[index];
+//            if (models.type == 1 && self.controllerIndex == 0) {  // 官方充值
+//                self.selectPayModels = models;
+//                self.dataArray = [models.items copy];
+//                PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
+//                self.selectPayModel = model;
+//                break;
+//            } else if (models.type == 2 && self.controllerIndex == 1) {  // 网关充值
+//                self.selectPayModels = models;
+//                self.dataArray = [models.items copy];
+//                PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
+//                self.selectPayModel = model;
+//                break;
+//            } else if (models.type == 3) {  //盈商充值
+//
+//            }
+//        }
+//
+//        [self.tableView reloadData];
+//    } else {
         [MBProgressHUD showActivityMessageInWindow:nil];
-    }
+//    }
     
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
+        strongSelf.dataArray = [NSMutableArray array];
         [MBProgressHUD hideHUD];
         // 结束刷新
         [strongSelf.tableView.mj_header endRefreshing];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            
+
             NSArray *payArray = [PayTopupModels mj_objectArrayWithKeyValuesArray:response[@"data"]];
-            
+
             for (NSInteger index = 0; index < payArray.count; index++) {
                 PayTopupModels *models = (PayTopupModels *)payArray[index];
-                if (models.type == 1 && strongSelf.controllerIndex == 1) {  // 官方充值
+                if (models.type == 1 && strongSelf.controllerIndex == 0) {  // 官方充值
                     strongSelf.selectPayModels = models;
                     strongSelf.dataArray = [models.items copy];
                     PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
                     strongSelf.selectPayModel = model;
                     break;
-                } else if (models.type == 2 && strongSelf.controllerIndex == 0) {  // 网关充值
+                } else if (models.type == 2 && strongSelf.controllerIndex == 1) {  // 网关充值
                     strongSelf.selectPayModels = models;
                     strongSelf.dataArray = [models.items copy];
                     PayTopupModel *model = (PayTopupModel *)models.items.firstObject;
                     strongSelf.selectPayModel = model;
                     break;
                 } else if (models.type == 3) {  //盈商充值
-                    
+
                 }
             }
-            
-            [strongSelf.tableView reloadData];
-            
-            [XHNetworkCache save_asyncJsonResponseToCacheFile:response[@"data"] andURL:entity.urlString params:nil completed:^(BOOL result) {
-                NSLog(@"1");
-            }];
-            
+//            [XHNetworkCache save_asyncJsonResponseToCacheFile:response[@"data"] andURL:entity.urlString params:nil completed:^(BOOL result) {
+//                NSLog(@"1");
+//            }];
+
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
+        [strongSelf.tableView reloadData];
+        [self showPlaceholderDefaultView];
     } failureBlock:^(NSError *error) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         // 结束刷新
+        strongSelf.dataArray = [NSMutableArray array];
         [strongSelf.tableView.mj_header endRefreshing];
         [[AFHttpError sharedInstance] handleFailResponse:error];
+        [strongSelf.tableView reloadData];
+        [self showPlaceholderDefaultView];
     } progressBlock:nil];
     
     return;
     
 }
-
 
 
 #pragma mark -  UITextFieldDelegate
@@ -414,12 +440,16 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
         return;
     }
     
-#pragma mark -  人工充值
-    TopupBankCardDetailsVC *vc = [[TopupBankCardDetailsVC alloc] init];
-    vc.selectPayModel = self.selectPayModel;
-    vc.topupMoney = self.topupMoney;
-    [self.navigationController pushViewController:vc animated:YES];
-    return;
+    
+    if (self.controllerIndex == 0) {
+        //官方
+        [self  getTopupDetailsData];
+        return;
+    } else if (self.controllerIndex == 1) {
+        //网关充值
+        [self  getThirdTopupDetailsData];
+        return;
+    }
     
     
     NSMutableDictionary *dictPar = [[NSMutableDictionary alloc]init];
@@ -477,6 +507,134 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
     //    } showHUD:YES];
     
 }
+
+
+
+/**
+ 获取第三方充值详情
+ */
+- (void)getThirdTopupDetailsData {
+    
+    NSDictionary *parameters = @{
+                                 @"method_id":@(self.selectPayModel.ID),
+                                 @"money":self.topupMoney
+                                 };
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"recharge/order/third"];
+    entity.needCache = NO;
+    entity.parameters = parameters;
+    
+    [MBProgressHUD showActivityMessageInWindow:nil];
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [MBProgressHUD hideHUD];
+        
+        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            PayThirdModel *model = [PayThirdModel mj_objectWithKeyValues:response[@"data"]];
+            strongSelf.payThirdModel = model;
+            [strongSelf goto_topupDetailsController];
+            
+        } else {
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+        
+    } failureBlock:^(NSError *error) {
+        [MBProgressHUD hideHUD];
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
+
+/**
+ 获取充值详情
+ */
+- (void)getTopupDetailsData {
+    
+    NSDictionary *parameters = @{
+                                 @"id":@(self.selectPayModel.ID),
+                                 @"money":self.topupMoney
+                                 };
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"recharge/channel/detail"];
+    entity.needCache = NO;
+    entity.parameters = parameters;
+    
+    [MBProgressHUD showActivityMessageInWindow:nil];
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [MBProgressHUD hideHUD];
+        
+        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            TopupDetailsModel *detailsModel = [TopupDetailsModel mj_objectWithKeyValues:response[@"data"]];
+            strongSelf.detailsModel = detailsModel;
+            [strongSelf goto_topupDetailsController];
+            
+        } else {
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+        
+    } failureBlock:^(NSError *error) {
+        [MBProgressHUD hideHUD];
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
+
+
+/**
+ 跳转到充值详情
+ */
+- (void)goto_topupDetailsController {
+    
+    if (self.controllerIndex == 0) {
+        ///官方充值
+        if (self.selectPayModel.type == 1) {  /// 支付宝
+            PayAlipayController *vc = [[PayAlipayController alloc] init];
+            vc.selectPayModel = self.selectPayModel;
+            vc.detailsModel = self.detailsModel;
+            [self.navigationController pushViewController:vc animated:YES];
+        } else if (self.selectPayModel.type == 2) {  /// 微信
+            PayWeChatController *vc = [[PayWeChatController alloc] init];
+            vc.selectPayModel = self.selectPayModel;
+            vc.detailsModel = self.detailsModel;
+            [self.navigationController pushViewController:vc animated:YES];
+        } else if (self.selectPayModel.type == 3) {  /// 银行卡
+            PayBankcardController *vc = [[PayBankcardController alloc] init];
+            vc.selectPayModel = self.selectPayModel;
+            vc.detailsModel = self.detailsModel;
+            [self.navigationController pushViewController:vc animated:YES];
+        }
+        
+    } else {
+        ///网关充值
+        if (self.payThirdModel.type == 1) {
+        //            BAWebViewController *webVC = [BAWebViewController new];
+        ////            webVC.ba_web_progressTintColor = [UIColor cyanColor];
+        ////            webVC.ba_web_progressTrackTintColor = [UIColor whiteColor];
+        //
+        //            [webVC ba_web_loadURLString:self.payThirdModel.res];
+        //             [self.navigationController pushViewController:webVC animated:YES];
+            
+            WKWebViewController *web = [[WKWebViewController alloc] init];
+            [web loadWebURLSring:self.payThirdModel.res];
+            [self.navigationController pushViewController:web animated:YES];
+            return;
+        } else if (self.payThirdModel.type == 2) {
+        //            BAWebViewController *webVC = [BAWebViewController new];
+        ////            webVC.title = @"";
+        //            [webVC ba_web_loadHTMLString:self.payThirdModel.res];
+        //
+        //            [self.navigationController pushViewController:webVC animated:YES];
+            
+            
+            WKWebViewController *web = [[WKWebViewController alloc] init];
+            [web loadWebFormHTMLSring:self.payThirdModel.res];
+            [self.navigationController pushViewController:web animated:YES];
+        }
+        
+    }
+}
+
 //判断是否为整形：
 - (BOOL)isPureInt:(NSString*)string{
     NSScanner *scan = [NSScanner scannerWithString:string];
@@ -690,10 +848,4 @@ static const float WKJTopUpViewControllerBackViewHeight = 145;
     return _quotaArray;
 }
 
-- (NSMutableArray *)dataArray {
-    if (!_dataArray) {
-        _dataArray = [[NSMutableArray alloc] init];
-    }
-    return _dataArray;
-}
 @end

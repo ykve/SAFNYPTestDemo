@@ -1,6 +1,6 @@
 //
 //  MessageTableViewCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -46,7 +46,7 @@
     if (!cell) {
         cell = [[MessageTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:ID];
     }
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+//    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
 }
 
@@ -105,7 +105,8 @@
     [_dotView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(self->_headIcon.mas_top).offset(3);
         make.centerX.equalTo(self->_headIcon.mas_right).offset(-3);
-        make.width.height.equalTo(@(16));
+         make.width.equalTo(@(16));
+        make.height.equalTo(@(16));
     }];
     
     _titleLabel = [UILabel new];
@@ -151,8 +152,6 @@
     }];
     
     
-    
-    
     UIView *lineView = [[UIView alloc] init];
     lineView.backgroundColor = [UIColor colorWithHex:@"#EBEBEB"];
     [self.contentView addSubview:lineView];
@@ -187,45 +186,49 @@
     _descLabel.text = model.desc;
     
     
-    if (model.isChatsList) {
-      
-        NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",model.sessionId,[AppModel sharedInstance].user_info.userId];
-        PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
-        _descLabel.text = pmModel.lastMessage;
+    NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",model.sessionId,[AppModel sharedInstance].user_info.userId];
+    PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
+    _descLabel.text = pmModel.lastMessage;
+    
+    _dotView.hidden = YES;
+    if (pmModel.number > 0) {
+        _dotView.hidden = NO;
+        _dotView.text = (pmModel.number>99) ? @"99+" : [NSString stringWithFormat:@"%ld",pmModel.number];
         
-        _dotView.hidden = YES;
-        if (pmModel.number > 0) {
-            _dotView.hidden = NO;
-            _dotView.text = (pmModel.number>99) ? @"99+" : [NSString stringWithFormat:@"%ld",pmModel.number];
-        }
-        
-        if ([model.name isEqualToString:@"在线客服"]) {
-            if (pmModel.number == 0) {
-                _descLabel.text = @"有问题，找客服";
-            }
-        }
-        
-        NSString *pageStr = [NSString stringWithFormat:@"%d,%d", 0,1];
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId = '%ld' and isDeleted = 0", model.sessionId];
-        YPMessage *oldMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr order:@"by timestamp desc,create_time desc" limit:pageStr] firstObject];
-
-        
-         // 显示时间 和 自己的已读状态
-        _dateLabel.text = [NSDate stringFromDate:oldMessage.create_time andNSDateFmt:NSDateFmtHHmm];
-        if (pmModel.isYourselfSend) {
-            _readedImg.hidden = NO;
-             _readedImg.image = [UIImage imageNamed:@"mes_read_send"];
-            if (oldMessage) {
-                if (oldMessage.isRemoteRead) {
-                     _readedImg.image = [UIImage imageNamed:@"mes_read"];
-                }
-            }
+        if (pmModel.number>99) {
+            [_dotView mas_updateConstraints:^(MASConstraintMaker *make) {
+                make.width.equalTo(@(25));
+            }];
         } else {
-            _readedImg.hidden = YES;
+            [_dotView mas_updateConstraints:^(MASConstraintMaker *make) {
+                make.width.equalTo(@(16));
+            }];
         }
-        
+    }
+    
+    if ([model.name isEqualToString:@"在线客服"]) {
+        if (pmModel.number == 0) {
+            _descLabel.text = @"有问题，找客服";
+        }
+    }
+    
+    NSString *pageStr = [NSString stringWithFormat:@"%d,%d", 0,1];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and sessionId = '%ld' and isDeleted = 0", [AppModel sharedInstance].user_info.userId,model.sessionId];
+    YPMessage *oldMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr order:@"by timestamp desc,create_time desc" limit:pageStr] firstObject];
+    
+    
+    // 显示时间 和 自己的已读状态
+    _dateLabel.text = [NSDate stringFromDate:oldMessage.create_time andNSDateFmt:NSDateFmtHHmm];
+    if (pmModel.isYourselfSend) {
+        _readedImg.hidden = NO;
+        _readedImg.image = [UIImage imageNamed:@"mes_read_send"];
+        if (oldMessage) {
+            if (oldMessage.isRemoteRead) {
+                _readedImg.image = [UIImage imageNamed:@"mes_read"];
+            }
+        }
     } else {
-        _dotView.hidden = YES;
+        _readedImg.hidden = YES;
     }
     
 }

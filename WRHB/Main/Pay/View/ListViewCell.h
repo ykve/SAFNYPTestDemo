@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class BankModel;
+@class WithdrawBankModel;
 
 @interface ListViewCell : UITableViewCell
 
@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
                        reusableId:(NSString *)ID;
 
 // strong注释
-@property (nonatomic, strong) BankModel *model;
+@property (nonatomic, strong) WithdrawBankModel *model;
 
 @end
 

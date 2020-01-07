@@ -1,6 +1,6 @@
 //
 //  Contacts.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/6/20.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -33,8 +33,12 @@ typedef NS_ENUM(NSInteger, FriendType) {
 @property (nonatomic, assign) NSInteger     user_id;
 /// 用户名称
 @property (nonatomic, copy) NSString     *name;
+/// 昵称
+@property (nonatomic, copy) NSString     *nickName;
 /// 用户头像
 @property (nonatomic, copy) NSString     *avatar;
+/// 用户性别
+@property (nonatomic, assign) UserGender sex;
 /// 好友关系
 @property (nonatomic, assign) FriendType  contactsType;
 /// 个性签名

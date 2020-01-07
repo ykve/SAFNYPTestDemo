@@ -1,6 +1,6 @@
 //
 //  EnvelopeViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/8.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -19,9 +19,14 @@
 #import "SendRedPackedDefaultTextCell.h"
 #import "SendRedPackedNormalCellCell.h"
 
+#import "SPAlertController.h"
+#import "LoginForgetPsdController.h"
+#import "PasswordTipController.h"
+#import "PWView.h"
+
 #define kTableViewMarginWidth 20
 
-@interface SendRedPacketController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate>{
+@interface SendRedPacketController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate,PWViewDelegate>{
     UITextField *_textField[3];
     UILabel *_titLabel[3];
     UILabel *_unitLabel[3];
@@ -43,6 +48,7 @@
 @property (nonatomic, strong) NSString *desTitle;
 /// 锁定金额
 @property (nonatomic ,strong) UILabel *smoneyLabel;
+@property (nonatomic, copy) NSString *password;
 
 @end
 
@@ -54,6 +60,7 @@
     self.navigationItem.title = @"发红包";
     
     self.desTitle = @"恭喜发财，大吉大利";
+    self.password = @"";
     [self setupSubViews];
     [self initNotif];
     
@@ -229,12 +236,11 @@
     if (indexPath.row == 0) {
         SendRedPackedTextCell *cell = [SendRedPackedTextCell cellWithTableView:tableView reusableId:@"SendRedPackedTextCell"];
         //    cell.backgroundColor = [UIColor blueColor];
+        cell.deTextField.placeholder = [NSString stringWithFormat:@"%@-%@", minMoney, maxMoney];
         if (self.chatsModel.play_type != RedPacketType_Private) {
-            cell.deTextField.placeholder = [NSString stringWithFormat:@"%@-%@", minMoney, maxMoney];
             cell.titleLabel.text = @"总 金 额";
         } else {
             cell.titleLabel.text = @"总额";
-            cell.deTextField.placeholder = @"0.00";
         }
         cell.deTextField.tag = 3000;
         cell.deTextField.userInteractionEnabled = YES;
@@ -396,22 +402,94 @@
         return;
     }
     
-    _submit.enabled = NO;
-    [self redpackedRequest:self.totalMoneyString packetNum:self.countString mineNum:self.mineString];
     
+    if (self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_BigUnion || self.chatsModel.sessionType == ChatSessionType_SystemRoom) {
+        self.submit.enabled = NO;
+        [self redpackedRequest:self.totalMoneyString packetNum:self.countString mineNum:self.mineString];
+    } else {
+        /// 判断是否设置交易密码
+        if (![AppModel sharedInstance].set_trade_password) {
+            [self passwordAlert];
+            return;
+        }
+        
+        [self goto_PasswordTipPop];
+    }
+}
+
+- (void)passwordAlert {
+    SPAlertController *alertController = [SPAlertController alertControllerWithTitle:@"密码未设置" message:@"交易密码未设置，请设置好以后继续操作" preferredStyle:SPAlertControllerStyleAlert animationType:SPAlertAnimationTypeDefault];
+    alertController.needDialogBlur = YES;
+    
+    __weak __typeof(self)weakSelf = self;
+    SPAlertAction *action1 = [SPAlertAction actionWithTitle:@"前往设置" style:SPAlertActionStyleDestructive handler:^(SPAlertAction * _Nonnull action) {
+        NSLog(@"点击了确定");
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        LoginForgetPsdController *vc = [[LoginForgetPsdController alloc] init];
+        vc.updateType = 2;
+        vc.navigationItem.title = @"设置交易密码";
+        [strongSelf.navigationController pushViewController:vc animated:YES];
+    }];
+    // SPAlertActionStyleDestructive默认文字为红色(可修改)
+    SPAlertAction *action2 = [SPAlertAction actionWithTitle:@"取消" style:SPAlertActionStyleCancel handler:^(SPAlertAction * _Nonnull action) {
+        NSLog(@"点击了取消");
+    }];
+    // 设置第2个action的颜色
+    action2.titleColor = [UIColor colorWithRed:0.0 green:0.48 blue:1.0 alpha:1.0];
+    [alertController addAction:action2];
+    [alertController addAction:action1];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+#pragma mark - PWViewDelegate
+- (void)passWordBeginInput:(PWView *)passWord {
+}
+- (void)passWordDidChange:(PWView *)passWord {
+    self.password = passWord.textStore;
+    NSLog(@"1");
+}
+- (void)passWordCompleteInput:(PWView *)passWord {
+    __weak __typeof(self)weakSelf = self;
+    
+    [self dismissViewControllerAnimated:YES completion:^{
+        [[UIApplication sharedApplication].keyWindow endEditing:YES];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+             strongSelf.submit.enabled = NO;
+            [strongSelf redpackedRequest:strongSelf.totalMoneyString packetNum:strongSelf.countString mineNum:strongSelf.mineString];
+        });
+    }];
+}
+
+
+- (void)goto_PasswordTipPop {
+    PasswordTipController *vc = [[PasswordTipController alloc] init];
+    [self presentViewController:vc animated:NO completion:nil];
+    vc.pwView.delegate = self;
+    vc.nameLabel.text = [NSString stringWithFormat:@"向 %@ 转账", self.chatsModel.name];
+    vc.moneyLabel.text = self.totalMoneyString;
 }
 
 - (void)redpackedRequest:(NSString *)money packetNum:(NSString *)packetNum mineNum:(NSString *)mineNum {
     
-    NSDictionary *parameters = @{
+    NSDictionary *parameters1 = @{
                                  @"session":@(self.chatsModel.sessionId),   // 会话编号
                                  @"play_type":@(self.chatsModel.play_type),    // 玩法类型 1 单雷 2 禁抢玩法
-                                 @"piece":packetNum,  // 份数
-                                 @"mime":mineNum ? mineNum : @"",  // 雷号 多雷号以逗号分割
                                  @"coin":@"GOLD",     // 红包资产类型 默认给GOLD
                                  @"number":money,     // 红包金额
+                                 @"password":self.password,
                                  @"title":self.desTitle ? self.desTitle : @""     // 红包标题
                                  };
+    NSDictionary *parameters2 = @{
+                                 @"piece":packetNum,  // 份数
+                                 @"mime":mineNum ? mineNum : @"",  // 雷号 多雷号以逗号分割
+                                   
+    };
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionaryWithDictionary:parameters1];
+    if (self.chatsModel.play_type != RedPacketType_Private) {
+        [parameters addEntriesFromDictionary:parameters2];
+    }
     
     NSString *apiUrl = @"";
     if (self.chatsModel.play_type == RedPacketType_SingleMine) {
@@ -441,7 +519,7 @@
                 [MBProgressHUD showSuccessMessage:@"发送成功"];
                 YPMessage *message = [[YPMessage alloc] init];
                 message.messageType = MessageType_RedPacket;
-                
+                message.userId = [AppModel sharedInstance].user_info.userId;
                 EnvelopeMessage *model = [EnvelopeMessage mj_objectWithKeyValues:response[@"data"]];
                 model.sender = [AppModel sharedInstance].user_info.userId;
                 model.mime = mineNum;

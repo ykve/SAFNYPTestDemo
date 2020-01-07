@@ -1,6 +1,6 @@
 //
 //  NSObject+CDCategory.m
-//  Project
+//  WRHB
 //
 //  Created by zhyt on 2019/11/10.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -315,7 +315,7 @@ static const void *CDParamKEY = "CDParam";
                 //设置界面的按钮显示 根据自己需求设置
                 [self setTitle:[NSString stringWithFormat:@"%@s",strTime] forState:UIControlStateNormal];
                 self.userInteractionEnabled = NO;
-                self.backgroundColor = [UIColor lightGrayColor];
+                self.backgroundColor = normalColor;
             });
             timeout--;
         }

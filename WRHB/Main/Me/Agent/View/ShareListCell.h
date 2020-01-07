@@ -1,6 +1,6 @@
 //
 //  ShareListCell.h
-//  Project
+//  WRHB
 //
 //  Created AFan on 2019/9/3.
 //  Copyright © 2019 AFan. All rights reserved.

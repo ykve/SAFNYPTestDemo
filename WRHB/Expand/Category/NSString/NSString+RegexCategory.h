@@ -97,6 +97,9 @@
  */
 - (BOOL)isEmailAddress;
 
+/// 手机号验证 比较宽松一点的
+- (BOOL)isMobileNumberLoose;
+
 /**
  *  简单的身份证有效性
  *

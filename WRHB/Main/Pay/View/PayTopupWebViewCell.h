@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
 #import "CellWebViewController.h"
+#import "BAKit_WebView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,8 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (strong, nonatomic) NSMutableArray *dataArray;
 /// 
-@property (nonatomic, strong) CellWebViewController *webView;
-
+//@property (nonatomic, strong) CellWebViewController *webView;
+@property(nonatomic, strong) WKWebView *webView;
 @end
 
 NS_ASSUME_NONNULL_END

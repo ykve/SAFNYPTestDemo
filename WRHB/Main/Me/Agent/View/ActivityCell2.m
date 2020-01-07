@@ -1,8 +1,8 @@
 //
 //  ActivityCell2.m
-//  Project
+//  WRHB
 //
-//  Created by fangyuan on 2019/2/12.
+//  Created by AFan on 2019/2/12.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 

@@ -40,18 +40,22 @@
     UIView *footView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, 100)];
     footView.backgroundColor = [UIColor clearColor];
     
-    UIButton *exitBtn = [[UIButton alloc] init];
-    [footView addSubview:exitBtn];
-    exitBtn.titleLabel.font = [UIFont boldSystemFontOfSize2:17];
-    [exitBtn setTitle:@"安全退出" forState:UIControlStateNormal];
-    [exitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [exitBtn setBackgroundImage:[UIImage imageNamed:@"reg_btn"] forState:UIControlStateNormal];
-    exitBtn.layer.cornerRadius = 5.0f;
-    exitBtn.layer.masksToBounds = YES;
-    //    exitBtn.backgroundColor = [UIColor redColor];
-    [exitBtn addTarget:self action:@selector(action_exit) forControlEvents:UIControlEventTouchUpInside];
-    [exitBtn delayEnable];
-    [exitBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+    
+    UIButton *submitBtn = [UIButton new];
+    submitBtn.layer.cornerRadius = 44/2;
+    submitBtn.titleLabel.font = [UIFont boldSystemFontOfSize2:18];
+    submitBtn.layer.masksToBounds = YES;
+    submitBtn.backgroundColor = [UIColor clearColor];
+    [submitBtn setTitle:@"安全退出" forState:UIControlStateNormal];
+    [submitBtn setBackgroundImage:[UIImage imageNamed:@"cm_btn"] forState:UIControlStateNormal];
+    [submitBtn setBackgroundImage:[UIImage imageNamed:@"cm_btn_press"] forState:UIControlStateHighlighted];
+    
+    [submitBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [submitBtn addTarget:self action:@selector(action_exit) forControlEvents:UIControlEventTouchUpInside];
+    [footView addSubview:submitBtn];
+    [submitBtn delayEnable];
+    
+    [submitBtn mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(footView.mas_left).offset(16);
         make.right.equalTo(footView.mas_right).offset(-16);
         make.top.equalTo(footView.mas_top).offset(50);
@@ -80,6 +84,9 @@
 
 #pragma mark ----- Data
 - (void)initData {
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];  
+   NSString *version = [infoDictionary objectForKey:@"CFBundleShortVersionString"]; ;//获取项目版本号
+    
     _dataArray = @[
                    @[@{@"title":@"账号",@"content":[NSString stringWithFormat:@"%ld", [AppModel sharedInstance].user_info.userId]},
                      @{@"title":@"手机号",@"content":[AppModel sharedInstance].user_info.mobile ? [AppModel sharedInstance].user_info.mobile : @"-"}],
@@ -88,10 +95,12 @@
                      @{@"title":@"红包提示音",@"content":@"0"}],
                    
                    @[@{@"title":@"银行卡管理",@"content":@"0"},
-                     @{@"title":@"重设密码",@"content":@"0"}],
+                     @{@"title":@"重设登录密码",@"content":@"0"},
+                     @{@"title":@"设置交易密码",@"content":@"0"}],
                    
                    @[@{@"title":@"帮助中心",@"content":@"0"},
-                     @{@"title":@"版本",@"content":@"v1.0.0"}]
+//                     @{@"title":@"版本",@"content":@"v1.0.0"}]
+                     @{@"title":@"版本",@"content":version}]
                    ];
 }
 
@@ -213,11 +222,17 @@
     NSDictionary *dict = self.dataArray[indexPath.section][indexPath.row];
     NSString *text = dict[@"title"];
     
-    if ([text isEqualToString:@"重设密码"]) {
+    if ([text isEqualToString:@"重设登录密码"]) {
         LoginForgetPsdController *vc = [[LoginForgetPsdController alloc] init];
+        vc.updateType = 1;
         vc.navigationItem.title = text;
         [self.navigationController pushViewController:vc animated:YES];
-    } if ([text isEqualToString:@"银行卡管理"]) {
+    } else if ([text isEqualToString:@"设置交易密码"]) {
+        LoginForgetPsdController *vc = [[LoginForgetPsdController alloc] init];
+        vc.updateType = 2;
+        vc.navigationItem.title = text;
+        [self.navigationController pushViewController:vc animated:YES];
+    } else if ([text isEqualToString:@"银行卡管理"]) {
         BankCardManageController *vc = [[BankCardManageController alloc] init];
         [self.navigationController pushViewController:vc animated:YES];
     }

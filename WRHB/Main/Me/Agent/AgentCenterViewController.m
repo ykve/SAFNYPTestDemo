@@ -1,8 +1,8 @@
 //
 //  AgentCenterViewController.m
-//  ProjectXZHB
+//  WRHB
 //
-//  Created by fangyuan on 2019/4/1.
+//  Created by AFan on 2019/4/1.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 
@@ -41,7 +41,7 @@
         UILabel *label = [[UILabel alloc] init];
         label.textAlignment = NSTextAlignmentCenter;
         label.backgroundColor = [UIColor clearColor];
-        label.font = [UIFont systemFontOfSize2:15];
+        label.font = [UIFont systemFontOfSize2:14];
         label.textColor = COLOR_X(80, 80, 80);
         label.tag = 2;
         [self addSubview:label];
@@ -50,21 +50,21 @@
             make.centerY.equalTo(self.mas_centerY).offset(24);
         }];
         
-        UIView *lineView = [[UIView alloc] init];
-        lineView.backgroundColor = COLOR_X(220, 220, 220);
-        [self addSubview:lineView];
-        [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.bottom.right.equalTo(self);
-            make.width.equalTo(@0.5);
-        }];
-        
-        lineView = [[UIView alloc] init];
-        lineView.backgroundColor = COLOR_X(220, 220, 220);
-        [self addSubview:lineView];
-        [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.bottom.right.equalTo(self);
-            make.height.equalTo(@0.5);
-        }];
+//        UIView *lineView = [[UIView alloc] init];
+//        lineView.backgroundColor = COLOR_X(220, 220, 220);
+//        [self addSubview:lineView];
+//        [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
+//            make.top.bottom.right.equalTo(self);
+//            make.width.equalTo(@0.5);
+//        }];
+//
+//        lineView = [[UIView alloc] init];
+//        lineView.backgroundColor = COLOR_X(220, 220, 220);
+//        [self addSubview:lineView];
+//        [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
+//            make.left.bottom.right.equalTo(self);
+//            make.height.equalTo(@0.5);
+//        }];
         
         self.btn = [UIButton buttonWithType:UIButtonTypeCustom];
         [self addSubview:self.btn];
@@ -149,39 +149,40 @@
     
     
     //    self.scrollView = [[UIScrollView alloc] initWithFrame: CGRectMake(20, Height_NavBar + 25, self.view.bounds.size.width -20*2, 100*3)];
-    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, Height_NavBar+ kBannerHeight, kSCREEN_WIDTH, kSCREEN_HEIGHT -Height_NavBar-kBannerHeight-kiPhoneX_Bottom_Height)];
-//    self.scrollView.frame = self.view.bounds;
-    self.scrollView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
-    self.scrollView.showsVerticalScrollIndicator = NO;
-    self.scrollView.showsHorizontalScrollIndicator = NO;
-    [self.view addSubview:self.scrollView];
-    self.scrollView.contentSize = CGSizeMake(self.scrollView.frame.size.width, self.scrollView.frame.size.height + 1);
+//    self.scrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, Height_NavBar+ kBannerHeight, kSCREEN_WIDTH, kSCREEN_HEIGHT -Height_NavBar-kBannerHeight-kiPhoneX_Bottom_Height)];
+////    self.scrollView.frame = self.view.bounds;
+//    self.scrollView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
+//    self.scrollView.showsVerticalScrollIndicator = NO;
+//    self.scrollView.showsHorizontalScrollIndicator = NO;
+//    [self.view addSubview:self.scrollView];
+//    self.scrollView.contentSize = CGSizeMake(self.scrollView.frame.size.width, self.scrollView.frame.size.height + 1);
     
 //    UIView *headView = [self headView];
 //    [self.scrollView addSubview:headView];
     
     
     
-    
+    UIImage *image = [UIImage imageNamed:@"me_agent_bg"];
+    image = [image resizableImageWithCapInsets:UIEdgeInsetsMake(10, 10, 20, 20) resizingMode:UIImageResizingModeStretch];
     
     UIImageView *backImageView = [[UIImageView alloc] init];
     backImageView.userInteractionEnabled = YES;
-    backImageView.backgroundColor = [UIColor whiteColor];
-    backImageView.image = [UIImage imageNamed:@"me_agent_bg"];
+//    backImageView.backgroundColor = [UIColor greenColor];
+    backImageView.image = image;
     //    [self.view addSubview:backImageView];
-    [self.scrollView addSubview:backImageView];
+    [self.view addSubview:backImageView];
     
     [backImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.scrollView.mas_top).offset(10);
-        make.left.equalTo(self.scrollView.mas_left).offset(15);
-        make.right.equalTo(self.scrollView.mas_right).offset(-15);
+        make.top.equalTo(self.cycleScrollView.mas_bottom).offset(20);
+        make.left.equalTo(self.view.mas_left).offset(20);
+        make.right.equalTo(self.view.mas_right).offset(-20);
         make.height.equalTo(@(100*3));
     }];
     
     
 //    NSInteger h = headView.frame.size.height;
     NSInteger perNum = 3;
-    NSInteger width = (kSCREEN_WIDTH- 15*2-3*2)/perNum;
+    NSInteger width = (kSCREEN_WIDTH- (20*2+perNum*1))/perNum;
     //    NSInteger height = width * 0.6666;
     NSInteger height = 98;
     for (NSInteger i = 0; i < self.menuArray.count; i ++) {
@@ -199,7 +200,7 @@
         if(i == 0)
             self.item1 = item;
     }
-    
+
     if([AppModel sharedInstance].user_info.is_agent == NO){
         [self performSelector:@selector(becomeAgent) withObject:nil afterDelay:0.5];
     }
@@ -234,14 +235,15 @@
 
 
 -(void)becomeAgent{
-    AlertViewCus *view = [AlertViewCus createInstanceWithView:nil];
-    WEAK_OBJ(weakSelf, self);
-    [view showWithText:@"您还不是代理，是否申请代理？" button1:@"取消" button2:@"提交" callBack:^(id object) {
-        NSInteger index = [object integerValue];
-        if(index == 1){
-            
-        }
-    }];
+    [self btnAction:self.item1.btn];
+//    AlertViewCus *view = [AlertViewCus createInstanceWithView:nil];
+//    WEAK_OBJ(weakSelf, self);
+//    [view showWithText:@"您还不是代理，是否申请代理？" button1:@"取消" button2:@"提交" callBack:^(id object) {
+//        NSInteger index = [object integerValue];
+//        if(index == 1){
+//
+//        }
+//    }];
 }
 
 
@@ -276,10 +278,10 @@
             view.alertBlock = ^(NSInteger tag) {
                 __strong __typeof(weakSelf)strongSelf = weakSelf;
                 if (tag == 0) {
-                    [strongSelf tf_popupViewWillHide:strongSelf.agentAlertView];
+                    [strongSelf.agentAlertView tf_hide];
                 } else {
                     [strongSelf onSubmit];
-                    [strongSelf.agentAlertView tf_remove];
+                    [strongSelf.agentAlertView tf_hide];
                 }
                 
             };
@@ -306,8 +308,16 @@
         vc.title = dic[@"title"];
         [self.navigationController pushViewController:vc animated:YES];
     } else if(tag == 4){
+        if([AppModel sharedInstance].user_info.is_agent == NO){
+            [self becomeAgent];
+            return;
+        }
         PUSH_C(self, SubPlayerViewController, YES);
     } else if(tag == 5){
+        if([AppModel sharedInstance].user_info.is_agent == NO){
+            [self becomeAgent];
+            return;
+        }
         ReportFormsViewController *vc = [[ReportFormsViewController alloc] init];
         vc.hidesBottomBarWhenPushed = YES;
         vc.userId = [AppModel sharedInstance].user_info.userId;
@@ -317,7 +327,9 @@
     } else if(tag == 7){
         NSString *url = [NSString stringWithFormat:@"%@?code=%zd",self.bannerModels.webSite,[AppModel sharedInstance].user_info.userId];
         if([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:url]])
-            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url]];
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:url] options:@{} completionHandler:^(BOOL success) {
+                
+            }];
     } else if(tag == 8){
         UIPasteboard *pastboard = [UIPasteboard generalPasteboard];
         pastboard.string = self.bannerModels.downLoadUrl;
@@ -343,12 +355,17 @@
         
         __weak __typeof(self)weakSelf = self;
         [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-//            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
             [MBProgressHUD hideHUD];
             if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
                 [MBProgressHUD showTipMessageInWindow:@"申请代理成功"];
 //                [self.navigationController popViewControllerAnimated:YES];
-            } else {
+            }else if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 0){
+                MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:strongSelf.view animated:YES];
+                hud.mode = MBProgressHUDModeText;
+                hud.detailsLabelText = [response objectForKey:@"message"]?:@"";
+                [hud hide:true afterDelay:2];
+            }else {
                 [[AFHttpError sharedInstance] handleFailResponse:response];
             }
             
@@ -449,7 +466,6 @@
         spring.toValue = @(self.view.bounds.size.height * 0.5-50);  // 运动的位置
         //        spring.toValue = @(200);
         spring.fillMode = kCAFillModeForwards;
-        [popup.layer addAnimation:spring forKey:nil];
         
         __weak typeof(popup) weakPopup = popup;
         [spring observerAnimationDidStop:^(CAAnimation *anima, BOOL finished) {
@@ -457,13 +473,15 @@
                 //                weakPopup.center = CGPointMake(self.view.bounds.size.width * 0.5, self.view.bounds.size.height * 0.5);
             }
         }];
+        
+        [popup.layer addAnimation:spring forKey:nil];
+        
+        
     }
     return YES;
 }
 - (BOOL)tf_popupViewWillHide:(UIView *)popup{
-    
     [popup hideDefaultBackground];
-    
     CASpringAnimation *spring = [CASpringAnimation animationWithKeyPath:@"position.y"];
     spring.damping = 15;
     spring.stiffness = 100;
@@ -473,13 +491,16 @@
     spring.fromValue = @(self.view.center.y);
     spring.toValue = @(-200);
     spring.fillMode = kCAFillModeForwards;
-    [popup.layer addAnimation:spring forKey:nil];
     __weak typeof(popup) weakPopup = popup;
     [spring observerAnimationDidStop:^(CAAnimation *anima, BOOL finished) {
         if (finished) {
             weakPopup.center = CGPointMake([UIScreen mainScreen].bounds.size.width * 0.5, -200);
+            
         }
     }];
+    
+    [popup.layer addAnimation:spring forKey:nil];
+    
     return YES;
 
 }

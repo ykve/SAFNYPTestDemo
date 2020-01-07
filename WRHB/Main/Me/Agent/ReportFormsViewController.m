@@ -1,6 +1,6 @@
 //
 //  ReportFormsViewController.m
-//  Project
+//  WRHB
 //
 //  Created AFan on 2019/9/9.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -570,14 +570,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"首充金额/笔数";
     item.desc = self.reportModel.group_activity.first_charge_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd", self.reportModel.group_activity.first_charge_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd笔", self.reportModel.group_activity.first_charge_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"次充金额/笔数";
     item.desc = self.reportModel.group_activity.second_charge_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd", self.reportModel.group_activity.second_charge_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd笔", self.reportModel.group_activity.second_charge_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -608,14 +608,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"首充总额/笔数";
     item.desc = self.reportModel.group_assets.charge_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_assets.charge_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd笔", self.reportModel.group_assets.charge_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"提现总额/笔数";
     item.desc = self.reportModel.group_assets.withdraw_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_assets.withdraw_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd笔", self.reportModel.group_assets.withdraw_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -634,27 +634,27 @@
     
     ReportFormsItem *item = [[ReportFormsItem alloc] init];
     item.title = @"发包人数";
-    item.desc = [NSString stringWithFormat:@"%zd次", self.reportModel.group_capital.send_users];
+    item.desc = [NSString stringWithFormat:@"%zd人", self.reportModel.group_capital.send_users];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包人数";
-    item.desc = [NSString stringWithFormat:@"%zd次", self.reportModel.group_capital.grab_users];
+    item.desc = [NSString stringWithFormat:@"%zd人", self.reportModel.group_capital.grab_users];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_capital.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_capital.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_capital.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_capital.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_capital.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_capital.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -698,14 +698,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level1.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level1.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level1.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level1.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level1.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level1.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -749,14 +749,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level2.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level2.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level2.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level2.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level2.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level2.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -800,14 +800,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level3.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level3.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level3.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level3.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level3.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level3.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -851,14 +851,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level4.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level4.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level4.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level4.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level4.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level4.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -902,14 +902,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level5.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level5.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level5.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level5.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level5.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level5.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
@@ -953,14 +953,14 @@
     item = [[ReportFormsItem alloc] init];
     item.title =  @"发包金额/个数";
     item.desc = self.reportModel.group_level.level6.send_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level6.send_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level6.send_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     
     item = [[ReportFormsItem alloc] init];
     item.title =  @"抢包金额/个数";
     item.desc = self.reportModel.group_level.level6.grab_number;
-    item.desc2 = [NSString stringWithFormat:@"%zd次", self.reportModel.group_level.level6.grab_count];
+    item.desc2 = [NSString stringWithFormat:@"%zd个", self.reportModel.group_level.level6.grab_count];
     item.isShowDesBtn = YES;
     [arr addObject:item];
     

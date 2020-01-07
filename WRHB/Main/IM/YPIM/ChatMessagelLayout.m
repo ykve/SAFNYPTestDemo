@@ -1,6 +1,6 @@
 //
 //  YPMessagelLayoutModel.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/4/1.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -46,6 +46,9 @@
             break;
         case MessageType_RedPacket:
             [self setRedPacket];
+            break;
+        case MessageType_SendTransfer:
+            [self setTransfer];
             break;
         case MessageType_CowCow_SettleRedpacket:
             [self setCowCowRewardInfo];
@@ -134,6 +137,28 @@
     }
 }
 
+#pragma mark - 转账
+-(void)setTransfer {
+    
+    if(_message.messageFrom == MessageDirection_RECEIVE){
+        
+        _bubbleBackViewRect = CGRectMake(YPChatIconLeftOrRight+YPChatHeadImgWH+YPChatIconLeftOrRight, YPChatCellTopOrBottom + YPChatNameSpacingHeight, YPRedPacketBackWidth, YPRedPacketBackHeight);
+        
+        _imageInsets = UIEdgeInsetsMake(YPChatAirTop, YPChatAirLRB, YPChatAirBottom, YPChatAirLRS);
+        
+        _textLabRect.origin.x = YPChatTextLRB;
+        _textLabRect.origin.y = YPChatTextTop;
+        
+    }else{
+        
+        _bubbleBackViewRect = CGRectMake( YPChatIcon_RX - YPRedPacketBackWidth - YPChatIconLeftOrRight, YPChatCellTopOrBottom, YPRedPacketBackWidth, YPRedPacketBackHeight);
+        
+        _imageInsets = UIEdgeInsetsMake(YPChatAirTop, YPChatAirLRS, YPChatAirBottom, YPChatAirLRB);
+        
+        _textLabRect.origin.x = YPChatTextLRS;
+        _textLabRect.origin.y = YPChatTextTop;
+    }
+}
 #pragma mark - 文本
 -(void)setText {
     
@@ -143,8 +168,19 @@
     mTextView.text = self.message.text;
     mTextView.textContainerInset = UIEdgeInsetsMake(0, 0, 0, 0);
     [mTextView sizeToFit];
-    
     _textLabRect = mTextView.bounds;
+//    NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
+//    style.lineBreakMode = NSLineBreakByWordWrapping;
+//    style.alignment = NSTextAlignmentLeft;
+//
+//    CGSize size = [self.message.text boundingRectWithSize:CGSizeMake(YPChatTextInitWidth, 100)
+//                                              options:NSStringDrawingUsesLineFragmentOrigin
+//                                           attributes:@{NSFontAttributeName:[UIFont systemFontOfSize:13],NSParagraphStyleAttributeName:style}
+//                                              context:nil].size;
+//    _textLabRect = CGRectMake(0, 0,size.width+5,size.height);
+    
+    
+
     
     CGFloat textWidth  = _textLabRect.size.width;
     if (textWidth <= 50) {

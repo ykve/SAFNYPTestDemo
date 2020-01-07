@@ -36,7 +36,6 @@
     self.view.backgroundColor = [UIColor whiteColor];
     self.dataArray = [[NSMutableArray alloc] init];
 //    [self initData];
-    [self getGamesRecordType];
     
     [self setupViewUI];
     
@@ -45,6 +44,8 @@
     self.scrollView.showsVerticalScrollIndicator = NO;
     self.scrollView.showsHorizontalScrollIndicator = NO;
     [self.view addSubview:self.scrollView];
+    
+    [self getGamesRecordType];
 }
 
 - (void)setupViewUI {
@@ -61,29 +62,28 @@
     NSInteger rows = 3;
     
     NSInteger width = kSCREEN_WIDTH - (20+50/2);
-    NSInteger height = 56;
+    NSInteger height = 50;
     
     for (NSInteger i = 0; i < self.dataArray.count; i ++) {
         BillTypeModel *model = self.dataArray[i];
         NSInteger a = i%rows;
         NSInteger b = i/rows;
-        if (i == 0) {
-            [self setupAllCellViewModel:model frame:CGRectMake(0, i * height, kSCREEN_WIDTH, height+20)];
+        if (i == 0 || i == 5 || i == 6) {
+            [self setupOneLevelCellViewModel:model frame:CGRectMake(0, i * height, kSCREEN_WIDTH, height) index:i];
         } else {
-            [self setupCellViewModel:model frame:CGRectMake(20+50/2+1, i * height + 20, width, height) index:i];
+            [self setupTwoCellViewModel:model frame:CGRectMake(20+50/2+1, i * height, width, height) index:i];
         }
-        
     }
     self.scrollView.contentSize = CGSizeMake(self.scrollView.frame.size.width, self.scrollView.frame.size.height);
 }
 
-- (void)setupAllCellViewModel:(BillTypeModel* )model frame:(CGRect)frame {
+- (void)setupOneLevelCellViewModel:(BillTypeModel* )model frame:(CGRect)frame index:(NSInteger)index {
     
     UIView *backView = [[UIView alloc] init];
     backView.frame = frame;
     backView.backgroundColor = [UIColor whiteColor];
     [self.view addSubview:backView];
-    backView.tag = 0;
+    backView.tag = index;
     
     //添加手势事件 UITapGestureRecognizer
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onClickTapGRView:)];
@@ -101,16 +101,18 @@
         make.size.mas_equalTo(CGSizeMake(50, 50));
     }];
     
-    UIView *lineView = [[UIView alloc] init];
-    lineView.backgroundColor = [UIColor lightGrayColor];
-    [backView addSubview:lineView];
-    
-    [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(titleImgView.mas_bottom);
-        make.centerX.equalTo(titleImgView.mas_centerX);
-        make.width.mas_equalTo(1);
-        make.height.mas_equalTo(56*6-15);
-    }];
+    if (index == 0) {
+        UIView *lineView = [[UIView alloc] init];
+        lineView.backgroundColor = [UIColor lightGrayColor];
+        [backView addSubview:lineView];
+        
+        [lineView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.equalTo(titleImgView.mas_bottom);
+            make.centerX.equalTo(titleImgView.mas_centerX);
+            make.width.mas_equalTo(1);
+            make.height.mas_equalTo(50*4-50/2);
+        }];
+    }
     
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.font = [UIFont systemFontOfSize:17];
@@ -140,7 +142,7 @@
 }
 
 
-- (void)setupCellViewModel:(BillTypeModel* )model frame:(CGRect)frame index:(NSInteger)index {
+- (void)setupTwoCellViewModel:(BillTypeModel* )model frame:(CGRect)frame index:(NSInteger)index {
     
     CGFloat line1 = 27;
     
@@ -187,6 +189,7 @@
         make.left.equalTo(titleImgView.mas_right).offset(10);
     }];
     
+    
     UIImageView *iconView = [[UIImageView alloc] init];
     iconView.image = [UIImage imageNamed:@"bill_right"];
     [backView addSubview:iconView];
@@ -213,7 +216,14 @@
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"finance/billFinanceDesc"];
     entity.needCache = NO;
     
-    [MBProgressHUD showActivityMessageInView:nil];
+    id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:nil];
+    if (cacheJson) {
+        [self billItemAnalysisData:cacheJson];
+    } else {
+        [MBProgressHUD showActivityMessageInView:nil];
+    }
+    
+    
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
@@ -221,6 +231,8 @@
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [strongSelf billItemAnalysisData:response[@"data"]];
             //
+            [XHNetworkCache save_asyncJsonResponseToCacheFile:response[@"data"] andURL:entity.urlString params:nil completed:^(BOOL result) {
+            }];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
@@ -233,21 +245,26 @@
 
 - (void)billItemAnalysisData:(NSArray *)array {
     
+    [self.dataArray removeAllObjects];
     NSArray *icons = @[@"me_bill_all",@"me_bill_jiangli",@"me_bill_cz",@"me_bill_tx",@"me_bill_yongjin",@"me_bill_zijin",@"me_bill_club",@"me_bill_dalianm"];
     NSArray *billArray = [BillTypeModel mj_objectArrayWithKeyValuesArray:array];
     for (NSInteger index = 0; index < billArray.count; index++) {
         BillTypeModel *model;
-        if (index == 0) {
-            model = [[BillTypeModel alloc] init];
-            model.icon = @"me_bill_all";
-            model.title = @"全部记录";
-            model.category = 0; 
-            model.tag = index;
-        } else {
-            model =  (BillTypeModel *)billArray[index];
-            model.icon = icons[index];
-            model.tag = index;
-        }
+//        if (index == 0) {
+//            model = [[BillTypeModel alloc] init];
+//            model.icon = @"me_bill_all";
+//            model.title = @"盈亏记录";
+//            model.category = 0;
+//            model.tag = index;
+//        } else {
+//            model =  (BillTypeModel *)billArray[index];
+//            model.icon = icons[index];
+//            model.tag = index;
+//        }
+        
+        model = (BillTypeModel *)billArray[index];
+        model.icon = icons[index];
+        model.tag = index;
         [self.dataArray addObject:model];
     }
     
@@ -353,7 +370,7 @@
         return;
     }
     
-    if (tag == 2) {
+    if ([model.title isEqualToString:@"充值记录"]) {
         PayTopupRecordController *vc = [[PayTopupRecordController alloc] init];
         vc.title = model.title;
         vc.sourceType = 2;
@@ -367,5 +384,7 @@
     vc.sourceType = 2;
     vc.billTypeModel = model;
     [self.navigationController pushViewController:vc animated:YES];
+    
+    
 }
 @end

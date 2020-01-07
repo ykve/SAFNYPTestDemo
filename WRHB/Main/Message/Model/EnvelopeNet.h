@@ -1,8 +1,8 @@
 //
 //  EnvelopeNet.h
-//  Project
+//  WRHB
 //
-//  Created by mac on 2019/11/20.
+//  Created by AFan on 2019/11/20.
 //  Copyright © 2018年 AFan. All rights reserved.
 //
 
@@ -48,6 +48,13 @@
 -(void)getRedpDetSendId:(NSString *)packetId successBlock:(void (^)(NSDictionary *))successBlock
            failureBlock:(void (^)(NSError *))failureBlock;
 
+
+-(void)gamesChatsClearSuccessBlock:(void (^)(NSDictionary *))successBlock
+                      failureBlock:(void (^)(NSError *))failureBlock;
+
 - (void)destroyData;
+
+
+
 
 @end

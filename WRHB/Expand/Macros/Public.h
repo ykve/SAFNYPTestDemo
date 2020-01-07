@@ -77,6 +77,10 @@ typedef NS_ENUM(NSUInteger,EnumActionTag){
 
 #define COLOR_X(R,G,B) [UIColor colorWithRed:R/255.0 green:G/255.0 blue:B/255.0 alpha:1]
 
+#define StringFrom(X) [NSString stringWithFormat:@"%lu",X]
+
+#define StringUniquId(A,B,C) [[[[StringFrom(A) stringByAppendingString:@"_"] stringByAppendingString:StringFrom(B)] stringByAppendingString:@"_"] stringByAppendingString:StringFrom(C)]
+
 #pragma mark - UserDefault
 
 #define GetUserDefaultWithKey(key) [[NSUserDefaults standardUserDefaults] objectForKey:key]
@@ -84,10 +88,10 @@ typedef NS_ENUM(NSUInteger,EnumActionTag){
 #pragma mark - 沙盒路径
 #define PATH_OF_DOCUMENT    [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]
 
-static NSString * const kJSPatchURL = @"https://www.520qun.com";
+static NSString * const kJSPatchURL = @"服务器地址";
 
 #define kSendRPTitleCellWidth 80
-#define kTopupWebCellHeight 220
+#define kTopupWebCellHeight 160
 
 #if DEBUG
 #define NSLog(FORMAT, ...) fprintf(stderr,"\nfunction:%s line:%d content:%s\n", __FUNCTION__, __LINE__, [[NSString stringWithFormat:FORMAT, ##__VA_ARGS__] UTF8String])

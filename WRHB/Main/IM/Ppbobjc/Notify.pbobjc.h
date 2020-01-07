@@ -84,6 +84,7 @@ typedef GPB_ENUM(SNotifySessionAdd_FieldNumber) {
   SNotifySessionAdd_FieldNumber_Type = 8,
   SNotifySessionAdd_FieldNumber_PacketRange = 9,
   SNotifySessionAdd_FieldNumber_MembersArray = 10,
+  SNotifySessionAdd_FieldNumber_Initiator = 11,
 };
 
 /**
@@ -122,6 +123,9 @@ typedef GPB_ENUM(SNotifySessionAdd_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<SessionMemberInfo*> *membersArray;
 /** The number of items in @c membersArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger membersArray_Count;
+
+/** 创建者 */
+@property(nonatomic, readwrite) uint64_t initiator;
 
 @end
 
@@ -194,6 +198,16 @@ typedef GPB_ENUM(SNotifySessionDel_FieldNumber) {
 typedef GPB_ENUM(SNotifySessionMemberAdd_FieldNumber) {
   SNotifySessionMemberAdd_FieldNumber_SessionId = 1,
   SNotifySessionMemberAdd_FieldNumber_AddMembersArray = 3,
+  SNotifySessionMemberAdd_FieldNumber_SessionVer = 4,
+  SNotifySessionMemberAdd_FieldNumber_Name = 5,
+  SNotifySessionMemberAdd_FieldNumber_Desc = 6,
+  SNotifySessionMemberAdd_FieldNumber_Avatar = 7,
+  SNotifySessionMemberAdd_FieldNumber_PlayType = 8,
+  SNotifySessionMemberAdd_FieldNumber_NumberLimit = 9,
+  SNotifySessionMemberAdd_FieldNumber_Type = 10,
+  SNotifySessionMemberAdd_FieldNumber_PacketRange = 11,
+  SNotifySessionMemberAdd_FieldNumber_MembersArray = 12,
+  SNotifySessionMemberAdd_FieldNumber_Initiator = 13,
 };
 
 /**
@@ -208,6 +222,38 @@ typedef GPB_ENUM(SNotifySessionMemberAdd_FieldNumber) {
 @property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<SessionMemberInfo*> *addMembersArray;
 /** The number of items in @c addMembersArray without causing the array to be created. */
 @property(nonatomic, readonly) NSUInteger addMembersArray_Count;
+
+/** 修改版本号 */
+@property(nonatomic, readwrite) uint32_t sessionVer;
+
+/** 群名 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *name;
+
+/** 描述 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *desc;
+
+/** 头像 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *avatar;
+
+/** 玩法 */
+@property(nonatomic, readwrite) int32_t playType;
+
+/** 限制 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *numberLimit;
+
+/** 类型 */
+@property(nonatomic, readwrite) int32_t type;
+
+/** 红包范围 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *packetRange;
+
+/** 添加的成员信息列表 */
+@property(nonatomic, readwrite, strong, null_resettable) NSMutableArray<SessionMemberInfo*> *membersArray;
+/** The number of items in @c membersArray without causing the array to be created. */
+@property(nonatomic, readonly) NSUInteger membersArray_Count;
+
+/** 创建者 */
+@property(nonatomic, readwrite) uint64_t initiator;
 
 @end
 
@@ -320,7 +366,7 @@ typedef GPB_ENUM(SNotifyUserInfoUpdate_FieldNumber) {
 /** 名称 */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *name;
 
-/** 头像 */
+/** 头像D */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *avatar;
 
 /** 性别, 1:未知, 2:男, 3:女 */
@@ -383,6 +429,38 @@ typedef GPB_ENUM(SNotifyPush_FieldNumber) {
 
 /** 扩展消息 */
 @property(nonatomic, readwrite, copy, null_resettable) NSString *extras;
+
+@end
+
+#pragma mark - SNotifyTransferStatus
+
+typedef GPB_ENUM(SNotifyTransferStatus_FieldNumber) {
+  SNotifyTransferStatus_FieldNumber_SessionId = 1,
+  SNotifyTransferStatus_FieldNumber_TransferId = 2,
+  SNotifyTransferStatus_FieldNumber_Sender = 3,
+  SNotifyTransferStatus_FieldNumber_Operator_p = 4,
+  SNotifyTransferStatus_FieldNumber_Status = 5,
+};
+
+/**
+ * 转账状态通知
+ **/
+@interface SNotifyTransferStatus : GPBMessage
+
+/** 会话ID */
+@property(nonatomic, readwrite) uint64_t sessionId;
+
+/** 转账ID */
+@property(nonatomic, readwrite) uint64_t transferId;
+
+/** 转账者 */
+@property(nonatomic, readwrite) uint64_t sender;
+
+/** 操作者(谁退还了, 谁领取了, 自动退还为0) */
+@property(nonatomic, readwrite) uint64_t operator_p;
+
+/** 状态, 1: 手动退还, 2: 自动退还, 3: 领取 */
+@property(nonatomic, readwrite) int32_t status;
 
 @end
 

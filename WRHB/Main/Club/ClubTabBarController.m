@@ -19,7 +19,7 @@
 @interface ClubTabBarController ()< UITabBarControllerDelegate, UITabBarDelegate >
 
 // 记录上次数
-@property (nonatomic,assign) NSInteger lastBadgeNum;
+@property (nonatomic,assign) NSInteger weChatslastBadgeNum;
 
 @end
 
@@ -37,7 +37,7 @@
     [self addObserver:self forKeyPath:@"selectedIndex" options:NSKeyValueObservingOptionNew context:nil];
     
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(updateSetBadgeValue:)name:kApplicationJoinClubNotification object:nil];
-    
+    [self updateSetBadgeValue:nil];
 }
 
 - (void)dealloc {
@@ -50,18 +50,18 @@
 - (void)updateSetBadgeValue:(NSNotification *)notification {
     
     BOOL isRefresh = YES;
-    if ((self.lastBadgeNum > 100 && [AppModel sharedInstance].appltJoinClubNum > 100) || self.lastBadgeNum == [AppModel sharedInstance].appltJoinClubNum) {
+    if ((self.weChatslastBadgeNum > 100 && [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum > 100) || self.weChatslastBadgeNum == [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum) {
         isRefresh = NO;
     }
-    self.lastBadgeNum = [AppModel sharedInstance].appltJoinClubNum;
+    self.weChatslastBadgeNum = [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum;
     
     if (isRefresh) {
         NSString *value = nil;
-        if ([AppModel sharedInstance].appltJoinClubNum > 0) {
-            if ([AppModel sharedInstance].appltJoinClubNum >= kMessageMaxNum) {
+        if ([UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum > 0) {
+            if ([UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum >= kMessageMaxNum) {
                 value = @"99+";
             } else {
-                value = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].appltJoinClubNum];
+                value = [NSString stringWithFormat:@"%ld", (long)[UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum];
             }
         }
         
@@ -80,7 +80,7 @@
 {
     //改变的内容: [change objectForKey:@"new"]、change 要改变的属性 keyPath
     //    NSLog(@"--->change: %@",change);
-    NSLog(@"--->_upperIndex: %ld",_upperIndex);
+    NSLog(@"--->_upperIndex: %ld",(long)_upperIndex);
     //    NSLog(@"--->new: %ld \n ",[[change objectForKey:@"new"] integerValue]);
     
     if ([keyPath isEqualToString:@"selectedIndex"])
@@ -108,9 +108,9 @@
 - (void)tabBarController:(UITabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController {
     
     //NSLog(@"--> _upperIndex = %ld ",self.upperIndex);
-    NSLog(@"--> didSelect = %ld \n ",self.selectedIndex);
+    NSLog(@"--> didSelect = %ld \n ",(long)self.selectedIndex);
     if (tabBarController.selectedIndex == 1) {
-        [ClubManager sharedInstance].isClickTabBar = YES;
+        [ClubManager sharedInstance].isClickTabBarInChat = YES;
     }
     if (self.selectedIndex==2) {
         [self tabBarController:tabBarController shouldSelectViewController:viewController];
@@ -125,7 +125,7 @@
 
 #pragma mark- UITabBarDelegate
 - (void)tabBar:(UITabBar *)tabBar didSelectItem:(UITabBarItem *)item{
-    NSLog(@"--> selectedIndex = %ld ",self.selectedIndex);
+    NSLog(@"--> selectedIndex = %ld ",(long)self.selectedIndex);
     
 }
 
@@ -267,7 +267,7 @@
 -(void)pressChange:(id)sender {
     NSLog(@"--> self.zmTabBar= %d",self.zmTabBar.hidden);
     NSLog(@"--> self.zmTabBar.UpperBtn.selected= %d",self.zmTabBar.UpperBtn.selected);
-    NSLog(@"--> _upperIndex = %ld \n ",self.upperIndex);
+    NSLog(@"--> _upperIndex = %ld \n ",(long)self.upperIndex);
     //选择器显示 突出控制器
     self.selectedIndex = _upperIndex;
     //突显图片

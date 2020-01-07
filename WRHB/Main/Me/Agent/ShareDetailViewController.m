@@ -1,6 +1,6 @@
 //
 //  ShareDetailViewController.m
-//  Project
+//  WRHB
 //
 //  Created AFan on 2019/9/3.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -22,8 +22,9 @@
 /// <#strong注释#>
 @property (nonatomic, strong) ShareModels *shareModels;
 
-@property (nonatomic, strong) UIImageView *qrImage;
 @property (nonatomic, strong) UILabel *codeLabel;
+
+@property (nonatomic, strong) UIImageView *qrImage;
 @property (nonatomic, strong) UIButton *ccopyBtn;
 
 @end
@@ -57,7 +58,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.navigationItem.title = @"分享赚钱";
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"share_bg"]];
     
     [self getShareData];
     
@@ -65,15 +66,23 @@
     imageView.frame = self.view.frame;
     imageView.userInteractionEnabled = YES;
     UIImage *image = [UIImage imageNamed:@"share_bg"];
-    UIEdgeInsets imageInsets = UIEdgeInsetsMake(210, 100, 280, 100);
+    UIEdgeInsets imageInsets = UIEdgeInsetsMake(500, 100, 150, 100);
     image = [image resizableImageWithCapInsets:imageInsets resizingMode:UIImageResizingModeStretch];
     imageView.image = image;
-    imageView.contentMode = UIViewContentModeScaleAspectFit;
+//    imageView.contentMode = UIViewContentModeScaleAspectFit;
     
     self.imageView = imageView;
-    
     [self.view addSubview:imageView];
-    
+ 
+    [self.imageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.bottom.right.mas_equalTo(0);
+        if (@available(iOS 11.0, *)) {
+            make.top.mas_equalTo([UIApplication sharedApplication].keyWindow.safeAreaInsets.top>0?20:0);
+        } else {
+            make.top.mas_equalTo(0);
+            // Fallback on earlier versions
+        }
+    }];
     [self setTopView];
     [self setMidQRImage];
     [self createShareMenuView];
@@ -86,7 +95,7 @@
     [self.imageView addSubview:titImgView];
     
     [titImgView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.imageView.mas_top).offset(Height_NavBar);
+        make.top.equalTo(self.imageView.mas_top).offset(64);
         make.centerX.equalTo(self.imageView.mas_centerX);
         make.size.mas_equalTo(CGSizeMake(283.5, 76));
     }];
@@ -96,7 +105,7 @@
     [self.imageView addSubview:pdImgView];
     
     [pdImgView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.imageView.mas_top).offset(Height_NavBar + 70);
+        make.top.equalTo(self.imageView.mas_top).offset(64+70);
         make.centerX.equalTo(self.imageView.mas_centerX);
         make.size.mas_equalTo(CGSizeMake(375,  62.5));
     }];
@@ -110,7 +119,7 @@
     [backView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(self.imageView.mas_left);
         make.right.equalTo(self.imageView.mas_right);
-        make.top.equalTo(self.qrImage.mas_bottom).offset(35);
+        make.top.equalTo(self.qrImage.mas_bottom).offset(80);
         make.height.equalTo(@70);
     }];
     
@@ -152,7 +161,7 @@
 
     float qrWith = 150;
     UIImageView *qrImage = [UIImageView new];
-    qrImage.frame = CGRectMake(self.view.frame.size.width/2-qrWith/2, self.view.frame.size.height/2-qrWith/2 + 35,qrWith,qrWith),
+    qrImage.frame = CGRectMake(self.view.frame.size.width/2-qrWith/2, self.view.frame.size.height/2-qrWith/2 + 35,qrWith,qrWith);
     _qrImage = qrImage;
     qrImage.contentMode = UIViewContentModeScaleAspectFit;
     qrImage.image = CD_QrImg(self.shareModels.down_load_url, qrWith);
@@ -161,13 +170,17 @@
     qrImage.layer.borderWidth = 2.0;
     [self.imageView addSubview:qrImage];
     
+    [qrImage mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(64 + 70 + 62.5 + 47.5 );
+        make.size.mas_equalTo(CGSizeMake(qrWith, qrWith));
+        make.left.mas_equalTo(self.view.frame.size.width/2-qrWith/2);
+    }];
     
     NSInteger labelFontSize = 21;
     NSInteger labelX = 50;
     if(kSCREEN_WIDTH == 320) {
         labelX = 50;
     }
-    
     UILabel *codeLabel = [[UILabel alloc] init];
 //    codeLabel.frame = CGRectMake(self.view.frame.size.width/2-qrWith/2, self.view.frame.size.height/2-qrWith, qrWith, 180);
     codeLabel.textAlignment = NSTextAlignmentCenter;
@@ -181,7 +194,12 @@
     codeLabel.text = [NSString stringWithFormat:@"邀请码: %zd",[AppModel sharedInstance].user_info.userId];
     codeLabel.shadowColor = [UIColor blackColor];
     codeLabel.shadowOffset = CGSizeMake(1, 1);
-    
+
+    [codeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.equalTo(qrImage.mas_top).offset(-10);
+        make.centerX.equalTo(self.imageView.mas_centerX);
+    }];
+
     self.shareImage = [self imageWithUIView:self.imageView];
     
     
@@ -193,22 +211,18 @@
     //    copyBtn.backgroundColor = [UIColor whiteColor];
     [copyBtn setBackgroundImage:[UIImage imageNamed:@"share_btn"] forState:UIControlStateNormal];
     copyBtn.contentEdgeInsets = UIEdgeInsetsMake(5, 5, 5, 5);
-    [copyBtn setTitle:@"复制我的邀请码" forState:UIControlStateNormal];
+    [copyBtn setTitle:@"复制下载链接" forState:UIControlStateNormal];
     [copyBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
     [copyBtn addTarget:self action:@selector(onCopyBtn) forControlEvents:UIControlEventTouchUpInside];
     [self.imageView addSubview:copyBtn];
      _ccopyBtn = copyBtn;
     
     [copyBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.equalTo(self.qrImage.mas_top).offset(-5);
+        make.top.equalTo(self.qrImage.mas_bottom).offset(35);
         make.centerX.equalTo(self.imageView.mas_centerX);
         make.size.mas_equalTo(CGSizeMake(btnWidth, btnHeight));
     }];
     
-    [codeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.equalTo(copyBtn.mas_top).offset(1);
-        make.centerX.equalTo(self.imageView.mas_centerX);
-    }];
 }
 
 
@@ -231,7 +245,6 @@
             
             if (models.items.count > 0) {
                 strongSelf.shareModel = models.items[0];
-                [strongSelf updateData];
                 [strongSelf updateViewVV];
             }
         } else {
@@ -247,119 +260,6 @@
 
 - (void)updateViewVV {
     self.qrImage.image = CD_QrImg(self.shareModels.down_load_url, 150);
-}
-
-- (void)updateData {
-    WEAK_OBJ(weakSelf, self);
-//    [self.imageView sd_setImageWithURL:[NSURL URLWithString:self.shareModel.url] placeholderImage:nil completed:^(UIImage * _Nullable image, NSError * _Nullable error, SDImageCacheType cacheType, NSURL * _Nullable imageURL) {
-//        [weakSelf resetImageView];
-//    }];
-    
-}
-
-
-
--(void)resetImageView{
-    UIImage *img = self.imageView.image;
-    if(img == nil) {
-        return;
-    }
-    
-    self.imageView.frame = CGRectMake(0, 0,img.size.width, img.size.height);
-    float qrWith = img.size.width * 0.230;
-    UIImageView *qrImage = [UIImageView new];
-    _qrImage = qrImage;
-    qrImage.contentMode = UIViewContentModeScaleAspectFit;
- 
-    qrImage.image = CD_QrImg(self.shareModels.down_load_url, qrWith);
-    
-    qrImage.layer.masksToBounds = YES;
-    qrImage.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.5].CGColor;
-    qrImage.layer.borderWidth = 2.0;
-    
-    NSString *qrCodeFrame = self.shareModel.codeImageFrame;
-    if(qrCodeFrame){
-        NSArray *arr = [qrCodeFrame componentsSeparatedByString:@","];
-        CGRect rect = CGRectMake([arr[0] integerValue], [arr[1] integerValue], [arr[2] integerValue], [arr[3] integerValue]);
-        qrImage.frame = rect;
-    } else {
-        qrImage.frame = CGRectMake((self.imageView.frame.size.width - qrWith)/2.0, self.imageView.frame.size.height/2- qrWith/2, qrWith, qrWith);
-    }
-    
-    [self.imageView addSubview:qrImage];
-    
-    NSInteger labelFontSize = 16;
-    
-    NSInteger labelX = 50;
-    if(kSCREEN_WIDTH == 320) {
-        labelX = 50;
-    }
-    
-    UILabel *codeLabel = [[UILabel alloc] init];
-    _codeLabel = codeLabel;
-    codeLabel.textColor = [UIColor whiteColor];
-    codeLabel.backgroundColor = [UIColor clearColor];
-    codeLabel.font = [UIFont boldSystemFontOfSize2:labelFontSize];
-    [self.imageView addSubview:codeLabel];
-    codeLabel.text = [NSString stringWithFormat:@"邀请码   %zd",[AppModel sharedInstance].user_info.userId];
-    codeLabel.shadowColor = [UIColor blackColor];
-    codeLabel.shadowOffset = CGSizeMake(1, 1);
-    NSString *codeFrame = self.shareModel.codeFrame;
-    if(codeFrame){
-        NSArray *arr = [qrCodeFrame componentsSeparatedByString:@","];
-        CGRect rect = CGRectMake([arr[0] integerValue], [arr[1] integerValue], [arr[2] integerValue], [arr[3] integerValue]);
-        codeLabel.frame = rect;
-    } else {
-       codeLabel.frame = CGRectMake(labelX, self.imageView.frame.size.height/2- qrWith/2 + qrWith + 20, 120, 30);
-    }
-    
-    codeLabel.textAlignment = NSTextAlignmentCenter;
-    [self.imageView addSubview:qrImage];
-    
-    self.shareImage = [self imageWithUIView:self.imageView];
-    float rate = img.size.width/img.size.height;
-    float x = 15;
-    float width = kSCREEN_WIDTH - x * 2;
-    float height = width/rate;
-    float xRate = width/self.shareImage.size.width;
-    
-    self.imageView.frame = CGRectMake(x, 15,width, height);
-    
-    qrImage.frame = CGRectMake(qrImage.frame.origin.x * xRate, qrImage.frame.origin.y * xRate, qrImage.frame.size.width * xRate, qrImage.frame.size.height * xRate);
-    codeLabel.frame = CGRectMake(codeLabel.frame.origin.x * xRate, codeLabel.frame.origin.y * xRate, codeLabel.frame.size.width * xRate, codeLabel.frame.size.height * xRate);
-    codeLabel.font = [UIFont boldSystemFontOfSize2:labelFontSize * xRate];
-    CGPoint point = CGPointMake(codeLabel.frame.origin.x + self.imageView.frame.origin.x, (codeLabel.frame.origin.y + codeLabel.frame.size.height/2.0) + self.imageView.frame.origin.y);
-
-    NSInteger mm = self.view.frame.size.height - height;
-    NSInteger h = self.view.frame.size.height - mm + 150 + 30;
-    if(h <= self.scrollView.frame.size.height) {
-        h = self.scrollView.frame.size.height + 1;
-    }
-    
-    self.scrollView.contentSize = CGSizeMake(self.scrollView.frame.size.width, h);
-    
-//    [qrImage removeFromSuperview];
-//    [label removeFromSuperview];
-    codeLabel.textAlignment = NSTextAlignmentLeft;
-
-    
-    NSInteger btnWidth = 80;
-    NSInteger btnHeight = 30;
-    UIButton *copyBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    _ccopyBtn = copyBtn;
-    copyBtn.titleLabel.font = [UIFont systemFontOfSize:15];
-    copyBtn.layer.cornerRadius = 5;
-    copyBtn.layer.cornerRadius = 5;
-//    copyBtn.frame = CGRectMake(self.scrollView.frame.size.width - btnWidth - point.x, point.y - btnHeight/2.0, btnWidth, btnHeight);
-    copyBtn.frame = CGRectMake(labelX + 200, self.imageView.frame.size.height/2- qrWith/2 + qrWith + 20, btnWidth, btnHeight);
-//    copyBtn.backgroundColor = [UIColor whiteColor];
-    [copyBtn setBackgroundImage:[UIImage imageNamed:@"share_btn"] forState:UIControlStateNormal];
-    copyBtn.contentEdgeInsets = UIEdgeInsetsMake(5, 5, 5, 5);
-    [copyBtn setTitle:@"复制我的邀请码" forState:UIControlStateNormal];
-    [copyBtn setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-//    [btn setImage:[UIImage imageNamed:@"copyBtn"] forState:UIControlStateNormal];
-    [copyBtn addTarget:self action:@selector(onCopyBtn) forControlEvents:UIControlEventTouchUpInside];
-    [self.scrollView addSubview:copyBtn];
 }
 
 -(void)createShareMenu {
@@ -458,7 +358,7 @@
     model.content = WXShareDescription;
     //CGSize size = self.shareImage.size;
     if(mediaType == MediaType_url){
-        NSString *shareUrl = [NSString stringWithFormat:@"%@%zd",[AppModel sharedInstance].commonInfo[@"share.url"],[AppModel sharedInstance].user_info.userId];
+//        NSString *shareUrl = [NSString stringWithFormat:@"%@%zd",[AppModel sharedInstance].commonInfo[@"share.url"],[AppModel sharedInstance].user_info.userId];
         model.link = self.shareModels.down_load_url;
         NSLog(@"url= %@",model.link);
         model.imageData = UIImageJPEGRepresentation([UIImage imageNamed:[[FunctionManager sharedInstance] getAppIconName]],1.0);
@@ -505,7 +405,7 @@
 
 -(void)onCopyBtn {
     UIPasteboard *pastboard = [UIPasteboard generalPasteboard];
-    pastboard.string = [NSString stringWithFormat:@"%zd", [AppModel sharedInstance].user_info.userId];
+    pastboard.string = [NSString stringWithFormat:@"%@", self.shareModels.down_load_url];
     [MBProgressHUD showSuccessMessage:@"复制成功"];
 }
 @end

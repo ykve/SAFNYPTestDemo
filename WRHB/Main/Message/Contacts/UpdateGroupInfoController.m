@@ -8,7 +8,7 @@
 
 #import "UpdateGroupInfoController.h"
 #import "FSTextView.h"
-#import "SessionInfoModel.h"
+#import "SessionInfoModels.h"
 #import "ChatsModel.h"
 
 
@@ -173,7 +173,7 @@
     self.textView.text = self.sessionModel.notice;
 }
 
-- (void)setSessionModel:(SessionInfoModel *)sessionModel {
+- (void)setSessionModel:(SessionInfoModels *)sessionModel {
     _sessionModel = sessionModel;
 }
 

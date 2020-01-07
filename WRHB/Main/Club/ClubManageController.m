@@ -37,6 +37,7 @@
     
     NSString *title = @"退出";
     _dataArray = @[
+                   @{@"title":@"俱乐部属性",@"image":@"club_property"},
                    @{@"title":title,@"image":@"club_exit"}];
     if ([ClubManager sharedInstance].clubInfo.role == 2 || [ClubManager sharedInstance].clubInfo.role == 3) {
         title = @"解散俱乐部";
@@ -111,9 +112,9 @@
     NSDictionary *dict = self.dataArray[indexPath.row];
     cell.headView.image = [UIImage imageNamed:dict[@"image"]];
     cell.titleLabel.text = dict[@"title"];
-    if ([AppModel sharedInstance].appltJoinClubNum > 0 && indexPath.row == 1) {
+    if ([UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum > 0 && indexPath.row == 1 && [ClubManager sharedInstance].clubInfo.role != 1) {
         cell.messageNumLabel.hidden = NO;
-        cell.messageNumLabel.text = [NSString stringWithFormat:@"%zd", [AppModel sharedInstance].appltJoinClubNum];
+        cell.messageNumLabel.text = [NSString stringWithFormat:@"%zd", [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum];
     } else {
         cell.messageNumLabel.hidden = YES;
     }
@@ -203,7 +204,7 @@
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [MBProgressHUD showSuccessMessage:response[@"message"]];
-            // 可以延时调用方法
+            //  
             [strongSelf performSelector:@selector(exitAnimation) withObject:nil afterDelay:1.5];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];

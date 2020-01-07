@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 #import "JXCategoryListContainerView.h"
-
+#import "BasePayTopUpController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PayYSTopupController : UIViewController  <JXCategoryListContentViewDelegate>
+@interface PayYSTopupController : BasePayTopUpController  <JXCategoryListContentViewDelegate>
 /// 是否隐藏TabBar  默认显示
 @property (nonatomic, assign) BOOL isHidTabBar;
 @end

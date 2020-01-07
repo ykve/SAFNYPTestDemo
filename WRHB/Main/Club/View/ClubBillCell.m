@@ -74,24 +74,6 @@
         make.top.left.bottom.right.equalTo(self.contentView);
     }];
     
-    
-    UIButton *desBtn = [[UIButton alloc] init];
-//        desBtn.backgroundColor = [UIColor grayColor];
-    [desBtn setTitle:@"详情" forState:UIControlStateNormal];
-    //     [IDTypeBtn setImage:[UIImage imageNamed:@"club_red_down"] forState:UIControlStateNormal];
-//    [desBtn addTarget:self action:@selector(onIDTypeBtn) forControlEvents:UIControlEventTouchUpInside];
-    [desBtn setTitleColor:[UIColor colorWithHex:@"#1BA509"] forState:UIControlStateNormal];
-    desBtn.titleLabel.font = [UIFont systemFontOfSize:fontSize];
-    desBtn.tag = 1001;
-    desBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [backView addSubview:desBtn];
-    
-    [desBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(backView.mas_centerY);
-        make.right.equalTo(backView.mas_right).offset(-15);
-        make.size.mas_equalTo(CGSizeMake(35, 20));
-    }];
-    
     // ****** 返佣 ******
     UILabel *fyLabel = [[UILabel alloc] init];
 //        fyLabel.backgroundColor = [UIColor redColor];
@@ -103,13 +85,6 @@
     [backView addSubview:fyLabel];
     _fyLabel = fyLabel;
     
-    [fyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(desBtn.mas_left).offset(-spacingWidht);
-        make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(60);
-    }];
-    
-    
     // ****** 日期 ******
     UILabel *dateLabel = [[UILabel alloc] init];
 //        dateLabel.backgroundColor = [UIColor cyanColor];
@@ -120,11 +95,7 @@
     [backView addSubview:dateLabel];
     _dateLabel = dateLabel;
     
-    [dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(backView.mas_left).offset(15);
-        make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(85);
-    }];
+    
     
     // ****** 上线玩家 ******
     UILabel *wjNumLabel = [[UILabel alloc] init];
@@ -137,13 +108,6 @@
     [backView addSubview:wjNumLabel];
     _wjNumLabel = wjNumLabel;
     
-    [wjNumLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(dateLabel.mas_right).offset(spacingWidht);
-        make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(60);
-    }];
-    
-    
     // ****** 当日流水 ******
     UILabel *LSLabel = [[UILabel alloc] init];
 //        LSLabel.backgroundColor = [UIColor yellowColor];
@@ -155,11 +119,32 @@
     [backView addSubview:LSLabel];
     _LSLabel = LSLabel;
     
-    [LSLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(fyLabel.mas_left).offset(-spacingWidht);
+    [dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(backView.mas_left).offset(15);
         make.centerY.equalTo(backView.mas_centerY);
-        make.left.equalTo(wjNumLabel.mas_right).offset(spacingWidht);
+        make.width.equalTo(wjNumLabel);
     }];
+    
+    [wjNumLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(dateLabel.mas_right).offset(spacingWidht);
+        make.centerY.equalTo(backView.mas_centerY);
+        make.width.equalTo(LSLabel);
+    }];
+    
+    [LSLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(wjNumLabel.mas_right).offset(spacingWidht);
+        make.centerY.equalTo(backView.mas_centerY);
+        make.width.equalTo(fyLabel);
+    }];
+    
+    [fyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(LSLabel.mas_right).offset(spacingWidht);
+        make.right.equalTo(backView.mas_right).offset(-15);
+        make.centerY.equalTo(backView.mas_centerY);
+        make.width.equalTo(dateLabel);
+    }];
+    
+    
     
     
     UIView *lineView = [[UIView alloc] init];

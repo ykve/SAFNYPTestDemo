@@ -11,13 +11,8 @@
 @implementation SessionInfoModel
 
 + (NSDictionary *)mj_replacedKeyFromPropertyName{
-    return @{@"desc": @"description"};
+    return @{@"sessionId": @"id"};
 }
-+ (NSDictionary *)mj_objectClassInArray
-{
-    return @{
-             @"group_users" : @"BaseUserModel"
-             };
-}
+
 
 @end

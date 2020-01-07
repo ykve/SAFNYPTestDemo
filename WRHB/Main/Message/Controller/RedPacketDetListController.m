@@ -1,6 +1,6 @@
 //
 //  EnvelopeListViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/13.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -99,7 +99,7 @@ dispatch_async(dispatch_get_main_queue(), block);\
     [_tableView addSubview:self.headBackView];
     
     [self setHeadUI];
-    [self setPopView];
+//    [self setPopView];
     
     //    [self setHeadData];
     //    [self setRefreshUserInfo];
@@ -596,8 +596,8 @@ dispatch_async(dispatch_get_main_queue(), block);\
             }
             
             // AFan  待确认是否这样
-            self.bankerLabel.text = [NSString stringWithFormat:@"%ld", self.redEnDetModel.banker_wins];
-            self.playerWinLabel.text = [NSString stringWithFormat:@"%ld", self.redEnDetModel.player_wins];
+            self.bankerLabel.text = [NSString stringWithFormat:@"%zd", self.redEnDetModel.banker_wins];
+            self.playerWinLabel.text = [NSString stringWithFormat:@"%zd", self.redEnDetModel.player_wins];
         }
         
     }
@@ -611,16 +611,70 @@ dispatch_async(dispatch_get_main_queue(), block);\
             self.yuanLabel.text = @"";
             
         } else {
-            self.moneyLabel.text = self.redEnDetModel.sender.value;
+            
+            if (self.redEnDetModel.redpacketType == RedPacketType_SingleMine) {
+                NSRange startRange = [self.redEnDetModel.title rangeOfString:@"["];
+                NSRange endRange = [self.redEnDetModel.title rangeOfString:@"]"];
+                NSRange range = NSMakeRange(startRange.location + startRange.length, endRange.location - startRange.location - startRange.length);
+                NSString *result = [self.redEnDetModel.title substringWithRange:range];
+                NSString *curstring = [self.redEnDetModel.sender.value substringFromIndex:self.redEnDetModel.sender.value.length-1];
+                
+                if ([result isEqualToString:curstring]) {
+                    /**
+                     contentStr  为要被修改的字符串
+                     redRange   为要被修改颜色的特定字符位置
+                     */
+                    NSMutableAttributedString *contentStr = [[NSMutableAttributedString alloc]initWithString:self.redEnDetModel.sender.value];
+                    //找出特定字符在整个字符串中的位置
+                    NSRange redRange = NSMakeRange(self.redEnDetModel.sender.value.length -1, 1);
+                    //修改特定字符的颜色
+                    [contentStr addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:redRange];
+                    //修改特定字符的字体大小
+                    [contentStr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:28] range:redRange];
+                    [self.moneyLabel setAttributedText:contentStr];
+                } else {
+                    self.moneyLabel.text = self.redEnDetModel.sender.value;
+                }
+                
+            } else {
+                self.moneyLabel.text = self.redEnDetModel.sender.value;
+            }
+            
             self.moneyLabel.hidden = NO;
             self.yuanLabel.hidden = NO;
             self.yuanLabel.text = @"￥";
         }
         
-    }
-    
-    if (self.redEnDetModel.sender.value.floatValue != 0) {
-        self.moneyLabel.text = self.redEnDetModel.sender.value;
+    } else if (self.redEnDetModel.sender.value.floatValue != 0) {
+        
+        if (self.redEnDetModel.redpacketType == RedPacketType_SingleMine) {
+            NSRange startRange = [self.redEnDetModel.title rangeOfString:@"["];
+            NSRange endRange = [self.redEnDetModel.title rangeOfString:@"]"];
+            NSRange range = NSMakeRange(startRange.location + startRange.length, endRange.location - startRange.location - startRange.length);
+            NSString *result = [self.redEnDetModel.title substringWithRange:range];
+            NSString *curstring = [self.redEnDetModel.sender.value substringFromIndex:self.redEnDetModel.sender.value.length-1];
+            
+            if ([result isEqualToString:curstring]) {
+                /**
+                 contentStr  为要被修改的字符串
+                 redRange   为要被修改颜色的特定字符位置
+                 */
+                NSMutableAttributedString *contentStr = [[NSMutableAttributedString alloc]initWithString:self.redEnDetModel.sender.value];
+                //找出特定字符在整个字符串中的位置
+                NSRange redRange = NSMakeRange(self.redEnDetModel.sender.value.length -1, 1);
+                //修改特定字符的颜色
+                [contentStr addAttribute:NSForegroundColorAttributeName value:[UIColor redColor] range:redRange];
+                //修改特定字符的字体大小
+                [contentStr addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:28] range:redRange];
+                [self.moneyLabel setAttributedText:contentStr];
+            } else {
+                self.moneyLabel.text = self.redEnDetModel.sender.value;
+            }
+            
+        } else {
+            self.moneyLabel.text = self.redEnDetModel.sender.value;
+        }
+        
         self.moneyLabel.hidden = NO;
         self.yuanLabel.hidden = NO;
     } else {
@@ -799,9 +853,15 @@ dispatch_async(dispatch_get_main_queue(), block);\
     if (data != NULL) {
         
         RedPacketDetModel *redPacketDesModel = [RedPacketDetModel mj_objectWithKeyValues:data];
-        _redEnDetModel = redPacketDesModel;
-        //            [self.dataList removeAllObjects];
         
+        //            [self.dataList removeAllObjects];
+        if (redPacketDesModel.redpacketType == RedPacketType_Private) {
+            redPacketDesModel.remain_piece = redPacketDesModel.sender.remain_count.integerValue;
+            redPacketDesModel.grab_piece = redPacketDesModel.sender.packet_count - redPacketDesModel.sender.remain_count.integerValue;
+            redPacketDesModel.total = redPacketDesModel.sender.amount;
+            redPacketDesModel.title = redPacketDesModel.sender.title;
+        }
+        _redEnDetModel = redPacketDesModel;
         NSInteger luckMaxIndex = 0;
         CGFloat moneyMax = 0.0;
         
@@ -821,33 +881,9 @@ dispatch_async(dispatch_get_main_queue(), block);\
             
         }
         
-        
-        
         for (NSInteger i = 0; i < redPacketDesModel.grab_logs.count; i++) {
             
             GrabPackageInfoModel *grabInfo = redPacketDesModel.grab_logs[i];
-            
-            
-            
-            if (redPacketDesModel.redpacketType == 3) {
-                // 禁抢暂不标雷
-                //                    NSString *moneyLei = [objDict objectForKey:@"money"];
-                //                    NSString *last = [moneyLei substringFromIndex:moneyLei.length-1];
-                //                    NSDictionary *attrDict = [[self.redPackedInfoDetail objectForKey:@"attr"] mj_JSONObject];
-                //
-                //                    NSArray *bombListArray = (NSArray *)attrDict[@"bombList"];
-                //
-                //                    for (NSInteger index = 0; index < bombListArray.count; index++) {
-                //                        NSString *bombNum = [NSString stringWithFormat:@"%ld", [bombListArray[index] integerValue]];
-                //                        if ([last isEqualToString:bombNum]) {
-                //                            [objDict setValue:@(YES) forKey:@"isMine"];
-                //                            break;
-                //                        } else {
-                //                            [objDict setValue:@(NO) forKey:@"isMine"];
-                //                        }
-                //                    }
-            }
-            
             
             BOOL isItself = NO;
             //                SenderModel
@@ -863,10 +899,14 @@ dispatch_async(dispatch_get_main_queue(), block);\
             if (redPacketDesModel.remain_piece == 0) {
                 // 手气最佳
                 if (luckMaxIndex == i) {
-                    grabInfo.isLuck = YES;
+                    grabInfo.isLuck = self.redEnDetModel.redpacketType == RedPacketType_Private?NO:YES;
                 } else {
                     grabInfo.isLuck = NO;
                 }
+            }
+            
+            if (self.redEnDetModel.redpacketType == RedPacketType_Private) {
+                grabInfo.value = redPacketDesModel.sender.amount;
             }
             
             if (redPacketDesModel.redpacketType == 2) {  // 庄 闲
@@ -901,7 +941,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
                     }
                 }
             }
-            //                [self.dataList addObject:model];
         }
     }
     
@@ -914,7 +953,7 @@ dispatch_async(dispatch_get_main_queue(), block);\
         // ****** 庄、闲视图 ******
         [self headBottomView];
     }
-    
+
     [self setRefreshUserInfo];
     [self popViewShow];
     
@@ -926,7 +965,7 @@ dispatch_async(dispatch_get_main_queue(), block);\
 - (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
     
     
-    NSString *str = [NSString stringWithFormat:@"已领取%ld/%ld个，共%@元/%@元",self.redEnDetModel.grab_piece,(self.redEnDetModel.grab_piece +self.redEnDetModel.remain_piece), self.redEnDetModel.grab_value, self.redEnDetModel.total];
+    NSString *str = [NSString stringWithFormat:@"已领取%ld/%ld个，共%@元/%@元",self.redEnDetModel.grab_piece,(self.redEnDetModel.grab_piece + self.redEnDetModel.remain_piece),self.redEnDetModel?self.redEnDetModel.grab_value?self.redEnDetModel.grab_value:@"":@"0", self.redEnDetModel?self.redEnDetModel.total?self.redEnDetModel.total:@"0":@"0"];
     
     
     UIView *sectionHeaderView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, 30)];
@@ -997,6 +1036,7 @@ dispatch_async(dispatch_get_main_queue(), block);\
 #pragma mark UITableViewDataSource
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     return self.redEnDetModel.grab_logs.count;
+//    return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {

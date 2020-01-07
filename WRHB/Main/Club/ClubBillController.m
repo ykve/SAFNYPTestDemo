@@ -232,16 +232,9 @@ static CGFloat const BottomViewHeight = 50;
     
     //    [IDTypeBtn setImagePosition:WPGraphicBtnTypeRight spacing:10];
     dateBtn.tag = 1001;
-    dateBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    dateBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
     [backView addSubview:dateBtn];
     _dateBtn = dateBtn;
-    
-    [dateBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(backView.mas_centerY);
-        make.left.equalTo(backView.mas_left).offset(15);
-        make.size.mas_equalTo(CGSizeMake(80, 20));
-    }];
-    
     
     UILabel *wjNumLabel = [[UILabel alloc] init];
 //    wjNumLabel.backgroundColor = [UIColor cyanColor];
@@ -251,25 +244,13 @@ static CGFloat const BottomViewHeight = 50;
     wjNumLabel.textAlignment = NSTextAlignmentCenter;
     [backView addSubview:wjNumLabel];
     
-    [wjNumLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(dateBtn.mas_right).offset(swidht);
-        make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(70);
-    }];
-    
     UILabel *lsLabel = [[UILabel alloc] init];
 //    lsLabel.backgroundColor = [UIColor yellowColor];
-    lsLabel.text = @"当日流水";
+    lsLabel.text = @"游戏流水";
     lsLabel.font = [UIFont systemFontOfSize:15];
     lsLabel.textColor = [UIColor redColor];
     lsLabel.textAlignment = NSTextAlignmentCenter;
     [backView addSubview:lsLabel];
-    
-    [lsLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(wjNumLabel.mas_right).offset(swidht);
-        make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(80);
-    }];
     
     UILabel *fyLabel = [[UILabel alloc] init];
 //    fyLabel.backgroundColor = [UIColor redColor];
@@ -279,10 +260,29 @@ static CGFloat const BottomViewHeight = 50;
     fyLabel.textAlignment = NSTextAlignmentCenter;
     [backView addSubview:fyLabel];
     
+    [dateBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(backView.mas_centerY);
+        make.left.equalTo(backView.mas_left).offset(15);
+        make.width.equalTo(wjNumLabel);
+    }];
+    
+    [wjNumLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(dateBtn.mas_right).offset(swidht);
+        make.centerY.equalTo(backView.mas_centerY);
+        make.width.equalTo(lsLabel);
+    }];
+    
+    [lsLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(wjNumLabel.mas_right).offset(swidht);
+        make.centerY.equalTo(backView.mas_centerY);
+        make.width.equalTo(fyLabel);
+    }];
+    
     [fyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(lsLabel.mas_right).offset(swidht);
+        make.right.equalTo(backView.mas_right).offset(-15);
         make.centerY.equalTo(backView.mas_centerY);
-        make.width.mas_equalTo(60);
+        make.width.equalTo(dateBtn);
     }];
     
 }

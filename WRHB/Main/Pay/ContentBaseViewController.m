@@ -29,7 +29,6 @@
     self.categoryView.delegate = self;
     [self.view addSubview:self.categoryView];
 
-
     if (self.isNeedIndicatorPositionChangeItem) {
         UIBarButtonItem *rightItem = [[UIBarButtonItem alloc] initWithTitle:@"指示器位置切换" style:UIBarButtonItemStylePlain target:self action:@selector(rightItemClicked)];
         self.navigationItem.rightBarButtonItem = rightItem;
@@ -97,6 +96,9 @@
 - (void)categoryView:(JXCategoryBaseView *)categoryView didSelectedItemAtIndex:(NSInteger)index {
     //侧滑手势处理
     self.navigationController.interactivePopGestureRecognizer.enabled = (index == 0);
+    if (self.delegate) {
+        [self.delegate didSelectedItemAtIndex:index];
+    }
     NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 

@@ -67,14 +67,15 @@ GPBEnumDescriptor *Cmd_EnumDescriptor(void) {
         "on\000SmsgNoSpeakKefuSession\000CmsgDisconnect"
         "KefuSession\000SmsgDisconnectKefuSession\000Sm"
         "sgMirrorKefuSendMessage\000SmsgUserQueueInf"
-        "o\000CmsgDelMessageAck\000SmsgNotifyStateChang"
-        "e\000SmsgNotifyNewMessage\000SmsgNotifySession"
-        "Add\000SmsgNotifySessionDel\000SmsgNotifySessi"
-        "onUpdate\000SmsgNotifySessionMemberAdd\000Smsg"
-        "NotifySessionMemberDel\000SmsgNotifyAddFrie"
-        "nds\000SmsgNotifyAnnouncement\000SmsgNotifyUse"
-        "rInfoUpdate\000SmsgNotifySessionMemberInfoU"
-        "pdate\000SmsgNotifyPush\000CmsgNotifyAck\000";
+        "o\000CmsgDelMessageAck\000SmsgAgainLogin\000SmsgN"
+        "otifyStateChange\000SmsgNotifyNewMessage\000Sm"
+        "sgNotifySessionAdd\000SmsgNotifySessionDel\000"
+        "SmsgNotifySessionUpdate\000SmsgNotifySessio"
+        "nMemberAdd\000SmsgNotifySessionMemberDel\000Sm"
+        "sgNotifyAddFriends\000SmsgNotifyAnnouncemen"
+        "t\000SmsgNotifyUserInfoUpdate\000SmsgNotifySes"
+        "sionMemberInfoUpdate\000SmsgNotifyPush\000Smsg"
+        "NotifyTransferStatus\000CmsgNotifyAck\000";
     static const int32_t values[] = {
         Cmd_CmsgHello,
         Cmd_SmsgHello,
@@ -116,6 +117,7 @@ GPBEnumDescriptor *Cmd_EnumDescriptor(void) {
         Cmd_SmsgMirrorKefuSendMessage,
         Cmd_SmsgUserQueueInfo,
         Cmd_CmsgDelMessageAck,
+        Cmd_SmsgAgainLogin,
         Cmd_SmsgNotifyStateChange,
         Cmd_SmsgNotifyNewMessage,
         Cmd_SmsgNotifySessionAdd,
@@ -128,9 +130,10 @@ GPBEnumDescriptor *Cmd_EnumDescriptor(void) {
         Cmd_SmsgNotifyUserInfoUpdate,
         Cmd_SmsgNotifySessionMemberInfoUpdate,
         Cmd_SmsgNotifyPush,
+        Cmd_SmsgNotifyTransferStatus,
         Cmd_CmsgNotifyAck,
     };
-    static const char *extraTextFormatInfo = "5\000b\007\000\001b\007\000\002b\007\000\003b\007\000\004b\t\000\005b\r\000\006b\r\000\007b\013\000\010b\013\000\tb\016\000\nb\016\000\013b\r\000\014b\r\000\rb\014\000\016b\014\000\017b\016\000\020b\016\000\021b\r\000\022b\r\000\023b\023\000\024b\023\000\025b\021\000\026b\021\000\027b\r\000\030b\r\000\031b\020\000\032b\021\000\033b\021\000\034b\016\000\035b\016\000\036b\022\000\037b\017\000 b\017\000!b\024\000\"b\024\000#b\027\000$b\027\000%b\027\000&b\017\000\'b\017\000(b\023\000)b\022\000*b\022\000+b\022\000,b\025\000-b\030\000.b\030\000/b\022\0000b\024\0001b\026\0002b\037\0003b\014\0004b\013\000";
+    static const char *extraTextFormatInfo = "7\000b\007\000\001b\007\000\002b\007\000\003b\007\000\004b\t\000\005b\r\000\006b\r\000\007b\013\000\010b\013\000\tb\016\000\nb\016\000\013b\r\000\014b\r\000\rb\014\000\016b\014\000\017b\016\000\020b\016\000\021b\r\000\022b\r\000\023b\023\000\024b\023\000\025b\021\000\026b\021\000\027b\r\000\030b\r\000\031b\020\000\032b\021\000\033b\021\000\034b\016\000\035b\016\000\036b\022\000\037b\017\000 b\017\000!b\024\000\"b\024\000#b\027\000$b\027\000%b\027\000&b\017\000\'b\017\000(b\014\000)b\023\000*b\022\000+b\022\000,b\022\000-b\025\000.b\030\000/b\030\0000b\022\0001b\024\0002b\026\0003b\037\0004b\014\0005b\026\0006b\013\000";
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(Cmd)
                                        valueNames:valueNames
@@ -188,6 +191,7 @@ BOOL Cmd_IsValidValue(int32_t value__) {
     case Cmd_SmsgMirrorKefuSendMessage:
     case Cmd_SmsgUserQueueInfo:
     case Cmd_CmsgDelMessageAck:
+    case Cmd_SmsgAgainLogin:
     case Cmd_SmsgNotifyStateChange:
     case Cmd_SmsgNotifyNewMessage:
     case Cmd_SmsgNotifySessionAdd:
@@ -200,6 +204,7 @@ BOOL Cmd_IsValidValue(int32_t value__) {
     case Cmd_SmsgNotifyUserInfoUpdate:
     case Cmd_SmsgNotifySessionMemberInfoUpdate:
     case Cmd_SmsgNotifyPush:
+    case Cmd_SmsgNotifyTransferStatus:
     case Cmd_CmsgNotifyAck:
       return YES;
     default:

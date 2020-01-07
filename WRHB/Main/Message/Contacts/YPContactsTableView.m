@@ -1,6 +1,6 @@
 //
 //  ContactsTableView.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/6/20.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -71,6 +71,7 @@
     rect.origin.y = (self.bounds.size.height - rect.size.height - edgeInsets.top - edgeInsets.bottom) / 2 + edgeInsets.top + 20;
     self.tableViewIndex.frame = rect;
     self.tableViewIndex.tableViewIndexDelegate = self;
+    self.tableView.tableFooterView = nil;
 }
 
 

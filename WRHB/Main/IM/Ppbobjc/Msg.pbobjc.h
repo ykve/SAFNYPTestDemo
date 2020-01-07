@@ -92,6 +92,9 @@ typedef GPB_ENUM(SegmentType) {
 
   /** 自动回复 */
   SegmentType_SegmentTypeAutoReply = 15,
+
+  /** 发转账 */
+  SegmentType_SegmentTypeSendTransfer = 16,
 };
 
 GPBEnumDescriptor *SegmentType_EnumDescriptor(void);
@@ -104,7 +107,11 @@ BOOL SegmentType_IsValidValue(int32_t value);
 
 #pragma mark - Enum SessionType
 
-/** 会话类型 */
+/**
+ * 会话类型
+ * 1, 3, 4, 7, 8: 成员永久在里面
+ * 2, 5, 6: 退出房间就移除成员
+ **/
 typedef GPB_ENUM(SessionType) {
   /**
    * Value used if any message's field encounters a value that is not defined
@@ -132,7 +139,7 @@ typedef GPB_ENUM(SessionType) {
   /** 系统房间 */
   SessionType_SystemRoom = 6,
 
-  /** 客服 */
+  /** 客服A */
   SessionType_Kefu = 7,
 
   /** 盈商客服 */
@@ -146,6 +153,57 @@ GPBEnumDescriptor *SessionType_EnumDescriptor(void);
  * the time this source was generated.
  **/
 BOOL SessionType_IsValidValue(int32_t value);
+
+#pragma mark - Enum PlayType
+
+/** 玩法类型 */
+typedef GPB_ENUM(PlayType) {
+  /**
+   * Value used if any message's field encounters a value that is not defined
+   * by this enum. The message will also have C functions to get/set the rawValue
+   * of the field.
+   **/
+  PlayType_GPBUnrecognizedEnumeratorValue = kGPBUnrecognizedEnumeratorValue,
+  PlayType_PtNone = 0,
+
+  /** 单雷 */
+  PlayType_PtSingleMime = 1,
+
+  /** 禁抢场 */
+  PlayType_PtMultiMime = 2,
+
+  /** 牛牛 不翻倍 */
+  PlayType_PtNnNoTimes = 3,
+
+  /** 牛牛翻倍 */
+  PlayType_PtNnTimes = 4,
+
+  /** 普通群红包 */
+  PlayType_PtGroupNormal = 5,
+
+  /** 私人红包 */
+  PlayType_PtPersonal = 6,
+
+  /** 红包接力系 */
+  PlayType_PtRelay = 7,
+
+  /** 大联盟 */
+  PlayType_PtAlliance = 8,
+
+  /** 红包福利 */
+  PlayType_PtWelfare = 9,
+
+  /** lucky */
+  PlayType_PtLucky = 10,
+};
+
+GPBEnumDescriptor *PlayType_EnumDescriptor(void);
+
+/**
+ * Checks to see if the given value is defined by the enum or was not known at
+ * the time this source was generated.
+ **/
+BOOL PlayType_IsValidValue(int32_t value);
 
 #pragma mark - MsgRoot
 
@@ -586,6 +644,46 @@ typedef GPB_ENUM(AutoReplySegment_FieldNumber) {
 
 @end
 
+#pragma mark - SendTransferSegment
+
+typedef GPB_ENUM(SendTransferSegment_FieldNumber) {
+  SendTransferSegment_FieldNumber_Id_p = 1,
+  SendTransferSegment_FieldNumber_Sender = 3,
+  SendTransferSegment_FieldNumber_Create = 4,
+  SendTransferSegment_FieldNumber_Expire = 5,
+  SendTransferSegment_FieldNumber_Title = 7,
+  SendTransferSegment_FieldNumber_SendTime = 8,
+  SendTransferSegment_FieldNumber_Total = 9,
+};
+
+/**
+ * 发转账
+ **/
+@interface SendTransferSegment : GPBMessage
+
+/** 转账ID */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *id_p;
+
+/** 发送者 */
+@property(nonatomic, readwrite) uint64_t sender;
+
+/** 创建时间 */
+@property(nonatomic, readwrite) int64_t create;
+
+/** 过期时间 */
+@property(nonatomic, readwrite) int64_t expire;
+
+/** 标题 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *title;
+
+/** 发送时间 */
+@property(nonatomic, readwrite) int64_t sendTime;
+
+/** 转账金额 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *total;
+
+@end
+
 #pragma mark - Content
 
 typedef GPB_ENUM(Content_FieldNumber) {
@@ -725,7 +823,7 @@ typedef GPB_ENUM(Message_FieldNumber) {
 /** 会话ID */
 @property(nonatomic, readwrite) uint64_t sessionId;
 
-/** 会话类型, 1: 单人会话, 2: 多人游戏, 3: 多人普通聊天, 4: 俱乐部大厅, 5: 大联盟, 6: 系统房间, 7: 客服 */
+/** 会话类型 */
 @property(nonatomic, readwrite) int32_t sessionType;
 
 /** 会话修改版本号 */

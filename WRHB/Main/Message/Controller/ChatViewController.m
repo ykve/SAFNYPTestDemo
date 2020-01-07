@@ -1,6 +1,6 @@
 //
 //  ChatViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -9,7 +9,7 @@
 #import "ChatViewController.h"
 #import <AVFoundation/AVFoundation.h>
 #import "EnvelopeMessage.h"
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "EnvelopeTipCell.h"
 #import "EnvelopeTipMessage.h"
 
@@ -33,6 +33,7 @@
 #import "YPContacts.h"
 #import "FriendChatInfoController.h"
 #import "ChatsModel.h"
+#import "SessionInfoModels.h"
 #import "SessionInfoModel.h"
 
 #import "RedPacketDetModel.h"
@@ -50,17 +51,26 @@
 #import "GamesTypeModel.h"
 #import "CSAskFormController.h"
 #import "PayTopUpTypeController.h"
+#import "FriendHeadImageController.h"
+
+#import "AFMarqueeModel.h"
+#import "AFMarqueeView.h"
+#import "NSString+Size.h"
+
+#import "TransferController.h"
+#import "TransferModel.h"
+#import "PayTransferLookController.h"
+#import "PayConfirmReceController.h"
 
 
-
-@interface ChatViewController ()<AFSystemBaseCellDelegate, SendRedPacketDelegate>
+@interface ChatViewController ()<AFSystemBaseCellDelegate, SendRedPacketDelegate,TransferViewDelegate>
 
 // 红包详情模型
 @property (nonatomic, strong) RedPacketDetModel *redEnDetModel;
 // 抢红包视图
 @property (nonatomic, strong) RedPacketAnimationView *redpView;
 /// 会话信息
-@property (nonatomic, strong) SessionInfoModel *sessionModel;
+@property (nonatomic, strong) SessionInfoModels *sessionModels;
 
 // 红包动画是否结束
 @property (nonatomic, assign) BOOL isAnimationEnd;
@@ -87,13 +97,17 @@
 //@property (nonatomic, strong) RCMessageModel *messageModel;
 @property (nonatomic, assign) NSInteger bankerId;
 
-
-
 @property (nonatomic ,strong) NSMutableArray *dataList;
 
+@property (nonatomic, strong) UIView *jjScorllBgView;
+@property (nonatomic, strong) AFMarqueeView *marqueeView;
 
+///
+@property (nonatomic, strong) NSMutableArray *winningBroadcastArray;
+@property (nonatomic, assign) BOOL isRunning;
 
 @end
+
 
 
 // 群组类
@@ -111,7 +125,7 @@ static ChatViewController *_chatVC;
     _chatVC.sessionId = model.sessionId;
     //设置聊天会话界面要显示的标题
     NSString *title = model.name;
-
+    
     if (title.length > 12) {
         _chatVC.title = [NSString stringWithFormat:@"%@...", [title substringToIndex:12]];
     } else {
@@ -142,6 +156,7 @@ static ChatViewController *_chatVC;
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [MBProgressHUD hideHUD];
     //    [IQKeyboardManager sharedManager].enableAutoToolbar = NO;
     //    [[IQKeyboardManager sharedManager]setEnable:NO];
     self.extendedLayoutIncludesOpaqueBars = YES;  // 防止导航栏下移64   11.13 有用
@@ -161,17 +176,19 @@ static ChatViewController *_chatVC;
     //    [IQKeyboardManager sharedManager].enableAutoToolbar = YES;
     //    [[IQKeyboardManager sharedManager]setEnable:YES];
     
+    [self.marqueeView stopAnimation];
+    
     self.isCreateRpView = NO;
     self.isVSViewClick = NO;
     if ([self.navigationController.viewControllers indexOfObject:self] == NSNotFound) {
         _chatVC = nil;
     }
-    if ((self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game) && [self.navigationController.viewControllers indexOfObject:self] == NSNotFound) {
-        [self action_exitGroup];
+    if ((self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_BigUnion) && [self.navigationController.viewControllers indexOfObject:self] == NSNotFound) {
+        [self exitGroupRequest];
     } else if ([AppModel sharedInstance].isClubChat && [self.navigationController.viewControllers indexOfObject:self] == NSNotFound) {
         self.tabBarController.selectedIndex = 0;
         if (self.chatsModel.sessionType == ChatSessionType_Clubs_Hall) {
-            [self action_exitGroup];
+            [self exitGroupRequest];
         }
     }
     /// 启用侧滑手势
@@ -189,6 +206,7 @@ static ChatViewController *_chatVC;
     } else if (self.chatSessionType == ChatSessionType_CustomerService) {
         [self createServiceSession];
     }
+    
     
     [self setNavUI];
     
@@ -209,18 +227,160 @@ static ChatViewController *_chatVC;
     //        [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(scrollToBottom) name:@"scrollToBottom" object:nil];
     
     
-//    if (self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game) {
-//        // 创建悬浮视图
-//        [self setEntrancePlazaView];
-//    }
+    //    if (self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game) {
+    //        // 创建悬浮视图
+    //        [self setEntrancePlazaView];
+    //    }
     
     /// 会话信息
-    if (self.sessionId && (self.chatSessionType == ChatSessionType_SystemRoom || self.chatSessionType == ChatSessionType_ManyPeople_NormalChat  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game)) {
-        [self getSessionInfoData];
+//    if (self.sessionId && (self.chatSessionType == ChatSessionType_SystemRoom || self.chatSessionType == ChatSessionType_ManyPeople_NormalChat  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_Clubs_Hall || self.chatsModel.sessionType == ChatSessionType_BigUnion)) {
+//        [self getSessionInfoData];
+//    }
+    [self getSessionInfoData];
+    //    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getSessionData) name:kSessionInfoUpdateNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getSessionInfoDataNoti:) name:kSessionMemberUpdateNotification object:nil];
+    
+    if (self.chatSessionType == ChatSessionType_SystemRoom || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_Clubs_Hall || self.chatsModel.sessionType == ChatSessionType_BigUnion) {
+        [self JJScorllTextLableView];
     }
     
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getSessionData) name:kSessionInfoUpdateNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getSessionInfoData) name:kSessionMemberUpdateNotification object:nil];
+    /// 中奖广播
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onWinningBroadcastNotification:) name:kWinningBroadcastNotification object:nil];
+    /// 好友把你删除的时候 更新  强制退出会话窗口
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onForceOutSession) name:kAddressBookUpdateNotification object:@"Delete"];
+}
+
+- (void)onForceOutSession {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.navigationController popToRootViewControllerAnimated:YES];
+    });
+    
+}
+
+
+- (void)onWinningBroadcastNotification:(NSNotification *)notification {
+    NSDictionary *dict = notification.object;
+    
+    NSString *contet = dict[@"content"];
+    NSInteger num = [dict[@"num"] integerValue];
+    if (!contet) {
+        return;
+    }
+    
+    CGFloat textWidht = [contet widthWithFont:[UIFont systemFontOfSize:12] constrainedToHeight:20];
+    NSMutableArray *modelList = [NSMutableArray array];
+    AFMarqueeModel *model = [[AFMarqueeModel alloc] init];
+    model.title = contet;
+    model.titleWidth = textWidht;    // 计算文字宽度
+    model.width = textWidht;
+    
+    for (NSInteger index = 0; index < num; index++) {
+        //        if (index == num -1) {
+        //            model.titleWidth = textWidht + 100;
+        //            model.width = textWidht + 100;
+        //        } else {
+        //            model.titleWidth = textWidht + UIScreen.mainScreen.bounds.size.width -100;
+        //            model.width = textWidht + UIScreen.mainScreen.bounds.size.width -100;
+        //        }
+        
+        model.titleWidth = textWidht +200;
+        model.width = textWidht + 200;
+        [modelList addObject:model];
+    }
+    
+    [self.winningBroadcastArray addObject:modelList];
+    
+    [self executionWinningBroadcastScorll];
+}
+
+
+
+- (void)executionWinningBroadcastScorll {
+    
+    if (self.winningBroadcastArray.count > 0 && !self.isRunning) {
+        self.isRunning = YES;
+        NSMutableArray *modelList = self.winningBroadcastArray.firstObject;
+        [self.marqueeView setItems:modelList];
+        [self.marqueeView startAnimation];
+        self.jjScorllBgView.hidden = NO;
+        [self.winningBroadcastArray removeObject:modelList];
+    }
+}
+
+
+- (void)JJScorllTextLableView {
+    
+    UIView *backView = [[UIView alloc] init];
+    backView.hidden = YES;
+    backView.backgroundColor = YPChatCellColor;
+    [self.view addSubview:backView];
+    _jjScorllBgView = backView;
+    
+    [backView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self.view.mas_top).offset(Height_NavBar);
+        make.left.equalTo(self.view.mas_left).offset(0);
+        make.right.equalTo(self.view.mas_right).offset(0);
+        make.height.mas_equalTo(31.5+5);
+    }];
+    
+    UIImageView *imageBgView = [[UIImageView alloc] init];
+    imageBgView.image = [UIImage imageNamed:@"chats_scorll_text"];
+    [backView addSubview:imageBgView];
+    
+    [imageBgView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(backView.mas_top).offset(8);
+        make.left.equalTo(backView.mas_left).offset(15);
+        make.right.equalTo(backView.mas_right).offset(-23);
+        make.height.mas_equalTo(28);
+    }];
+    
+    UIImageView *icnView = [[UIImageView alloc] init];
+    icnView.image = [UIImage imageNamed:@"chats_scorll_xx"];
+    [backView addSubview:icnView];
+    
+    [icnView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(backView.mas_top);
+        make.left.equalTo(backView.mas_left).offset(25);
+        make.size.mas_equalTo(CGSizeMake(61, 22));
+    }];
+    
+    
+    
+    AFMarqueeView *marqueeView = [[AFMarqueeView alloc] initWithFrame:CGRectMake(53.5, 4, kSCREEN_WIDTH-50, 20)];
+    marqueeView.backgroundColor = [UIColor clearColor];
+    [imageBgView addSubview:marqueeView];
+    _marqueeView = marqueeView;
+    //    [marqueeView setItems:modelList];
+    //    [marqueeView startAnimation];
+    [marqueeView addMarueeViewItemClickBlock:^(AFMarqueeModel *model) {
+        NSLog(@"%@",model.title);
+    }];
+    
+    __weak __typeof(self)weakSelf = self;
+    [marqueeView setScrollEndBlock:^{
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        NSLog(@"1");
+        [strongSelf.marqueeView stopTimer];
+        strongSelf.isRunning = NO;
+        strongSelf.jjScorllBgView.hidden = YES;
+        [strongSelf executionWinningBroadcastScorll];
+    }];
+    
+    [marqueeView mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(imageBgView.mas_left).offset(53.5);
+        make.right.equalTo(imageBgView.mas_right).offset(-6);
+        make.centerY.equalTo(imageBgView.mas_centerY);
+        make.height.mas_equalTo(20);
+    }];
+}
+
+
+- (void)getSessionInfoDataNoti:(NSNotification *)notification {
+    
+    /// 判断会话是否还在
+    if ([SessionSingle sharedInstance].myJoinGameGroupSessionId == [notification.object[@"sessionId"] integerValue]) {
+        [self getSessionInfoData];
+    }
 }
 
 - (void)notifyUpdateUnreadMessageCount {
@@ -229,14 +389,14 @@ static ChatViewController *_chatVC;
     self.navigationItem.rightBarButtonItems = self.rightBtnArray;
 }
 
- #pragma mark -  单人会话创建
+#pragma mark -  单人会话创建
 /**
  单人会话创建
  */
 - (void)createSession {
     NSDictionary *parameters = @{
-                                 @"user":@(self.chatsModel.userId),   // 对方ID
-                                 };
+        @"user":@(self.chatsModel.userId),   // 对方ID
+    };
     
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/createSession"];
@@ -273,7 +433,7 @@ static ChatViewController *_chatVC;
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/createServiceSession"];
     entity.needCache = NO;
-//    entity.parameters = parameters;
+    //    entity.parameters = parameters;
     
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
@@ -296,8 +456,8 @@ static ChatViewController *_chatVC;
 #pragma mark -  获取会话信息数据
 - (void)getSessionInfoData {
     NSDictionary *parameters = @{
-                                 @"session":@(self.sessionId)
-                                 };
+        @"session":@(self.sessionId)
+    };
     
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/session/info"];
@@ -309,17 +469,22 @@ static ChatViewController *_chatVC;
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            strongSelf.sessionModel = [SessionInfoModel mj_objectWithKeyValues:response[@"data"]];
+            strongSelf.sessionModels = [SessionInfoModels mj_objectWithKeyValues:response[@"data"]];
+            
             if (strongSelf.chatSessionType == ChatSessionType_Private) {
-                strongSelf.chatsModel.play_type = strongSelf.sessionModel.play_type;
+                strongSelf.chatsModel.play_type = strongSelf.sessionModels.session_info.play_type;
+                strongSelf.chatsModel.name = strongSelf.sessionModels.session_info.name;
+                strongSelf.chatsModel.avatar = strongSelf.sessionModels.session_info.avatar;
+                strongSelf.chatsModel.packet_range = strongSelf.sessionModels.session_info.packet_range;
+                strongSelf.chatsModel.number_limit = strongSelf.sessionModels.session_info.number_limit;
             }
             
             NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-            for (BaseUserModel *model in strongSelf.sessionModel.group_users) {
+            for (BaseUserModel *model in strongSelf.sessionModels.group_users) {
                 [dict setObject:model forKey:[NSString stringWithFormat:@"%ld_%ld", strongSelf.sessionId, model.userId]];   // 用户昵称
             }
             [AppModel sharedInstance].myGroupFriendListDict = [dict copy];
-            
+
             dispatch_async(dispatch_get_main_queue(), ^{
                 [strongSelf.tableView reloadData];
             });
@@ -338,27 +503,28 @@ static ChatViewController *_chatVC;
 /**
  退出群组请求  退群
  */
-- (void)action_exitGroup {
+- (void)exitGroupRequest {
     
     
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/leaveSession"];
     NSDictionary *parameters = @{
-                                 @"session":@(self.chatsModel.sessionId)
-                                 };
+        @"session":@(self.chatsModel.sessionId)
+    };
     entity.parameters = parameters;
     entity.needCache = NO;
     
     __weak __typeof(self)weakSelf = self;
-    [MBProgressHUD showActivityMessageInView:nil];
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            [SessionSingle sharedInstance].myJoinGameGroupSessionId = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadMyMessageGroupList object:nil];
-//            [SqliteManage removeGroupSql:strongSelf.chatsModel.sessionId];
-//            NSString *msg = [NSString stringWithFormat:@"%@",[response objectForKey:@"message"]];
-//             [MBProgressHUD showSuccessMessage:msg]; 
-//            [strongSelf.navigationController popToViewController:[strongSelf.navigationController.viewControllers objectAtIndex:0] animated:YES];
+            
+            //            [SqliteManage removePushMessageNumModelSql:strongSelf.chatsModel.sessionId];
+            //            NSString *msg = [NSString stringWithFormat:@"%@",[response objectForKey:@"message"]];
+            //             [MBProgressHUD showSuccessMessage:msg];
+            //            [strongSelf.navigationController popToViewController:[strongSelf.navigationController.viewControllers objectAtIndex:0] animated:YES];
             
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
@@ -376,13 +542,14 @@ static ChatViewController *_chatVC;
 
 /**
  本地创建消息
-
+ 
  @param message 消息模型
  */
 - (void)onLocalCreateMessage:(YPMessage *)message {
-    
+    message.userId = [AppModel sharedInstance].user_info.userId;
     message.sessionId = self.sessionId;
     message.messageId = [FunctionManager getNowTime];
+    message.uniqeid = StringUniquId(message.userId, message.sessionId, message.messageId);
     if (message.redPacketInfo.redpacketType == RedPacketType_Private) {
         message.chatSessionType = ChatSessionType_Private;
     } else if (message.redPacketInfo.redpacketType == RedPacketType_Normal) {
@@ -407,10 +574,14 @@ static ChatViewController *_chatVC;
     }
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        BOOL isSuccess = [WHC_ModelSqlite insert:message];
-        if (!isSuccess) {
-            [WHC_ModelSqlite removeModel:[YPMessage class]];
-            [WHC_ModelSqlite insert:message];
+        NSString *queryWhere = [NSString stringWithFormat:@"uniqeid = '%@'",message.uniqeid];
+        NSArray *userGroupArray = [WHC_ModelSqlite query:[YPMessage class] where:queryWhere];
+        if (userGroupArray==nil||userGroupArray.count < 1) {
+            BOOL isSuccess = [WHC_ModelSqlite insert:message];
+            if (!isSuccess) {
+                [WHC_ModelSqlite removeModel:[YPMessage class]];
+                [WHC_ModelSqlite insert:message];
+            }
         }
     });
 }
@@ -432,7 +603,8 @@ static ChatViewController *_chatVC;
     }
     
     // 嵌套模型查询 school.city.name = '北京' 3层嵌套写法
-    NSString *whereStr = [NSString stringWithFormat:@"sessionId=%zd AND redPacketInfo.redp_id = '%@'", self.sessionId,redId];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and sessionId=%zd AND redPacketInfo.redp_id = '%@'", [AppModel sharedInstance].user_info.userId,self.sessionId,redId];
+    
     YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     ypMessage.messageId = messageId;
     if (ypMessage) {
@@ -441,11 +613,11 @@ static ChatViewController *_chatVC;
         });
     }
     
-//    __weak __typeof(self)weakSelf = self;
-//    dispatch_async(dispatch_get_main_queue(), ^{
-//        __strong __typeof(weakSelf)strongSelf = weakSelf;
-//        [strongSelf.tableView reloadData];
-//    });
+    //    __weak __typeof(self)weakSelf = self;
+    //    dispatch_async(dispatch_get_main_queue(), ^{
+    //        __strong __typeof(weakSelf)strongSelf = weakSelf;
+    //        [strongSelf.tableView reloadData];
+    //    });
 }
 
 
@@ -463,7 +635,7 @@ static ChatViewController *_chatVC;
         if ([redId isEqualToString: tableViewLayout.message.redPacketInfo.redp_id]) {
             tableViewLayout.message.redPacketInfo.remain = remain;
             if (remain <= 0) {
-                if (tableViewLayout.message.redPacketInfo.cellStatus > 0) {
+                if (tableViewLayout.message.redPacketInfo.cellStatus > 1) {
                     break;
                 }
                 [self updateRedPackedStatus:tableViewLayout.message.redPacketInfo.redp_id cellStatus:RedPacketCellStatus_NoPackage];
@@ -478,6 +650,29 @@ static ChatViewController *_chatVC;
         [strongSelf.tableView reloadData];
     });
 }
+
+/**
+ 转账状态
+ 
+ @param transferModel 转账模型
+ */
+- (void)receiveTransferStatusModel:(TransferModel *)transferModel {
+    for (NSInteger index = 0; index < self.dataSource.count; index++) {
+        ChatMessagelLayout *tableViewLayout = self.dataSource[index];
+        if (transferModel.transfer == tableViewLayout.message.transferModel.transfer) {
+            tableViewLayout.message.transferModel.cellStatus = transferModel.cellStatus;
+            break;
+        }
+    }
+    
+    __weak __typeof(self)weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [strongSelf.tableView reloadData];
+    });
+}
+
+
 
 /**
  数据库更新红包状态
@@ -496,12 +691,26 @@ static ChatViewController *_chatVC;
     }
     __weak __typeof(self)weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-         __strong __typeof(weakSelf)strongSelf = weakSelf;
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         [strongSelf.tableView reloadData];
     });
 }
 
-
+- (void)updateTransferStatus:(NSInteger)transferId cellStatus:(TransferCellStatus)cellStatus {
+    
+    for (ChatMessagelLayout *modelLayout in self.dataSource) {
+        if (transferId ==  modelLayout.message.transferModel.transfer) {
+            modelLayout.message.transferModel.cellStatus = cellStatus;
+            [[YPIMManager sharedInstance] updateTransferInfo:modelLayout.message.transferModel];
+            break;
+        }
+    }
+    __weak __typeof(self)weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [strongSelf.tableView reloadData];
+    });
+}
 
 
 #pragma mark goto发红包入口
@@ -539,8 +748,8 @@ static ChatViewController *_chatVC;
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"redpacket/grab"];
     NSDictionary *parameters = @{
-                                 @"packet":messageModel.redPacketInfo.redp_id
-                                 };
+        @"packet":messageModel.redPacketInfo.redp_id
+    };
     entity.parameters = parameters;
     entity.needCache = NO;
     
@@ -572,8 +781,8 @@ static ChatViewController *_chatVC;
 - (void)getRedPacketDetailsData:(YPMessage *)messageModel {
     
     NSDictionary *parameters = @{
-                                 @"redpacket":messageModel.redPacketInfo.redp_id
-                                 };
+        @"redpacket":messageModel.redPacketInfo.redp_id
+    };
     
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"redpacket/detail"];
@@ -587,7 +796,11 @@ static ChatViewController *_chatVC;
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && ([[response objectForKey:@"status"] integerValue] == 1)) {
             [strongSelf analysisData:response];
-            if (messageModel.redPacketInfo.cellStatus == RedPacketCellStatus_Normal) {
+            if (self.redEnDetModel.packetId == 0) {
+                self.redEnDetModel.packetId = messageModel.redPacketInfo.redp_id.integerValue;
+            }
+            
+            if (messageModel.redPacketInfo.cellStatus != RedPacketCellStatus_Invalid && messageModel.redPacketInfo.cellStatus != RedPacketCellStatus_Normal) {
                 [strongSelf goto_RedPackedDetail:messageModel.redPacketInfo.redp_id isCowCow:YES];
             } else {
                 [strongSelf actionShowRedPackedView:messageModel];
@@ -612,6 +825,13 @@ static ChatViewController *_chatVC;
     if (data != NULL) {
         
         RedPacketDetModel *redPacketDesModel = [RedPacketDetModel mj_objectWithKeyValues:data];
+        if (redPacketDesModel.redpacketType == RedPacketType_Private) {
+            redPacketDesModel.remain_piece = redPacketDesModel.sender.remain_count.integerValue;
+            redPacketDesModel.grab_piece = redPacketDesModel.sender.packet_count - redPacketDesModel.sender.remain_count.integerValue;
+            redPacketDesModel.total = redPacketDesModel.sender.amount;
+            redPacketDesModel.title = redPacketDesModel.sender.title;
+        }
+        
         _redEnDetModel = redPacketDesModel;
         [self.dataList removeAllObjects];
         
@@ -673,10 +893,14 @@ static ChatViewController *_chatVC;
             if (redPacketDesModel.remain_piece == 0) {
                 // 手气最佳
                 if (luckMaxIndex == i) {
-                    grabInfo.isLuck = YES;
+                    grabInfo.isLuck = self.redEnDetModel.redpacketType == RedPacketType_Private?NO:YES;;
                 } else {
                     grabInfo.isLuck = NO;
                 }
+            }
+            
+            if (self.redEnDetModel.redpacketType == RedPacketType_Private) {
+                grabInfo.value = redPacketDesModel.sender.amount;
             }
             
             if (redPacketDesModel.redpacketType == 2) {  // 庄 闲
@@ -718,9 +942,68 @@ static ChatViewController *_chatVC;
 }
 
 
+#pragma mark -  转账完成代理
+- (void)didTransferFinished:(YPMessage *)message {
+    message.userId = [AppModel sharedInstance].user_info.userId;
+    message.sessionId = self.sessionId;
+    message.messageId = [FunctionManager getNowTime];
+    message.uniqeid = StringUniquId(message.userId, message.sessionId, message.messageId);
+    message.messageFrom = MessageDirection_SEND;
+    message.timestamp = message.messageId;
+    message.create_time = [NSDate date];
+    message.isReceivedMsg = YES;
+    message.messageSendId = [AppModel sharedInstance].user_info.userId;
+    message.deliveryState = MessageDeliveryState_Successful;
+    
+    message = [self.delegate willAppendAndDisplayMessage:message];
+    
+    // 消息数量保存 最后消息保存
+    if (self.receiveMessageDelegate && [self.receiveMessageDelegate respondsToSelector:@selector(onIMReceiveMessage: messageCount:left:)]) {
+        [self.receiveMessageDelegate onIMReceiveMessage:message messageCount:0 left:0];
+    }
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        NSString *queryWhere = [NSString stringWithFormat:@"uniqeid = '%@'",message.uniqeid];
+        NSArray *userGroupArray = [WHC_ModelSqlite query:[YPMessage class] where:queryWhere];
+        if (userGroupArray==nil||userGroupArray.count < 1) {
+            BOOL isSuccess = [WHC_ModelSqlite insert:message];
+            if (!isSuccess) {
+                [WHC_ModelSqlite removeModel:[YPMessage class]];
+                [WHC_ModelSqlite insert:message];
+            }
+        }
+    });
+}
 
-
-
+/**
+ 转账
+ 
+ @param message 消息体
+ */
+- (void)receiveSendbyYourselfTransferMessage:(YPMessage *)message {
+    for (NSInteger index = 0; index < self.dataSource.count; index++) {
+        ChatMessagelLayout *tableViewLayout = self.dataSource[index];
+        if (message.transferModel.transfer == tableViewLayout.message.transferModel.transfer) {
+            tableViewLayout.message.messageId = message.messageId;
+            tableViewLayout.message.transferModel.create = message.transferModel.create;
+            tableViewLayout.message.transferModel.sendTime = message.transferModel.sendTime;
+            tableViewLayout.message.transferModel.expire = message.transferModel.expire;
+            break;
+        }
+    }
+    
+    NSString *whereStr = [NSString stringWithFormat:@"sessionId=%zd AND transferModel.transfer = '%zd'", self.sessionId,message.transferModel.transfer];
+    YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
+    ypMessage.messageId = message.messageId;
+    ypMessage.transferModel.create = message.transferModel.create;
+    ypMessage.transferModel.sendTime = message.transferModel.sendTime;
+    ypMessage.transferModel.expire = message.transferModel.expire;
+    if (ypMessage) {
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            [WHC_ModelSqlite update:ypMessage where:whereStr];
+        });
+    }
+}
 
 
 #pragma mark - Cell- 点击事件
@@ -740,27 +1023,108 @@ static ChatViewController *_chatVC;
             [self goto_RedPackedDetail:model.redPacketInfo.redp_id isCowCow:NO];
         } else if (model.redPacketInfo.cellStatus == RedPacketCellStatus_MyselfReceived || model.redPacketInfo.cellStatus == RedPacketCellStatus_Expire || model.redPacketInfo.cellStatus == RedPacketCellStatus_NoPackage) {
             [self goto_RedPackedDetail:model.redPacketInfo.redp_id isCowCow:NO];
-        } else if (model.redPacketInfo.redpacketType == RedPacketType_BanRob && model.messageSendId == [AppModel sharedInstance].user_info.userId) {
+        } else if ((model.redPacketInfo.redpacketType == RedPacketType_BanRob || model.redPacketInfo.redpacketType == RedPacketType_CowCowNoDouble || model.redPacketInfo.redpacketType == RedPacketType_CowCowDouble) && model.messageSendId == [AppModel sharedInstance].user_info.userId) {
             [self goto_RedPackedDetail:model.redPacketInfo.redp_id isCowCow:NO];
         } else {
             [self getRedPacketDetailsData:model];
         }
+    } else if (model.messageType  == MessageType_SendTransfer) {
+        if (self.isCreateRpView) {
+            return;
+        }
+        self.isCreateRpView = YES;
+        
+        if (model.transferModel.cellStatus == TransferCellStatus_Normal && model.messageSendId == [AppModel sharedInstance].user_info.userId) {
+            [self transferGotoVC:model];
+        } else if (model.transferModel.cellStatus == TransferCellStatus_Normal) {
+//            [self transferPickup:model];
+            [self getTransferDetailsData:model];
+        } else if (model.transferModel.cellStatus == TransferCellStatus_Refund) {
+            [self transferGotoVC:model];
+        } else if (model.transferModel.cellStatus == TransferCellStatus_Expire) {
+            [self transferGotoVC:model];
+        } else {
+             [self getTransferDetailsData:model];
+        }
+        
     }
 }
 
+- (void)transferGotoVC:(YPMessage *)model {
+    self.isCreateRpView = NO;
+    PayTransferLookController *vc = [[PayTransferLookController alloc] init];
+    vc.model = model.transferModel;
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
+#pragma mark - 转账详情
+- (void)getTransferDetailsData:(YPMessage *)messageModel {
+    
+    NSDictionary *parameters = @{
+        @"id":@(messageModel.transferModel.transfer)
+    };
+    
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"transfer/detail"];
+    entity.parameters = parameters;
+    entity.needCache = NO;
+    
+    [MBProgressHUD showActivityMessageInView:nil];
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [MBProgressHUD hideHUD];
+        if ([response objectForKey:@"status"] && ([[response objectForKey:@"status"] integerValue] == 1)) {
+           
+            messageModel.transferModel.cellStatus = [response[@"data"][@"status"] integerValue];
+            messageModel.transferModel.sender = [response[@"data"][@"sender"] integerValue];
+            messageModel.transferModel.receiver = [response[@"data"][@"receiver"] integerValue];
+            messageModel.transferModel.receive_time = [response[@"data"][@"receive_time"] integerValue];
+            messageModel.transferModel.send_time = [response[@"data"][@"send_time"] integerValue];
+            messageModel.transferModel.sendName = self.chatsModel.name;
+            
+            if (messageModel.transferModel.cellStatus == TransferCellStatus_Normal) {
+//                [strongSelf transferPickup:messageModel];
+                [self goto_TransferConfirm:messageModel.transferModel];
+                
+            } else {
+                [strongSelf updateTransferStatus:messageModel.transferModel.transfer cellStatus:TransferCellStatus_MyselfReceived];
+                if (messageModel.transferModel.cellStatus == TransferCellStatus_MyselfReceived) {
+                    [strongSelf transferGotoVC:messageModel];
+                }
+                
+            }
+             strongSelf.isCreateRpView = NO;
+            
+        } else {
+            strongSelf.isCreateRpView = NO;
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+        
+    } failureBlock:^(NSError *error) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        strongSelf.isCreateRpView = NO;
+        [MBProgressHUD hideHUD];
+        //        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
 
-
-
+- (void)goto_TransferConfirm:(TransferModel *)transferModel {
+    PayConfirmReceController *vc = [[PayConfirmReceController alloc] init];
+    vc.model = transferModel;
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
 #pragma mark - 点击头像事件
 // 点击头像事件
 //- (void)didTapCellPortrait:(NSString *)userId {
--(void)didTapCellChatHeaderImg:(UserInfo *)userInfo {
+-(void)didTapCellChatHeaderImg:(BaseUserModel *)userInfo {
     
     if (self.chatSessionType == ChatSessionType_Private || self.chatSessionType == ChatSessionType_CustomerService) {
-        // 聊天信息页
+        
         //        [self goto_FriendChatInfo:userInfo];
+        [self goto_CircleHeadImage:userInfo];
         return;
     }
     
@@ -768,7 +1132,7 @@ static ChatViewController *_chatVC;
     if (userInfo.userId == [AppModel sharedInstance].user_info.userId) {
         return;
     }
-    [self.sessionInputView addMentionedUser:userInfo];
+    //    [self.sessionInputView addMentionedUser:userInfo];
 }
 
 
@@ -841,7 +1205,7 @@ static ChatViewController *_chatVC;
         [self updateRedPackedStatus:self.redp_Id cellStatus:RedPacketCellStatus_MyselfReceived];
         
 #pragma mark - 声音判断
-        NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", [AppModel sharedInstance].user_info.userId,self.chatsModel.sessionId];
+        NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", self.chatsModel.sessionId,[AppModel sharedInstance].user_info.userId];
         // 读取
         BOOL  isSwitch = [[NSUserDefaults standardUserDefaults] boolForKey:switchKeyStr];
         if (!isSwitch && ![AppModel sharedInstance].turnOnSound) {
@@ -905,7 +1269,7 @@ static ChatViewController *_chatVC;
     };
     // 视图消失
     view.animationBlock = ^{
-         __strong __typeof(weakSelf)strongSelf = weakSelf;
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
         [strongSelf updateRedPackedStatus:messageModel.redPacketInfo.redp_id cellStatus:RedPacketCellStatus_MyselfReceived];
         return ;
     };
@@ -923,12 +1287,12 @@ static ChatViewController *_chatVC;
         return ;
     };
     
-//    if ([self getNowTimeWithCreate:model.message.redPacketInfo.create expire:model.message.redPacketInfo.expire] <= 0) {
-//         [self updateRedPackedStatus:messageModel.messageId cellStatus:RedPacketCellStatus_Expire];
-//     }
+    //    if ([self getNowTimeWithCreate:model.message.redPacketInfo.create expire:model.message.redPacketInfo.expire] <= 0) {
+    //         [self updateRedPackedStatus:messageModel.messageId cellStatus:RedPacketCellStatus_Expire];
+    //     }
     
     NSInteger left = self.redEnDetModel.remain_piece;
-    if (left == 0) {
+    if (left == 0 && self.redEnDetModel.redpacketType != RedPacketType_Private) {
         [self updateRedPackedStatus:messageModel.redPacketInfo.redp_id cellStatus:RedPacketCellStatus_NoPackage];
     }
     
@@ -980,6 +1344,10 @@ static ChatViewController *_chatVC;
     [view showInView:self.view];
 }
 
+
+
+
+
 #pragma mark - 聊天功能扩展拦
 //多功能视图点击回调  图片10  视频11  位置12
 -(void)chatFunctionBoardClickedItemWithTag:(NSInteger)tag {
@@ -990,24 +1358,18 @@ static ChatViewController *_chatVC;
         
         [MBProgressHUD showTipMessageInWindow:@"敬请期待"];
         return;
-        //        SendRedPacketController *vc = [[SendRedPacketController alloc] init];
-        //        vc.delegate = self;
-        //        //        vc.isFu = YES;
-        //        vc.CDParam = self.chatsModel;
-        //        UINavigationController *navvc = [[UINavigationController alloc]initWithRootViewController:vc];
-        //        [self presentViewController:navvc animated:YES completion:nil];
+        //        [self goto_sendRedPacketEnt];
         
     } else if (tag == ChatExtensionBar_Join){ // 加盟
         AgentCenterViewController *vc = [[AgentCenterViewController alloc] init];
         vc.hidesBottomBarWhenPushed = YES;
         [self.navigationController pushViewController:vc animated:YES];
     } else if (tag == ChatExtensionBar_RedEnevpole){  // 红包
-        
-        SendRedPacketController *vsendVC = [[SendRedPacketController alloc] init];
-        UINavigationController *vc = [[UINavigationController alloc] initWithRootViewController:vsendVC];
-        vsendVC.chatsModel = self.chatsModel;
-        vsendVC.delegate = self;
-        [self presentViewController:vc animated:YES completion:nil];
+        if (self.chatsModel.play_type == RedPacketType_Fu) {
+            [MBProgressHUD showTipMessageInWindow:@"当前会话不允许发红包"];
+            return;
+        }
+        [self goto_sendRedPacketEnt];
         
     } else if (tag == ChatExtensionBar_Recharge){   // 充值
         [self onCzBtn];
@@ -1025,7 +1387,7 @@ static ChatViewController *_chatVC;
         vc.hidesBottomBarWhenPushed = YES;
         [self.navigationController pushViewController:vc animated:YES];
     } else if (tag == ChatExtensionBar_CustomerService){  // 客服
-//        [self actionShowCustomerServiceAlertView:nil];
+        //        [self actionShowCustomerServiceAlertView:nil];
         [self goto_CustomerService];
     } else if (tag == ChatExtensionBar_Album){ // 照片
         
@@ -1040,19 +1402,26 @@ static ChatViewController *_chatVC;
         //        [view showWithText:@"等待更新，敬请期待" button:@"好的" callBack:nil];
     } else if(tag == ChatExtensionBar_MakeMoney){  // 赚钱
         [self goto_onShareBtn];
+    } else if(tag == ChatExtensionBar_Transfer){  // 转账
+        TransferController *vc = [[TransferController alloc] init];
+        vc.delegate = self;
+        vc.chatsModel = self.chatsModel;
+        [self.navigationController pushViewController:vc animated:YES];
     } else {
         [MBProgressHUD showTipMessageInWindow:@"敬请期待"];
         return;
         
     }
     
+    
+    
 }
 #pragma mark -  悬浮菜单入口  充值|玩法|加盟 、红包详情|分享|群信息|群规
 - (void)onCzBtn {
-//    AppDelegate *delegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-//    ZMTabBarController *tab = (ZMTabBarController *)delegate.window.rootViewController;
-//    tab.selectedIndex = 1;
-//    [self.navigationController popToRootViewControllerAnimated:YES];
+    //    AppDelegate *delegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    //    ZMTabBarController *tab = (ZMTabBarController *)delegate.window.rootViewController;
+    //    tab.selectedIndex = 1;
+    //    [self.navigationController popToRootViewControllerAnimated:YES];
     
     
     PayTopUpTypeController *vc = [[PayTopUpTypeController alloc] init];
@@ -1074,31 +1443,16 @@ static ChatViewController *_chatVC;
  群规
  */
 - (void)groupRuleView {
-//    ImageDetailViewController *vc = [[ImageDetailViewController alloc] init];
-//    vc.imageUrl = self.chatsModel.ruleImg;
-//    vc.hiddenNavBar = YES;
-//    vc.title = @"群规";
-//    [self.navigationController pushViewController:vc animated:YES];
+    //    ImageDetailViewController *vc = [[ImageDetailViewController alloc] init];
+    //    vc.imageUrl = self.chatsModel.ruleImg;
+    //    vc.hiddenNavBar = YES;
+    //    vc.title = @"群规";
+    //    [self.navigationController pushViewController:vc animated:YES];
     
     WKWebViewController *vc = [[WKWebViewController alloc] init];
     
-//    NSString *url = nil;
-//    if (self.chatsModel.play_type == RedPacketType_SingleMine) {
-//        url = @"https://wr869.com/#/h5/playmethod/slqg";  //扫雷
-//    } else if (self.chatsModel.play_type == RedPacketType_BanRob) {
-//        url = @"https://wr869.com/#/h5/playmethod/jqqg";  //禁抢
-//    } else if (self.chatsModel.play_type == RedPacketType_CowCowNoDouble || self.chatsModel.play_type == RedPacketType_CowCowDouble) {
-//        url = @"https://wr869.com/#/h5/playmethod/nnqg";  //牛牛
-//    } else if (self.chatsModel.play_type == RedPacketType_Relay) {
-//        url = @"https://wr869.com/#/h5/playmethod/jlqg";  //接力
-//    } else if (self.chatsModel.play_type == RedPacketType_Luckys) {
-//        url = @"https://wr869.com/#/h5/playmethod/lkqg";  //lucky
-//    } else if (self.chatsModel.play_type == RedPacketType_Fu) {
-//        url = @"https://wr869.com/#/h5/activity/mrdshb";  //福利
-//    }
-    
     [vc loadWebURLSring:self.gamesTypeModel.role];   /// 后台还没有好
-//    [vc loadWebURLSring:url];
+    //    [vc loadWebURLSring:url];
     vc.title = @"群规";
     vc.hidesBottomBarWhenPushed = YES;
     [self.navigationController pushViewController:vc animated:YES];
@@ -1134,17 +1488,20 @@ static ChatViewController *_chatVC;
     [self.navigationController pushViewController:vc animated:YES];
     
 }
+
+
+
 - (void)goto_CustomerService {
-//    return;
+    //    return;
     ChatsModel *model = [[ChatsModel alloc] init];
     model.sessionType = ChatSessionType_CustomerService;
     model.sessionId = kCustomerServiceID;
     model.name = @"在线客服";
     model.avatar = @"105";
-    model.isChatsList = YES;
+    model.isJoinChatsList = YES;
     
     CSAskFormController *vc = [[CSAskFormController alloc] init];
-    vc.model = model;
+    vc.chatsModel = model;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -1156,7 +1513,7 @@ static ChatViewController *_chatVC;
 - (void)goto_GroupInfo {
     [self.view endEditing:YES];
     GroupInfoViewController *vc = [GroupInfoViewController groupVc:self.chatsModel];
-    vc.sessionModel = self.sessionModel;
+    vc.sessionModel = self.sessionModels;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -1168,6 +1525,19 @@ static ChatViewController *_chatVC;
     [self goto_FriendChatInfo:nil];
 }
 
+
+/**
+ 好友聊天信息页
+ 
+ @param userModel 联系人模型 BaseUserModel
+ */
+- (void)goto_CircleHeadImage:(BaseUserModel *)userModel {
+    [self.view endEditing:YES];
+    FriendHeadImageController *vc = [[FriendHeadImageController alloc] init];
+    vc.userId = userModel.userId;
+    vc.chatsModel = self.chatsModel;
+    [self.navigationController pushViewController:vc animated:YES];
+}
 /**
  好友聊天信息页
  
@@ -1247,7 +1617,7 @@ static ChatViewController *_chatVC;
 
 - (void)setNavUI {
     
-    if (self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game) {
+    if (self.chatsModel.sessionType == ChatSessionType_SystemRoom  || self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_Clubs_Hall || self.chatsModel.sessionType == ChatSessionType_BigUnion) {
         
         UIButton *redpiconBtn = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 44, 44)];
         [redpiconBtn setImage:[UIImage imageNamed:@"nav_redpacket_Icon"] forState:UIControlStateNormal];
@@ -1268,8 +1638,17 @@ static ChatViewController *_chatVC;
         self.navigationItem.rightBarButtonItems = @[infoItem,exItem];
         
     } else if (self.chatsModel.sessionType == ChatSessionType_Private) {
-//        UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"nav_group_info"] style:UIBarButtonItemStyleDone target:self action:@selector(goto_userInfo)];
-//        [self.navigationItem setRightBarButtonItem:rightBarButtonItem];
+        UIBarButtonItem *rightBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"fc_more"] style:UIBarButtonItemStyleDone target:self action:@selector(rightBarButtonDown:)];
+        [self.navigationItem setRightBarButtonItem:rightBarButtonItem];
+        
+        //        UIButton *info = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 44, 44)];
+        //        [info setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        //        [info setImage:[UIImage imageNamed:@"fc_more"] forState:UIControlStateNormal];
+        //        [info addTarget:self action:@selector(rightBarButtonDown:) forControlEvents:UIControlEventTouchUpInside];
+        //
+        //        UIBarButtonItem *infoItem = [[UIBarButtonItem alloc]initWithCustomView:info];
+        //        self.navigationItem.rightBarButtonItems = @[infoItem];
+        
     } else if (self.chatsModel.sessionType == ChatSessionType_ManyPeople_NormalChat) {
         
         UIButton *info = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 44, 44)];
@@ -1281,16 +1660,23 @@ static ChatViewController *_chatVC;
         UIBarButtonItem *infoItem = [[UIBarButtonItem alloc]initWithCustomView:info];
         
         self.navigationItem.rightBarButtonItem = infoItem;
-    } else if (self.chatsModel.sessionType == ChatSessionType_Clubs_Hall) {
-//        UIBarButtonItem *leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"nav_back"] style:UIBarButtonItemStyleDone target:self action:@selector(leftBarButtonDown:)];
-//        [self.navigationItem setLeftBarButtonItem:leftBarButtonItem];
     }
-
-    
 }
+
+
+
+- (void)rightBarButtonDown:(UIButton *)sender {
+    BaseUserModel *model = [BaseUserModel new];
+    model.userId = self.chatsModel.userId;
+    model.name = self.sessionModels.session_info.name;
+    model.avatar = self.sessionModels.session_info.avatar;
+    
+    [self goto_CircleHeadImage:model];
+}
+
 #pragma mark -  俱乐部聊天出口
 - (void)leftBarButtonDown:(UIBarButtonItem *)sender {
-//    [self.tabBarController.navigationController popToRootViewControllerAnimated:YES];
+    //    [self.tabBarController.navigationController popToRootViewControllerAnimated:YES];
 }
 
 - (void)setEntrancePlazaView {
@@ -1356,6 +1742,13 @@ static ChatViewController *_chatVC;
     
     [self.view bringSubviewToFront:backView];
     
+}
+
+- (NSMutableArray *)winningBroadcastArray {
+    if (!_winningBroadcastArray) {
+        _winningBroadcastArray = [[NSMutableArray alloc] init];
+    }
+    return _winningBroadcastArray;
 }
 
 @end

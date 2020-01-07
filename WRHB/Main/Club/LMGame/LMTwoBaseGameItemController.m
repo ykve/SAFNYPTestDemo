@@ -13,6 +13,7 @@
 #import "GameItemSelectedCollViewCell.h"
 
 #import "ChatViewController.h"
+#import "SessionSingle.h"
 
 static NSString * const kGameItemCollectionViewCellId = @"kGameItemCollectionViewCell";
 static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCollViewCell";
@@ -23,9 +24,9 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
 
 /// 退群使用
 ///
-@property (nonatomic, strong) GamesTypeModel *exitGamesTypeModel;
+@property (nonatomic, strong) GamesTypeModel *gamesTypeModel;
 ///
-@property (nonatomic, strong) ChatsModel *exitChatsModel;
+@property (nonatomic, strong) ChatsModel *chatsModel;
 
 @end
 
@@ -37,7 +38,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
     [self initSubviews];
     
     [self setFootView];
-    
+    [self gamesChatsClear];
 }
 
 - (void)setTopImgSelectedIndex:(NSInteger)topImgSelectedIndex {
@@ -96,7 +97,12 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
         ChatsModel *cmodel = model.items[indexPath.row];
         cell.titleLabel.text = model.title;
         cell.contentLabel.text = [cmodel.number_limit stringByReplacingOccurrencesOfString:@"," withString:@"-"];   //替换字符串
-        cell.scorllTextLable.text = cmodel.desc;
+        cell.scorllTextLable.text = cmodel.name;
+        if (cmodel.play_type == RedPacketType_CowCowDouble || cmodel.play_type == RedPacketType_CowCowNoDouble) {
+            cell.imgType.image = cmodel.play_type == RedPacketType_CowCowDouble?[UIImage imageNamed:@"club_doubleNiuNiu"]:[UIImage imageNamed:@"club_singleNiuNiu"];
+        }else{
+            cell.imgType.image = nil;
+        }
     }
     
     return cell;
@@ -113,8 +119,8 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
     GamesTypeModel *model = self.dataArray[self.topImgSelectedIndex];
     ChatsModel *cmodel = model.items[indexPath.row];
     
-    self.exitGamesTypeModel = model;
-    self.exitChatsModel = cmodel;
+    self.gamesTypeModel = model;
+    self.chatsModel = cmodel;
     
     [self joinGroup:cmodel gamesTypeModel:model password:nil];
     
@@ -145,10 +151,11 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            [strongSelf groupChat:chatModel gamesTypeModel:gamesTypeModel];
+            [SessionSingle sharedInstance].myJoinGameGroupSessionId = chatModel.sessionId;
+            [strongSelf goto_groupChat:chatModel gamesTypeModel:gamesTypeModel];
         } else if ([[response objectForKey:@"status"] integerValue] == 2) {
             // 退群
-            [self action_exitGroup:[response[@"data"][@"session"] integerValue]];
+            [strongSelf exitGroupRequest:[response[@"data"][@"session"] integerValue]];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response[@"mesage"]];
         }
@@ -159,7 +166,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
     } progressBlock:nil];
 }
 
-- (void)groupChat:(ChatsModel *)model gamesTypeModel:(GamesTypeModel *)gamesTypeModel {
+- (void)goto_groupChat:(ChatsModel *)model gamesTypeModel:(GamesTypeModel *)gamesTypeModel {
     
     NSDictionary *dict = @{@"model": model,
                            @"gamesTypeModel": gamesTypeModel,
@@ -171,7 +178,7 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
 /**
  退出群组请求  退群
  */
-- (void)action_exitGroup:(NSInteger)sessionId {
+- (void)exitGroupRequest:(NSInteger)sessionId {
     
     
     BADataEntity *entity = [BADataEntity new];
@@ -188,7 +195,8 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
         [MBProgressHUD hideHUD];
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            [strongSelf joinGroup:strongSelf.exitChatsModel gamesTypeModel:self.exitGamesTypeModel password:nil];
+            [SessionSingle sharedInstance].myJoinGameGroupSessionId = 0;
+            [strongSelf joinGroup:strongSelf.chatsModel gamesTypeModel:strongSelf.gamesTypeModel password:nil];
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
@@ -196,6 +204,14 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
         [MBProgressHUD hideHUD];
         [[AFHttpError sharedInstance] handleFailResponse:error];
     } progressBlock:nil];
+}
+
+- (void)gamesChatsClear {
+    [[SessionSingle sharedInstance] gamesChatsClearSuccessBlock:^(NSDictionary *success) {
+        NSLog(@"1");
+    } failureBlock:^(NSError *error) {
+        NSLog(@"1");
+    }];
 }
 
 //返回这个UICollectionView是否可以被选择

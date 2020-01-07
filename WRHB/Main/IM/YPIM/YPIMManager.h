@@ -1,6 +1,6 @@
 //
 //  YPIMManager.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/4/2.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class PushMessageNumModel;
+@class TransferModel;
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -23,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param redPacketInfo 更改后的红包模型
  */
 - (void)updateRedPacketInfo:(EnvelopeMessage *)redPacketInfo;
-
+- (void)updateTransferInfo:(TransferModel *)redPacketInfo;
 
 - (void)updateMessageNum:(PushMessageNumModel *)curPushModel left:(NSInteger)left;
 

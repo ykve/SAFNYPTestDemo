@@ -32,9 +32,9 @@ static NSString * const kGameItemSelectedCollViewCellId = @"kGameItemSelectedCol
 
 /// 退群使用
 ///
-@property (nonatomic, strong) GamesTypeModel *exitGamesTypeModel;
+@property (nonatomic, strong) GamesTypeModel *gamesTypeModel;
 ///
-@property (nonatomic, strong) ChatsModel *exitChatsModel;
+@property (nonatomic, strong) ChatsModel *chatsModel;
 
 @property(nonatomic, strong) TFPopupParam *popupParam;
 

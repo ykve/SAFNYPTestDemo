@@ -8,6 +8,7 @@
 
 #import "CreateGroupController.h"
 #import "FSTextView.h"
+#import "SessionSingle.h"
 
 
 
@@ -67,8 +68,9 @@
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [MBProgressHUD showTipMessageInWindow:@"创建群成功"];
-            [[NSNotificationCenter defaultCenter] postNotificationName:kReloadMyMessageGroupList object:nil];
-            [self.navigationController popViewControllerAnimated:YES];
+            [[SessionSingle sharedInstance] queryMyJoinGroup];
+            [strongSelf performSelector:@selector(execData) withObject:nil afterDelay:1];
+           
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
         }
@@ -79,6 +81,10 @@
         [MBProgressHUD hideHUD];
         [[AFHttpError sharedInstance] handleFailResponse:error];
     } progressBlock:nil];
+}
+- (void)execData {
+    [self.navigationController popViewControllerAnimated:YES];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadMyMessageGroupList object:nil];
 }
 
 

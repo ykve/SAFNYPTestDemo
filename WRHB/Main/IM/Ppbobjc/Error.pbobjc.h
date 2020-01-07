@@ -127,6 +127,12 @@ typedef GPB_ENUM(Error) {
 
   /** 不能和客服讲话 */
   Error_NoSpeakKefu = 700513,
+
+  /** 自已不能讲话 */
+  Error_SelfNoSpeak = 700514,
+
+  /** 会话不能讲话 */
+  Error_SessionNoSpeak = 700515,
 };
 
 GPBEnumDescriptor *Error_EnumDescriptor(void);

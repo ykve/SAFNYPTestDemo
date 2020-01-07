@@ -14,22 +14,22 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SessionInfoModel : NSObject
 
-/// 玩法说明(只有群聊才会有，单聊不返回)
-@property (nonatomic, copy) NSString *play_type_notice;
-/// 群规(只有群聊才会有，单聊不返回)
-@property (nonatomic, copy) NSString *group_regulation;
+/// 会话 ID
+@property (nonatomic, assign) NSInteger sessionId;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, copy) NSString *avatar;
 /// 须知(只有群聊才会有，单聊不返回)
 @property (nonatomic, copy) NSString *desc;
-/// 成员信息
-@property (nonatomic, strong) NSArray<BaseUserModel *> *group_users;
+@property (nonatomic, copy) NSString *packet_range;
+@property (nonatomic, copy) NSString *number_limit;
 /// 公告(只有群聊才会有，单聊不返回)
 @property (nonatomic, copy) NSString *notice;
 /// 红包类型
 @property (nonatomic, assign) RedPacketType play_type;
-/// 群主ID
-@property (nonatomic, assign) NSInteger groupId;
-/// 创建者ID
-@property (nonatomic, assign) NSInteger creator;
+///
+@property (nonatomic, assign) NSInteger initiator;
+/// 会话类型
+@property (nonatomic, assign) ChatSessionType type;
 
 @end
 

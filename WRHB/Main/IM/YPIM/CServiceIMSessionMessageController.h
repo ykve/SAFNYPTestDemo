@@ -14,6 +14,7 @@
 #import "YPContacts.h"
 @class ChatsModel;
 @class CSAskFormModel;
+@class YSTopupListModel;
 
 @interface CServiceIMSessionMessageController : UIViewController
 
@@ -35,6 +36,8 @@
 
 /// 自动询问模型
 @property (nonatomic, strong) CSAskFormModel *askModel;
+/// 盈商列表数据
+@property (nonatomic, strong) YSTopupListModel *ysTopupListModel;
 
 
 - (void)didTapMessageCell:(YPMessage *)model;

@@ -8,7 +8,7 @@
 
 #import "BankCardManageController.h"
 #import "AddBankCardViewController.h"
-#import "BankModel.h"
+#import "WithdrawBankModel.h"
 #import "BanklistCell.h"
 #import "UIView+TapAction.h"
 
@@ -99,10 +99,10 @@
         cell = [[BanklistCell alloc] initWithStyle:0 reuseIdentifier:@"BanklistCell"];
     }
     cell.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
-    BankModel *model = [self.bankArray objectAtIndex:indexPath.row];
+    WithdrawBankModel *model = [self.bankArray objectAtIndex:indexPath.row];
     cell.model = model;
     __weak __typeof(self)weakSelf = self;
-    cell.deleteBankCardBlock = ^(BankModel *model) {
+    cell.deleteBankCardBlock = ^(WithdrawBankModel *model) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         [strongSelf deleteBankCardBlock:model];
     };
@@ -112,7 +112,7 @@
 
 
 #pragma mark -  删除银行卡
-- (void)deleteBankCardBlock:(BankModel *)model {
+- (void)deleteBankCardBlock:(WithdrawBankModel *)model {
     
      NSDictionary *parameters = @{
                                   @"bank_card":model.card
@@ -221,7 +221,7 @@
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            strongSelf.bankArray = [BankModel mj_objectArrayWithKeyValuesArray:response[@"data"]];
+            strongSelf.bankArray = [WithdrawBankModel mj_objectArrayWithKeyValuesArray:response[@"data"]];
             
             [strongSelf.tableView reloadData];
         } else {

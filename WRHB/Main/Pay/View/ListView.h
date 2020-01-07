@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
-@class BankModel;
+@class WithdrawBankModel;
 
 
 typedef void(^ClubCancelBlock)(void);
-typedef void(^ClubSelectBlock)(BankModel *model);
+typedef void(^ClubSelectBlock)(WithdrawBankModel *model);
 NS_ASSUME_NONNULL_BEGIN
 
 @interface ListView : UIView<UITableViewDelegate,UITableViewDataSource>

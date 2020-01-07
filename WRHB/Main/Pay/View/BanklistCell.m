@@ -84,7 +84,7 @@
     return _exitBtn;
 }
 
-- (void)setModel:(BankModel *)model {
+- (void)setModel:(WithdrawBankModel *)model {
     _model = model;
     
 //    self.backImage.image = indexPath.row%2 == 0 ? [UIImage imageNamed:@"me_pay_bankcard_bg"] : [UIImage imageNamed:@"me_pay_bankcard_bg"];

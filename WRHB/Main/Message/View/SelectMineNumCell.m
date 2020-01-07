@@ -1,6 +1,6 @@
 //
 //  SendRedPackedCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/2/28.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -69,6 +69,7 @@
     [self addSubview:backView];
     
     [backView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(0);
         make.bottom.equalTo(self.mas_bottom).offset(-10);
         make.left.equalTo(self.mas_left).offset(kTableViewMarginWidth);
         make.right.equalTo(self.mas_right).offset(-kTableViewMarginWidth);
@@ -131,6 +132,14 @@
         }
     };
     [backView addSubview:sendRPCollectionView];
+    [sendRPCollectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(backView.mas_top);
+        make.left.mas_equalTo(kSendRPTitleCellWidth);
+        make.width.equalTo(@([UIScreen mainScreen].bounds.size.width - kTableViewMarginWidth*2 - kSendRPTitleCellWidth));
+        make.bottom.equalTo(backView.mas_bottom);
+    }];
+    
+    
     _sendRPCollectionView = sendRPCollectionView;
 
 }

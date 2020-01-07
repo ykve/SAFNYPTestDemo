@@ -1,6 +1,6 @@
 //
 //  RecommendedViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -14,7 +14,7 @@
 #import "SPAlertController.h"
 
 #import "Sub_Users.h"
-#import "UIView+AZGradient.h"
+#import "UIView+AZGradient.h"  // 渐变色
 #import "TFPopup.h"
 #import "ClubListView.h"
 

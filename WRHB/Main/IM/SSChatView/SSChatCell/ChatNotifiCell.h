@@ -1,6 +1,6 @@
 //
 //  NotificationMessageCell.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/2/13.
 //  Copyright © 2019 AFan. All rights reserved.

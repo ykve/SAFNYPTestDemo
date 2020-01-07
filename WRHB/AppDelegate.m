@@ -15,18 +15,23 @@
 #import "LoginViewController.h"
 
 #import "YPIMManager.h"
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "AFSocketManager.h"
 #import "IMMessageManager.h"
 
+#import <Pusher/Pusher.h>
+#import <AVFoundation/AVFoundation.h>
+#import "SysMessageListModel.h"
 
+#import <IQKeyboardManager/IQKeyboardManager.h>
 UIColor *MainNavBarColor = nil;
 UIColor *MainViewColor = nil;
 
 
 
-@interface AppDelegate () <UIActionSheetDelegate>
-
+@interface AppDelegate () <UIActionSheetDelegate,PTPusherDelegate>
+@property (nonatomic ,strong) PTPusher *client;
+@property (nonatomic, strong) AVAudioPlayer *player;
 @end
 
 @implementation AppDelegate
@@ -41,18 +46,18 @@ static AppDelegate *_singleInstance;
     
     NSLog(@"服务器地址 %@",kServerUrl);
     NSLog(@"微信key %@ 微信secret %@",kWXKey,kWXSecret);
-    
+    [IQKeyboardManager sharedManager].previousNextDisplayMode = IQPreviousNextDisplayModeAlwaysHide;
+    [IQKeyboardManager sharedManager].toolbarDoneBarButtonItemText = @"确定";
     [self initData];
 #if TARGET_IPHONE_SIMULATOR
-    //    [JPEngine startEngine];
-    //    NSString *sourcePath = [[NSBundle mainBundle] pathForResource:@"main" ofType:@"js"];
-    //    NSString *script = [NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:nil];
-    //    [JPEngine evaluateScript:script];
+    [JPEngine startEngine];
+    NSString *sourcePath = [[NSBundle mainBundle] pathForResource:@"main" ofType:@"js"];
+    NSString *script = [NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:nil];
+    [JPEngine evaluateScript:script];
 #elif TARGET_OS_IPHONE
-    // 热更新加载
-    //    [JSPatchManager asyncUpdate:YES];
+    [JSPatchManager asyncUpdate:YES];
 #endif
-    [self gethistoryMessageNum];
+    [self getHistoryMessageNum];
     
 #if DEBUG
 #else
@@ -63,7 +68,14 @@ static AppDelegate *_singleInstance;
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.window.backgroundColor = [UIColor whiteColor];
     
+    
     [self setRootViewController];
+    
+    
+    [self broadcastNotification];
+    /// 刷新会话信息
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(loginPusherSetValue) name:kLoginedNotification object:nil];
+    
     
     //    [self setTabbar];
     [self.window makeKeyAndVisible];
@@ -74,6 +86,7 @@ static AppDelegate *_singleInstance;
 - (void)initData {
     // 初始化一些数据
     [AppModel sharedInstance].isClubChat = NO;
+    [UnreadMessagesNumSingle sharedInstance];
 }
 
 /**
@@ -103,9 +116,9 @@ static AppDelegate *_singleInstance;
     [AppModel sharedInstance].token = nil;
     [AppModel sharedInstance].user_info = [UserInfo new];
     [[YPIMManager sharedInstance] userSignout];
-    [AppModel sharedInstance].unReadAllCount = 0;
-    [[MessageNet sharedInstance] destroyData];
+    [[SessionSingle sharedInstance] destroyData];
     [[AppModel sharedInstance] saveAppModel];
+    [[UnreadMessagesNumSingle sharedInstance] destoryInstance];
     
     __weak __typeof(self)weakSelf = self;
     dispatch_async(dispatch_get_main_queue(),^{
@@ -141,27 +154,112 @@ static AppDelegate *_singleInstance;
 }
 
 
-
-
-
-- (void)gethistoryMessageNum {
-    
-    NSInteger oldMessageNum = 0;
-    if ([AppModel sharedInstance].unReadAllCount > 0) {
-        oldMessageNum = [AppModel sharedInstance].unReadAllCount;
+#pragma mark -  Chats 广播
+- (void)broadcastNotification {
+    NSString *pushKey = nil;
+    if ([AppModel sharedInstance].isDebugMode) {
+        pushKey = kPusherKeyTest;
+    } else {
+        pushKey = kPusherKey;
     }
-    [AppModel sharedInstance].unReadAllCount = 0;
     
-    NSString *queryWhere = [NSString stringWithFormat:@"userId='%ld'",[AppModel sharedInstance].user_info.userId];
+    // self.client is a strong instance variable of class PTPusher
+    self.client = [PTPusher pusherWithKey:pushKey delegate:self encrypted:YES cluster:@"ap1"];
+    
+    // subscribe to channel and bind to event
+    PTPusherChannel *channel = [self.client subscribeToChannelNamed:@"pmd"];
+    
+    [channel bindToEventNamed:@"carousel" handleWithBlock:^(PTPusherEvent *channelEvent) {
+        // channelEvent.data is a NSDictianary of the JSON object received
+        NSDictionary *data = [channelEvent.data objectForKey:@"data"];
+        //        NSLog(@"message received: %@", message);
+        if (data) {
+            //            NSDictionary *dict = @{@"content":data[@"content"],@"num":data[@"num"]};
+            /// 中奖广播
+            [[NSNotificationCenter defaultCenter] postNotificationName:kWinningBroadcastNotification object: data];
+        }
+    }];
+    
+    if ([AppModel sharedInstance].channel.length > 0) {
+        [self loginPusherSetValue];
+    }
+    
+    [self.client connect];
+    
+}
+
+
+#pragma mark -  系统消息接收
+- (void)loginPusherSetValue {
+    
+    if ([AppModel sharedInstance].channel.length == 0) {
+        return;
+    }
+    // subscribe to channel and bind to event
+    PTPusherChannel *channel2 = [self.client subscribeToChannelNamed:[AppModel sharedInstance].channel];
+    
+    __weak __typeof(self)weakSelf = self;
+    
+    [channel2 bindToEventNamed:[AppModel sharedInstance].event handleWithBlock:^(PTPusherEvent *channelEvent) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        // channelEvent.data is a NSDictianary of the JSON object received
+        NSDictionary *data2 = [channelEvent.data objectForKey:@"data"];
+        //        NSLog(@"message received: %@", message);
+        if (data2) {
+            //            NSDictionary *dict = @{@"type":data2[@"type"],@"title":data2[@"title"],@"content":data2[@"content"],@"updateTime":data2[@"updateTime"]};
+            [strongSelf receiveSysMessageDict:data2];
+        }
+    }];
+}
+
+- (void)receiveSysMessageDict:(NSDictionary *)dict {
+    
+    [UnreadMessagesNumSingle sharedInstance].sysMessageListNum += 1;
+    
+    if (![AppModel sharedInstance].turnOnSound) {
+#if TARGET_IPHONE_SIMULATOR
+#elif TARGET_OS_IPHONE
+        [self.player play];
+#endif
+    }
+    
+    SysMessageListModel *model = [[SysMessageListModel alloc] init];
+    model.userId = [AppModel sharedInstance].user_info.userId;
+    model.type = [dict[@"type"] integerValue];
+    model.title = dict[@"title"];
+    model.content = dict[@"content"];
+    model.updateTime = [dict[@"updateTime"] integerValue];
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        BOOL isSuccess = [WHC_ModelSqlite insert:model];
+        if (!isSuccess) {
+            [WHC_ModelSqlite removeModel:[SysMessageListModel class]];
+            [WHC_ModelSqlite insert:model];
+        }
+    });
+    
+    [self performSelector:@selector(sysNotificat) withObject:nil afterDelay:1];
+    //    [self performSelectorOnMainThread:@selector(sysNotificat) withObject:nil waitUntilDone:YES];
+}
+
+- (void)sysNotificat {
+    /// 系统消息列表
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSysMessageListNotification object: @"kUpdateSysMessageList"];
+    
+}
+
+
+#pragma mark -  未读历史消息数量
+- (void)getHistoryMessageNum {
+    
+    NSString *queryWhere = [NSString stringWithFormat:@"userId='%ld'",(long)[AppModel sharedInstance].user_info.userId];
     NSArray *userGroupArray = [WHC_ModelSqlite query:[PushMessageNumModel class] where:queryWhere];
     
     for (NSInteger index = 0; index < userGroupArray.count; index++) {
         PushMessageNumModel *pmModel = (PushMessageNumModel *)userGroupArray[index];
         
-        if (pmModel != nil && pmModel.sessionId == 0 && !(pmModel.sessionId == 0)) {
-            //            [AppModel sharedInstance].unReadAllCount += pmModel.number;
-            
-            NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",pmModel.sessionId,[AppModel sharedInstance].user_info.userId];
+        if (pmModel != nil && pmModel.sessionId != 0) {
+            NSString *queryId = [NSString stringWithFormat:@"%ld_%ld", (long)pmModel.sessionId,(long)[AppModel sharedInstance].user_info.userId];
             [MessageSingle sharedInstance].unreadAllMessagesDict[queryId] = pmModel;
         }
     }
@@ -194,7 +292,7 @@ static AppDelegate *_singleInstance;
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     [self requestJSPatchInfo];
     // 更新的弹框 AFan
-//    [[FunctionManager sharedInstance] checkVersion:NO];
+    //    [[FunctionManager sharedInstance] checkVersion:NO];
 }
 
 /**
@@ -223,5 +321,30 @@ static AppDelegate *_singleInstance;
     NSLog(@"1");
 }
 
+
+
+
+
+
+
+- (AVAudioPlayer *)player {
+    if (!_player) {
+        // 虽然传递的参数是NSURL地址, 但是只支持播放本地文件, 远程音乐文件路径不支持
+        NSURL *url = [[NSBundle mainBundle]URLForResource:@"af_sms-received.caf" withExtension:nil];
+        _player = [[AVAudioPlayer alloc]initWithContentsOfURL:url error:nil];
+        
+        //允许调整速率,此设置必须在prepareplay 之前
+        _player.enableRate = YES;
+        //        _player.delegate = self;
+        
+        //指定播放的循环次数、0表示一次
+        //任何负数表示无限播放
+        [_player setNumberOfLoops:0];
+        //准备播放
+        [_player prepareToPlay];
+        
+    }
+    return _player;
+}
 
 @end

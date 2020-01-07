@@ -9,10 +9,10 @@
 #import <UIKit/UIKit.h>
 
 #import "JXCategoryListContainerView.h"
-
+#import "BasePayTopUpController.h"
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PayTopUpController : UIViewController <JXCategoryListContentViewDelegate>
+@interface PayTopUpController : BasePayTopUpController <JXCategoryListContentViewDelegate>
 
 /// 
 @property (nonatomic, assign) NSInteger controllerIndex;

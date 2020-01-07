@@ -1,8 +1,8 @@
 //
 //  WithdrawView.h
-//  Project
+//  WRHB
 //
-//  Created by fangyuan on 2019/2/27.
+//  Created by AFan on 2019/2/27.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 

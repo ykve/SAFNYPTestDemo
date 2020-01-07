@@ -12,9 +12,21 @@
 
 #define WindowsSize [UIScreen mainScreen].bounds.size
 
+@protocol ItemViewSelectedDelegate <NSObject>
+
+@optional
+/*
+ @param index 选中的index
+ */
+- (void)didSelectedItemAtIndex:(NSInteger)index;
+
+@end
+
 @interface ContentBaseViewController : UIViewController<JXCategoryListContainerViewDelegate>
 
 @property (nonatomic, strong) NSArray *titles;
+
+@property (nonatomic, weak) id<ItemViewSelectedDelegate> delegate;
 
 @property (nonatomic, strong) JXCategoryBaseView *categoryView;
 

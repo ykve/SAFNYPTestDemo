@@ -24,7 +24,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor greenColor];
+    self.view.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
     self.navigationItem.title = @"询前表单";
     
     [self getDataList];
@@ -63,12 +63,7 @@
 }
 
 
-- (void)goto_CServiceChat:(CSAskFormModel *)askModel {
-    CServiceChatController *vc = [CServiceChatController chatsFromModel:self.model];
-    vc.askModel = askModel;
-    vc.hidesBottomBarWhenPushed = YES;
-    [self.navigationController pushViewController:vc animated:YES];
-}
+
 
 
 
@@ -103,10 +98,52 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
     CSAskFormModel *model = self.dataArray[indexPath.row];
-    [self goto_CServiceChat:model];
+    [self createServiceSession:model];
+    
 }
 
 
+#pragma mark -  客服会话创建
+/**
+ 客服会话创建
+ */
+- (void)createServiceSession:(CSAskFormModel *)model {
+    
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/createServiceSession"];
+    entity.needCache = NO;
+    //    entity.parameters = parameters;
+    
+    __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        
+        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+//            strongSelf.sessionId = [response[@"data"][@"session"] integerValue];
+//            strongSelf.chatsModel.sessionId = kCustomerServiceID;
+            
+            strongSelf.chatsModel.sessionId = [response[@"data"][@"session"] integerValue];;
+            strongSelf.chatsModel.name = response[@"data"][@"title"];
+            strongSelf.chatsModel.avatar = response[@"data"][@"avatar"];
+            strongSelf.chatsModel.sessionType = ChatSessionType_CustomerService;
+            
+            [strongSelf goto_CServiceChat:model];
+            
+        } else {
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+    } failureBlock:^(NSError *error) {
+        [MBProgressHUD hideHUD];
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
+
+- (void)goto_CServiceChat:(CSAskFormModel *)askModel {
+    CServiceChatController *vc = [CServiceChatController chatsFromModel:self.chatsModel];
+    vc.askModel = askModel;
+    vc.hidesBottomBarWhenPushed = YES;
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
 #pragma mark - vvUITableView
 - (UITableView *)tableView {

@@ -1,6 +1,6 @@
 //
 //  AFMessageConstants.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/4/10.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -17,6 +17,8 @@ static NSString *const YPChatMapCellId = @"YPChatMapCellId";
 static NSString *const YPChatVideoCellId = @"YPChatVideoCellId";
 // 红包Cell
 static NSString *const AFRedPacketCellId = @"AFRedPacketCellId";
+// 转账
+static NSString *const AFTransferCellId = @"AFTransferCellId";
 // 牛牛报奖信息
 static NSString *const CowCowVSMessageCellId = @"CowCowVSMessageCellId";
 // 系统消息

@@ -713,7 +713,7 @@ static sqlite3 * _whc_database;
     sqlite3_stmt * pp_stmt = nil;
     NSDictionary * field_dictionary = [self parserModelObjectFieldsWithModelClass:[model_object class]];
     NSString * table_name = [self getTableName:[model_object class]];
-    __block NSString * insert_sql = [NSString stringWithFormat:@"INSERT INTO %@ (",table_name];
+    __block NSString * insert_sql = [NSString stringWithFormat:@"INSERT  INTO %@ (",table_name];
     NSArray * field_array = field_dictionary.allKeys;
     NSMutableArray * value_array = [NSMutableArray array];
     NSMutableArray * insert_field_array = [NSMutableArray array];

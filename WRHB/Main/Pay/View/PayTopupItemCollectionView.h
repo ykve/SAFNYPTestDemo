@@ -11,6 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface PayTopupItemCollectionView : UIView
+@property (nonatomic, strong) NSIndexPath *selectedIndexPath;
 @property (nonatomic, strong) id model;
 @end
 

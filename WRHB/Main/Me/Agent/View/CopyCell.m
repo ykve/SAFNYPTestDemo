@@ -1,13 +1,13 @@
 //
 //  CopyCell.m
-//  Project
+//  WRHB
 //
-//  Created by fangyuan on 2019/4/4.
+//  Created by AFan on 2019/4/4.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 
 #import "CopyCell.h"
-#import "UIView+AZGradient.h"
+#import "UIView+AZGradient.h"  // 渐变色
 @implementation CopyCell
 
 - (void)awakeFromNib {
@@ -61,7 +61,7 @@
         make.bottom.equalTo(self.contentView.mas_bottom).offset(-5);
         make.width.equalTo(@60);
     }];
-    [copyButton addTarget:self action:@selector(copyAction) forControlEvents:UIControlEventTouchUpInside];
+    [copyButton addTarget:self action:@selector(onCopyAction) forControlEvents:UIControlEventTouchUpInside];
     self.copBtn = copyButton;
     
     CGFloat marginWidth = 10;
@@ -112,7 +112,7 @@
     // Configure the view for the selected state
 }
 
--(void)copyAction{
+-(void)onCopyAction{
     NSString *s = self.tLabel.text;
     if(s.length == 0)
         s = @"";

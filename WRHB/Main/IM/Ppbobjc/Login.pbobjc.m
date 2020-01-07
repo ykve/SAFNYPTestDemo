@@ -309,6 +309,74 @@ void SetSLogin_Result_RawValue(SLogin *message, int32_t value) {
   GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
 }
 
+#pragma mark - SAgainLogin
+
+@implementation SAgainLogin
+
+@dynamic result;
+@dynamic errMsg;
+
+typedef struct SAgainLogin__storage_ {
+  uint32_t _has_storage_[1];
+  Error result;
+  NSString *errMsg;
+} SAgainLogin__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "result",
+        .dataTypeSpecific.enumDescFunc = Error_EnumDescriptor,
+        .number = SAgainLogin_FieldNumber_Result,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(SAgainLogin__storage_, result),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .dataType = GPBDataTypeEnum,
+      },
+      {
+        .name = "errMsg",
+        .dataTypeSpecific.className = NULL,
+        .number = SAgainLogin_FieldNumber_ErrMsg,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(SAgainLogin__storage_, errMsg),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[SAgainLogin class]
+                                     rootClass:[LoginRoot class]
+                                          file:LoginRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(SAgainLogin__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+int32_t SAgainLogin_Result_RawValue(SAgainLogin *message) {
+  GPBDescriptor *descriptor = [SAgainLogin descriptor];
+  GPBFieldDescriptor *field = [descriptor fieldWithNumber:SAgainLogin_FieldNumber_Result];
+  return GPBGetMessageInt32Field(message, field);
+}
+
+void SetSAgainLogin_Result_RawValue(SAgainLogin *message, int32_t value) {
+  GPBDescriptor *descriptor = [SAgainLogin descriptor];
+  GPBFieldDescriptor *field = [descriptor fieldWithNumber:SAgainLogin_FieldNumber_Result];
+  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+}
+
 #pragma mark - SKickOut
 
 @implementation SKickOut

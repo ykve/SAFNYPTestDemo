@@ -33,6 +33,7 @@
         make.top.left.bottom.right.equalTo(self);
     }];
     
+    
     UILabel *titleLabel = [[UILabel alloc] init];
     titleLabel.text = @"-";
     titleLabel.font = [UIFont systemFontOfSize:17];
@@ -61,13 +62,22 @@
         make.centerY.equalTo(backImageView.mas_centerY).offset(0);
         //        make.size.mas_equalTo(CGSizeMake(self.frame.size.width, 30));
     }];
+    ///单双倍牛牛
+    UIImageView *imgGameType = [[UIImageView alloc]init];
+    imgGameType.backgroundColor = [UIColor clearColor];
+    [self addSubview:imgGameType];
+    _imgType = imgGameType;
+    [imgGameType mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self).offset(-10);
+        make.left.equalTo(self);
+    }];
     
     //创建一个滚动文字的label
     JJScorllTextLable *deslabel = [[JJScorllTextLable alloc] init];
     //    label.text = @"设置滚动文字的内容";   //设置滚动文字的内容
     deslabel.font = [UIFont systemFontOfSize:13];
     deslabel.textColor = [UIColor whiteColor];
-    deslabel.rate = 0.3;
+    deslabel.rate = 0.2;
     [backImageView addSubview:deslabel]; //把滚动文字的lable加到视图
     _scorllTextLable = deslabel;
     //    label.backgroundColor= [UIColor redColor];

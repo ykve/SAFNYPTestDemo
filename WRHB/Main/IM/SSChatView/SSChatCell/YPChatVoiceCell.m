@@ -143,7 +143,7 @@
     }
     
     
-    NSString *whereStr = [NSString stringWithFormat:@"sessionId=%zd AND messageId=%zd", self.model.message.sessionId,self.model.message.messageId];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and sessionId=%zd AND messageId=%zd", [AppModel sharedInstance].user_info.userId,self.model.message.sessionId,self.model.message.messageId];
     YPMessage *oldMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     oldMessage.audioModel.isClickReaded = YES;
     

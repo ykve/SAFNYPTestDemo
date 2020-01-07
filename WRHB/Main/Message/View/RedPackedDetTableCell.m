@@ -1,6 +1,6 @@
 //
 //  EnvelopTableViewCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/9/3.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -17,7 +17,7 @@
 @property (nonatomic, strong) UILabel *name;
 @property (nonatomic, strong) UIImageView *sex;
 @property (nonatomic, strong) UILabel *date;
-@property (nonatomic, strong) UILabel *moneyLable;
+@property (nonatomic, strong) UILabel *moneyLabel;
 @property (nonatomic, strong) UIView *maxImgView;
 @property (nonatomic, strong) UIImageView *mineImageView;
 //
@@ -26,7 +26,7 @@
 @property (nonatomic, strong) UILabel *pointLabel;
 
 @property (nonatomic, strong) UIView *backView;
-
+@property (nonatomic, strong) UILabel *mineMoneyLabel;
 
 
 
@@ -60,45 +60,11 @@
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        [self initData];
         [self setupSubViews];
-        [self initLayout];
     }
     return self;
 }
 
-#pragma mark ----- Data
-- (void)initData{
-    
-}
-
-
-#pragma mark ----- Layout
-- (void)initLayout {
-    [_headImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.backView.mas_left).offset(15);
-        make.centerY.equalTo(self.backView);
-        make.height.width.equalTo(@(40));
-    }];
-    
-    [_name mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.headImageView.mas_right).offset(10);
-        make.top.equalTo(self.headImageView.mas_top);
-    }];
-    
-    [_date mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.headImageView.mas_right).offset(11);
-        make.top.equalTo(self ->_name.mas_bottom).offset(6);
-    }];
-    
-    [_mineImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.backView.mas_right).offset(-90);
-        make.centerY.equalTo(self.backView.mas_centerY);
-        make.size.mas_equalTo(CGSizeMake(22, 22));
-    }];
-    
-    
-}
 
 #pragma mark ----- subView
 - (void)setupSubViews {
@@ -134,10 +100,22 @@
     _headImageView.layer.cornerRadius = 5;
     _headImageView.layer.masksToBounds = YES;
     
+    [_headImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.backView.mas_left).offset(15);
+        make.centerY.equalTo(self.backView);
+        make.height.width.equalTo(@(40));
+    }];
+    
     _name = [UILabel new];
     [backView addSubview:_name];
     _name.textColor = Color_3;
     _name.font = [UIFont systemFontOfSize2:15];
+    
+    [_name mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.headImageView.mas_right).offset(10);
+        make.top.equalTo(self.headImageView.mas_top);
+    }];
+    
     
     _bankerImageView = [[UIImageView alloc] init];
     _bankerImageView.image = [UIImage imageNamed:@"cow_banker"];
@@ -155,13 +133,19 @@
     _date.textColor = Color_9;
     _date.font = [UIFont systemFontOfSize2:12];
     
+    [_date mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.headImageView.mas_right).offset(11);
+        make.top.equalTo(self ->_name.mas_bottom).offset(6);
+    }];
+    
     _pointsNumImageView = [[UIImageView alloc] init];
-    _pointsNumImageView.hidden = YES;
+//    _pointsNumImageView.backgroundColor = [UIColor greenColor];
+    _pointsNumImageView.hidden = NO;
     [backView addSubview:_pointsNumImageView];
     
     [_pointsNumImageView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(backView.mas_right).offset(-15);
-        make.top.equalTo(backView).offset(15);
+        make.top.equalTo(backView.mas_top).offset(15);
         make.size.mas_equalTo(CGSizeMake(11.5, 11));
     }];
     
@@ -177,14 +161,15 @@
     
     
     
-    _moneyLable = [UILabel new];
-    [backView addSubview:_moneyLable];
-    _moneyLable.textColor = Color_3;
-    _moneyLable.font = [UIFont boldSystemFontOfSize:16];
+    _moneyLabel = [UILabel new];
+//    _moneyLabel.backgroundColor = [UIColor redColor];
+    [backView addSubview:_moneyLabel];
+    _moneyLabel.textColor = Color_3;
+    _moneyLabel.font = [UIFont boldSystemFontOfSize:16];
     
-    [_moneyLable mas_makeConstraints:^(MASConstraintMaker *make) {
+    [_moneyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(backView.mas_right).offset(-15);
-        make.top.equalTo(backView).offset(15);
+        make.top.equalTo(backView.mas_top).offset(15);
     }];
     
     
@@ -195,6 +180,22 @@
     [backView addSubview:_mineImageView];
     _mineImageView.image = [UIImage imageNamed:@"mess_bomb"];
     
+    [_mineImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.equalTo(self.backView.mas_right).offset(-90);
+        make.top.equalTo(self.backView.mas_top).offset(10);
+        make.size.mas_equalTo(CGSizeMake(22, 22));
+    }];
+    
+    
+    _mineMoneyLabel = [UILabel new];
+    [backView addSubview:_mineMoneyLabel];
+    _mineMoneyLabel.textColor = Color_3;
+    _mineMoneyLabel.font = [UIFont systemFontOfSize:14];
+    
+    [_mineMoneyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.equalTo(self->_mineImageView.mas_centerX);
+        make.top.equalTo(self->_mineImageView.mas_bottom).offset(2);
+    }];
     
     UIView *maxBackView = [[UIView alloc] init];
     maxBackView.hidden = YES;
@@ -235,6 +236,10 @@
 - (void)setModel:(GrabPackageInfoModel *)model {
     _model = model;
     
+    if (model.is_sender) {
+        self.backView.backgroundColor = [UIColor colorWithHex:@"#FFE4E4"];
+    }
+    
     if (model.avatar.length < kAvatarLength) {
         UIImage *image = [UIImage imageNamed:[NSString stringWithFormat:@"group_av_%@", model.avatar]];
         if (image) {
@@ -256,7 +261,7 @@
         _name.textColor = [UIColor colorWithHex:@"#FFD700"];
     }
     _name.text = (![nickname isKindOfClass:[NSNull class]]) ? nickname:@"-";
-    _moneyLable.text = (![money isKindOfClass:[NSNull class]]) ? money : @"-";
+    _moneyLabel.text = (![money isKindOfClass:[NSNull class]]) ? money : @"-";
     
     if (self.redpacketType == RedPacketType_CowCowNoDouble || self.redpacketType == RedPacketType_CowCowDouble) { // 牛牛红包
         
@@ -273,10 +278,11 @@
         }
         
         
-        [_moneyLable mas_updateConstraints:^(MASConstraintMaker *make) {
-            make.right.equalTo(self.pointsNumImageView.mas_left).offset(-5);
-            make.centerY.equalTo(self.pointsNumImageView.mas_centerY);
+        [_moneyLabel mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.right.equalTo(self.backView.mas_right).offset(-30);
+            make.top.equalTo(self.backView.mas_top).offset(12);
         }];
+        
         _bankerImageView.hidden = model.is_banker ? NO : YES;
         
         self.pointsNumImageView.hidden = NO;
@@ -284,9 +290,9 @@
         _maxImgView.hidden = YES;
     } else {
         
-        [_moneyLable mas_updateConstraints:^(MASConstraintMaker *make) {
+        [_moneyLabel mas_updateConstraints:^(MASConstraintMaker *make) {
             make.right.equalTo(self.backView.mas_right).offset(-15);
-            make.top.equalTo(self.backView).offset(15);
+            make.top.equalTo(self.backView.mas_top).offset(15);
         }];
         
         self.pointsNumImageView.hidden = YES;
@@ -295,6 +301,12 @@
         if (self.redpacketType == RedPacketType_SingleMine || self.redpacketType == RedPacketType_BanRob) {
             _mineImageView.hidden = model.got_mime ? NO : YES;
         }
+        
+        self.mineMoneyLabel.text = @"";
+        if ([model.mime floatValue] != 0) {
+            self.mineMoneyLabel.text = model.mime;
+        }
+        
     }
 }
 

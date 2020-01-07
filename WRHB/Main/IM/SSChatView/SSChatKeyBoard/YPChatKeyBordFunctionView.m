@@ -38,8 +38,8 @@
 //        titles = @[@"照片",@"视频",@"位置"];
 //        images = @[@"zhaopian",@"shipin",@"weizhi"];
         
-        if ([AppModel sharedInstance].chatSessionType == ChatSessionType_SystemRoom || [AppModel sharedInstance].chatSessionType == ChatSessionType_ManyPeople_Game) {
-            viewTags = @[@(ChatExtensionBar_Rule),@(ChatExtensionBar_WanFa),@(ChatExtensionBar_RedEnevpole),@(ChatExtensionBar_CustomerService),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Fu),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_Help),@(0),@(0),@(0),@(0),@(0)];
+        if ([AppModel sharedInstance].chatSessionType == ChatSessionType_SystemRoom || [AppModel sharedInstance].chatSessionType == ChatSessionType_ManyPeople_Game || [AppModel sharedInstance].chatSessionType == ChatSessionType_Clubs_Hall || [AppModel sharedInstance].chatSessionType == ChatSessionType_BigUnion) {
+            viewTags = @[@(ChatExtensionBar_Rule),@(ChatExtensionBar_WanFa),@(ChatExtensionBar_RedEnevpole),@(ChatExtensionBar_CustomerService),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Fu),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_Help),@(ChatExtensionBar_Transfer),@(0),@(0),@(0),@(0)];
             
         } else if ([AppModel sharedInstance].chatSessionType == ChatSessionType_ManyPeople_NormalChat) {
              viewTags = @[@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_RedEnevpole),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_Fu),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Help)];
@@ -48,7 +48,7 @@
             viewTags = @[@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_Fu),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Help)];
             
         } else {
-            viewTags = @[@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_RedEnevpole),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_Fu),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Help)];
+            viewTags = @[@(ChatExtensionBar_Album),@(ChatExtensionBar_Camera),@(ChatExtensionBar_RedEnevpole),@(ChatExtensionBar_Recharge),@(ChatExtensionBar_MakeMoney),@(ChatExtensionBar_Join),@(ChatExtensionBar_Help),@(ChatExtensionBar_Transfer)];
             
         }
         [self imgOrTitleTagArray:viewTags];
@@ -224,6 +224,10 @@
             case ChatExtensionBar_WanFa:
                 title = @"玩法";
                 image = @"csb_wanfa";
+                break;
+            case ChatExtensionBar_Transfer:
+                title = @"转账";
+                image = @"csb_transfer";
                 break;
             default:
                 title = @"";

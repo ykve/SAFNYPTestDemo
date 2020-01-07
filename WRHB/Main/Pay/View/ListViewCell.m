@@ -7,7 +7,7 @@
 //
 
 #import "ListViewCell.h"
-#import "BankModel.h"
+#import "WithdrawBankModel.h"
 
 @implementation ListViewCell
 
@@ -45,7 +45,7 @@
 
 
 
--(void)setModel:(BankModel *)model {
+-(void)setModel:(WithdrawBankModel *)model {
     _model = model;
     
     NSString *cNum = model.card;

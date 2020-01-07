@@ -1,6 +1,6 @@
 //
 //  AddMemberController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/2/12.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -8,6 +8,12 @@
 
 #import "AddMemberController.h"
 #import "SearchCell.h"
+#import "ChatsModel.h"
+#import "SessionSingle.h"
+#import "FriendHeadImageController.h"
+#import "YPContacts.h"
+#import "AFContactCell.h"
+
 
 #define TopViewHeight 52
 
@@ -194,7 +200,7 @@
     
     __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-        __strong __typeof(weakSelf)strongSelf = weakSelf;
+//        __strong __typeof(weakSelf)strongSelf = weakSelf;
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 0) {
             NSString *msg = [NSString stringWithFormat:@"%@",[response objectForKey:@"message"]];
             [MBProgressHUD showSuccessMessage:msg];
@@ -260,6 +266,8 @@
             [strongSelf.tableView reloadData];
             if (!strongSelf.userModel) {
                 strongSelf.tableView.tableHeaderView = [strongSelf setHeaderView];
+            }else{
+                strongSelf.tableView.tableHeaderView = nil;
             }
         } else {
             strongSelf.userModel = nil;
@@ -285,9 +293,9 @@
     entity.needCache = NO;
     
     [MBProgressHUD showActivityMessageInView:nil];
-    __weak __typeof(self)weakSelf = self;
+//    __weak __typeof(self)weakSelf = self;
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-        __strong __typeof(weakSelf)strongSelf = weakSelf;
+//        __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             
@@ -351,20 +359,33 @@
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
-    SearchCell *cell = [tableView dequeueReusableCellWithIdentifier:@"user"];
-    if (cell == nil) {
-        cell = [[SearchCell alloc]initWithStyle:0 reuseIdentifier:@"user"];
-    }
-    cell.model = self.userModel;
-    __weak __typeof(self)weakSelf = self;
-    cell.addBtnBlock = ^(BaseUserModel *model) {
-         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        strongSelf.selectedModel = model;
-        [strongSelf onDoneButton];
-        return;
-    };
     
-    return cell;
+    NSString *userId = [NSString stringWithFormat:@"%ld_%ld",self.userModel.userId,[AppModel sharedInstance].user_info.userId];
+    YPContacts *contact = [[AppModel sharedInstance].myFriendListDict objectForKey:userId];
+    if (self.userModel.userId == contact.user_id) {  // 已添加
+          static NSString *CellIdentifier = @"ContactCell";
+          AFContactCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+          if(cell == nil) {
+              cell = [AFContactCell cellWithTableView:tableView reusableId:CellIdentifier];
+          }
+          cell.model = contact;
+          return cell;
+    }else{
+        SearchCell *cell = [tableView dequeueReusableCellWithIdentifier:@"user"];
+        if (cell == nil) {
+            cell = [[SearchCell alloc]initWithStyle:0 reuseIdentifier:@"user"];
+        }
+        cell.model = self.userModel;
+        __weak __typeof(self)weakSelf = self;
+        cell.addBtnBlock = ^(BaseUserModel *model) {
+             __strong __typeof(weakSelf)strongSelf = weakSelf;
+            strongSelf.selectedModel = model;
+            [strongSelf onDoneButton];
+            return;
+        };
+        
+        return cell;
+    }
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section
@@ -375,7 +396,38 @@
     [header.textLabel setFont:[UIFont systemFontOfSize:14]];
 }
 
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    NSString *userId = [NSString stringWithFormat:@"%ld_%ld",_userModel.userId,[AppModel sharedInstance].user_info.userId];
+    YPContacts *contact = [[AppModel sharedInstance].myFriendListDict objectForKey:userId];
+    if (_userModel.userId == contact.user_id) {  // 已添加
+       [self goto_groupChat:self.userModel];
+    }
+    
+}
 
+#pragma mark - goto好友聊天界面
+- (void)goto_groupChat:(BaseUserModel *)model {
+    
+    ChatsModel *chatModel = [[ChatsModel alloc] init];
+    chatModel.name = model.name;
+    chatModel.avatar = model.avatar;
+    chatModel.sessionType = ChatSessionType_Private;
+    chatModel.userId = model.userId;
 
+    /// 这里需要查询 会话列表
+    for (ChatsModel *myModel in [SessionSingle sharedInstance].mySessionListData) {
+        if (model.userId == myModel.userId) {
+            chatModel.sessionId = myModel.sessionId;
+            chatModel.play_type = myModel.play_type;
+            break;
+        }
+    }
+    FriendHeadImageController *vc = [[FriendHeadImageController alloc] init];
+    vc.userId = chatModel.userId;
+    vc.chatsModel = chatModel;
+    [self.navigationController pushViewController:vc animated:YES];
+}
 
 @end

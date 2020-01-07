@@ -68,12 +68,25 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)receiveSendbyYourselfRedPacketId:(NSString *)redId messageId:(NSInteger)messageId;
 
 /**
+ 转账
+ 
+ @param message 消息体
+ */
+- (void)receiveSendbyYourselfTransferMessage:(YPMessage *)message;
+
+/**
  红包结算状态
 
  @param redPacketId 红包ID
  @param remain 红包剩余数量
  */
 - (void)receiveRedPacketStatusRedPacketId:(NSString *)redPacketId remain:(NSInteger)remain;
+/**
+ 转账状态
+ 
+ @param transferModel 转账模型
+ */
+- (void)receiveTransferStatusModel:(TransferModel *)transferModel;
 
 /*!
  服务器返回的用户已读信息通知

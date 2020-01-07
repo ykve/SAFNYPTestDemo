@@ -1,6 +1,6 @@
 //
 //  AllUserViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/16.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -9,7 +9,7 @@
 #import "AllUserViewController.h"
 #import "UserTableViewCell.h"
 
-#import "SessionInfoModel.h"
+#import "SessionInfoModels.h"
 #import "GroupHeadView.h"
 #import "SelectContactsController.h"
 #import "ChatsModel.h"
@@ -72,7 +72,7 @@
     SelectContactsController *vc = [[SelectContactsController alloc] init];
     vc.title = @"添加群成员";
     vc.sessionId = self.chatsModel.sessionId;
-    vc.addedArray = self.sessionModel.group_users;
+    vc.addedArray = [NSMutableArray arrayWithArray:self.sessionModel.group_users];
     
     //    vc.groupId = self.chatsModel.sessionId;
     //    vc.addType = AddType_GroupMember;
@@ -84,7 +84,7 @@
     SelectContactsController *vc = [[SelectContactsController alloc] init];
     vc.title = @"删除成员";
     vc.sessionId = self.chatsModel.sessionId;
-    vc.addedArray = self.sessionModel.group_users;
+    vc.addedArray = [NSMutableArray arrayWithArray:self.sessionModel.group_users];
     
     //    vc.groupId = self.chatsModel.sessionId;
     //    vc.addType = AddType_GroupMember;
@@ -163,7 +163,7 @@
     [[AlertViewCus createInstanceWithView:nil] showWithText:@"确认移除该玩家？" button1:@"取消" button2:@"确认" callBack:^(id object) {
         NSInteger tag = [object integerValue];
         if(tag == 1)
-            [weakSelf action_exitGroup:userId];
+            [weakSelf exitGroupRequest:userId];
     }];
 }
 
@@ -172,7 +172,7 @@
 /**
  删除群成员
  */
-- (void)action_exitGroup:(NSInteger)userId {
+- (void)exitGroupRequest:(NSInteger)userId {
     
     BADataEntity *entity = [BADataEntity new];
     entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"social/skChatGroup/delgroupMember"];

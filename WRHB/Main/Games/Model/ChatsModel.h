@@ -12,17 +12,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ChatsModel : NSObject<NSCoding>
 
-
 /// 会话 ID
 @property (nonatomic, assign) NSInteger sessionId;
 /// 会话名称
 @property (nonatomic, copy) NSString *name;
 /// 头像
 @property (nonatomic, copy) NSString *avatar;
-/// 会话类型
-@property (nonatomic, assign) ChatSessionType sessionType;
 /// 红包类型
 @property (nonatomic, assign) RedPacketType play_type;
+/// 会话类型
+@property (nonatomic, assign) ChatSessionType sessionType;
+
+
+/// ******* 单聊  *******
+/// 单聊的用户ID
+@property (nonatomic, assign) NSInteger userId;
+/// 创建者
+@property (nonatomic, assign) NSInteger initiator;
+/// ******* 群专属  *******
 /// 玩法详情
 @property (nonatomic, copy) NSString *desc;
 /// "5,20"   包个数范围      如果是禁抢 这个是 数字 包数（如3  6  9）
@@ -31,18 +38,18 @@ NS_ASSUME_NONNULL_BEGIN
 ///  "10,1000"  包金额范围
 @property (nonatomic, copy) NSString *number_limit;
 
-
-/// 单聊的用户ID
-@property (nonatomic, assign) NSInteger userId;
+@property (nonatomic, copy) NSString *notice;
 
 
 
+/// 客服类型 0 正常 1 盈商  默认正常
+@property (nonatomic, assign) NSInteger kefuType;
 /// 群密码
 @property (nonatomic, copy) NSString *password;
 /// 本地头像
 @property (nonatomic, copy) NSString *localImg;
-/// 我加入的群组
-@property (nonatomic ,assign) BOOL isChatsList;
+/// 我加入的会话
+@property (nonatomic ,assign) BOOL isJoinChatsList;
 
 @end
 

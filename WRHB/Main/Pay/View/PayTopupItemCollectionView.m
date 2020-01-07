@@ -39,11 +39,14 @@ static NSString * const kPayTypeCellId = @"PayTypeCell";
 - (void)setModel:(id)model {
     self.selectItemIndexPath = nil;
     self.resultDataArray = [NSMutableArray arrayWithArray:(NSArray *)model];
+    self.collectionView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
     [self.collectionView reloadData];
     
-    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    NSIndexPath *indexPath = self.selectedIndexPath;
     [self.collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionNone];
     [self collectionView:self.collectionView didSelectItemAtIndexPath:indexPath];
+    
+    
 }
 
 
@@ -120,7 +123,10 @@ static NSString * const kPayTypeCellId = @"PayTypeCell";
 {
     self.selectItemIndexPath = indexPath;
     PayTopupModel *model = [self.resultDataArray objectAtIndex:indexPath.row];
-    NSDictionary *dict = @{@"model": model};
+    if (!indexPath) {
+        indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    }
+    NSDictionary *dict = @{@"model": model,@"indexPath": indexPath};
     
     [self routerEventWithName:@"PayItemCellSelected" user_info:dict];
     

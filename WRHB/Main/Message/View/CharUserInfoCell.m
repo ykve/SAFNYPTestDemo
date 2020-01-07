@@ -1,6 +1,6 @@
 //
 //  CharUserInfoCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/9/7.
 //  Copyright © 2019 AFan. All rights reserved.

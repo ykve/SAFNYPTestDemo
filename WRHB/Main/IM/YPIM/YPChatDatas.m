@@ -70,6 +70,9 @@
     } else if(message.messageType == MessageType_RedPacket){  // 红包
         message.cellString   = AFRedPacketCellId;
         
+    } else if(message.messageType == MessageType_SendTransfer){  // 转账
+        message.cellString   = AFTransferCellId;
+        
     } else if(message.messageType == MessageType_CowCow_SettleRedpacket){  // 牛牛结算
         message.cellString   = CowCowVSMessageCellId;
         

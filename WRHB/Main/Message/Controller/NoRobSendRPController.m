@@ -1,6 +1,6 @@
 //
 //  NoRobSendRPController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/3/2.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -16,10 +16,15 @@
 #import "SendRPNumTableViewCell.h"
 #import "ChatsModel.h"
 
+#import "SPAlertController.h"
+#import "LoginForgetPsdController.h"
+#import "PasswordTipController.h"
+#import "PWView.h"
+
 
 #define kTableViewMarginWidth 20
 
-@interface NoRobSendRPController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate>
+@interface NoRobSendRPController ()<UITableViewDelegate,UITableViewDataSource,UITextFieldDelegate,PWViewDelegate>
 
 @property (nonatomic ,strong) UITableView *tableView;
 @property (nonatomic ,strong) NSArray *rowList;
@@ -34,7 +39,8 @@
 @property (nonatomic ,assign) BOOL isNotPlaying;
 // 总金额
 @property (nonatomic ,strong) NSString *totalMoneyString;
-
+@property (nonatomic, copy) NSString *mines;
+@property (nonatomic, copy) NSString *password;
 
 @end
 
@@ -44,6 +50,7 @@
     [super viewDidLoad];
     
     self.isNotPlaying = NO;
+    self.password = @"";
     
     [self setupSubViews];
     [self initNotif];
@@ -176,11 +183,11 @@
     if (indexPath.row == 0) {
         return 162;
     } else if (indexPath.row == 1) {
-        return 65;
+        return CD_Scal(65, 812)>65?CD_Scal(65, 812):65;
     } else if (indexPath.row == 2) {
-        return 110;
+        return CD_Scal(110, 812)>110?CD_Scal(110, 812):110;
     }
-    return CD_Scal(10, 812);
+    return CD_Scal(10, 812)>10?CD_Scal(10, 812):10;
 }
 
 
@@ -381,10 +388,77 @@
             return;
         }
     }
+    self.mines = [mines copy];
     
-    _submit.enabled = NO;
-    [self redpackedRequest:self.totalMoneyString packetNum:self.redpbNum mines:mines];
     
+    if (self.chatsModel.sessionType == ChatSessionType_ManyPeople_Game || self.chatsModel.sessionType == ChatSessionType_BigUnion || self.chatsModel.sessionType == ChatSessionType_SystemRoom) {
+        self.submit.enabled = NO;
+        [self redpackedRequest:self.totalMoneyString packetNum:self.redpbNum mines: self.mines];
+    } else {
+        /// 判断是否设置交易密码
+        if (![AppModel sharedInstance].set_trade_password) {
+            [self passwordAlert];
+            return;
+        }
+        
+        [self goto_PasswordTipPop];
+    }
+    
+}
+
+#pragma mark - PWViewDelegate
+- (void)passWordBeginInput:(PWView *)passWord {
+}
+- (void)passWordDidChange:(PWView *)passWord {
+    self.password = passWord.textStore;
+    NSLog(@"1");
+}
+- (void)passWordCompleteInput:(PWView *)passWord {
+    __weak __typeof(self)weakSelf = self;
+    
+    [self dismissViewControllerAnimated:YES completion:^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            __strong __typeof(weakSelf)strongSelf = weakSelf;
+            strongSelf.submit.enabled = NO;
+            [strongSelf redpackedRequest:strongSelf.totalMoneyString packetNum:strongSelf.redpbNum mines: strongSelf.mines];
+        });
+    }];
+}
+
+
+- (void)goto_PasswordTipPop {
+    PasswordTipController *vc = [[PasswordTipController alloc] init];
+    [self presentViewController:vc animated:NO completion:nil];
+    vc.pwView.delegate = self;
+    vc.nameLabel.text = [NSString stringWithFormat:@"向 %@ 转账", self.chatsModel.name];
+    vc.moneyLabel.text = self.totalMoneyString;
+}
+
+
+
+- (void)passwordAlert {
+    SPAlertController *alertController = [SPAlertController alertControllerWithTitle:@"密码未设置" message:@"交易密码未设置，请设置好以后继续操作" preferredStyle:SPAlertControllerStyleAlert animationType:SPAlertAnimationTypeDefault];
+    alertController.needDialogBlur = YES;
+    
+    __weak __typeof(self)weakSelf = self;
+    SPAlertAction *action1 = [SPAlertAction actionWithTitle:@"前往设置" style:SPAlertActionStyleDestructive handler:^(SPAlertAction * _Nonnull action) {
+        NSLog(@"点击了确定");
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        LoginForgetPsdController *vc = [[LoginForgetPsdController alloc] init];
+        vc.updateType = 2;
+        vc.navigationItem.title = @"设置交易密码";
+        [strongSelf.navigationController pushViewController:vc animated:YES];
+    }];
+    // SPAlertActionStyleDestructive默认文字为红色(可修改)
+    SPAlertAction *action2 = [SPAlertAction actionWithTitle:@"取消" style:SPAlertActionStyleCancel handler:^(SPAlertAction * _Nonnull action) {
+        NSLog(@"点击了取消");
+    }];
+    // 设置第2个action的颜色
+    action2.titleColor = [UIColor colorWithRed:0.0 green:0.48 blue:1.0 alpha:1.0];
+    [alertController addAction:action2];
+    [alertController addAction:action1];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)redpackedRequest:(NSString *)money packetNum:(NSString *)packetNum mines:(NSString *)mines {
@@ -397,6 +471,7 @@
                                  @"piece":packetNum,   // 份数
                                  @"mime":mines,   // 雷号 多雷号以逗号分割
                                  @"coin":@"GOLD",     // 红包资产类型 默认给GOLD
+                                 @"password":self.password,
                                  @"number":money
                                  };
     
@@ -419,7 +494,7 @@
             if ([strongSelf.delegate respondsToSelector:@selector(sendRedPacketMessageModel:)]) {
                 YPMessage *message = [[YPMessage alloc] init];
                 message.messageType = MessageType_RedPacket;
-                
+                message.userId = [AppModel sharedInstance].user_info.userId;
                 EnvelopeMessage *model = [EnvelopeMessage mj_objectWithKeyValues:response[@"data"]];
                 model.sender = [AppModel sharedInstance].user_info.userId;
                 model.total = (int)packetNum.integerValue;

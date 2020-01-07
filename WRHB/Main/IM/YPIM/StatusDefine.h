@@ -567,7 +567,11 @@ typedef NS_ENUM(NSUInteger, ChatSessionType) {
     /*!
      客服
      */
-    ChatSessionType_CustomerService  = 7
+    ChatSessionType_CustomerService  = 7,
+    /*!
+     盈商客服
+     */
+    ChatSessionType_YSCustomerService  = 8
 };
 
 
@@ -654,7 +658,8 @@ typedef NS_ENUM(NSInteger, MessageType) {
     MessageType_RedPacketStatus = 12,
     /// 视频
     MessageType_Video = 13,
-    
+    /// 发转账
+    MessageType_SendTransfer = 16,
     
     
     
@@ -711,7 +716,7 @@ typedef NS_ENUM(NSInteger, RedPacketType) {
 typedef NS_ENUM(NSInteger, RedPacketCellStatus) {
     /// 无效
     RedPacketCellStatus_Invalid    = 0,
-    /// 没有点击(红包没抢)
+    /// 没有点击(红包没抢完)
     RedPacketCellStatus_Normal    = 1,
     /// 已点击-(已领取)
     RedPacketCellStatus_MyselfReceived    = 2,
@@ -720,7 +725,19 @@ typedef NS_ENUM(NSInteger, RedPacketCellStatus) {
     /// 已点击-(红包已过期) 已结束
     RedPacketCellStatus_Expire    = 4
 };
-
+// 转账状态    领取状态 是否已被领取 0 未领取  1 已被领取  2 已退还   3 已过期
+typedef NS_ENUM(NSInteger, TransferCellStatus) {
+    /// 无效
+    TransferCellStatus_Invalid    = 0,
+    /// 未领取
+    TransferCellStatus_Normal    = 1,
+    /// 已被领取
+    TransferCellStatus_MyselfReceived    = 2,
+    /// 已退还
+    TransferCellStatus_Refund    = 3,
+    /// 已过期 超时退还
+    TransferCellStatus_Expire   = 4,
+};
 /// 聊天扩展栏
 typedef NS_ENUM(NSInteger, ChatExtensionBarTag) {
     /// 福利
@@ -744,7 +761,10 @@ typedef NS_ENUM(NSInteger, ChatExtensionBarTag) {
     /// 相册
     ChatExtensionBar_Album    = 2009,
     /// 玩法
-    ChatExtensionBar_WanFa    = 2010
+    ChatExtensionBar_WanFa    = 2010,
+    /// 转账
+    ChatExtensionBar_Transfer    = 2011,
+    
 };
 
 

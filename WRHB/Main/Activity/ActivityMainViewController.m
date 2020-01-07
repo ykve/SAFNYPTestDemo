@@ -1,8 +1,8 @@
 //
 //  ActivityMainViewController.m
-//  Project
+//  WRHB
 //
-//  Created by fangyuan on 2019/3/29.
+//  Created by AFan on 2019/3/29.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 
@@ -173,10 +173,10 @@
     ActivityModel *model = self.dataArray[indexPath.row];
     
     WKWebViewController *vc = [[WKWebViewController alloc] init];
+    vc.isLoadWebTitle = NO;
     [vc loadWebURLSring:model.url];
-    
-    //                vc.navigationItem.title = item.name;
-    vc.title = model.title;
+    vc.navigationItem.title  = model.title;
+//    vc.navigationItem.title = @"活动详情";
     vc.hidesBottomBarWhenPushed = YES;
     //[vc loadWithURL:url];
     [self.navigationController pushViewController:vc animated:YES];

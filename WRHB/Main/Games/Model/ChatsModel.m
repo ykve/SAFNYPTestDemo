@@ -13,7 +13,7 @@
 MJCodingImplementation
 
 + (NSDictionary *)mj_replacedKeyFromPropertyName{
-    return @{@"sessionId": @"id", @"sessionType": @"type"};
+    return @{@"sessionId": @"id", @"sessionType": @"type", @"userId": @"user"};
 }
 
 @end

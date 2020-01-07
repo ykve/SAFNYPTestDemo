@@ -1,6 +1,6 @@
 //
 //  EnvelopAnimationView.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/13.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -199,8 +199,12 @@
     
     _redDescLabel.hidden = NO;
     _redDescLabel.text = [NSString stringWithFormat:@"发了一个%@，金额随机", [self redTypeString:redEnDetModel.redpacketType]];
-    _contentLabel.text = kRedpackedGongXiFaCaiMessage;
+    _contentLabel.text = redEnDetModel.title.length>0? redEnDetModel.title:kRedpackedGongXiFaCaiMessage;
     
+    if (redEnDetModel.redpacketType == RedPacketType_Private) {
+        _redDescLabel.hidden = YES;
+        _contentLabel.text = redEnDetModel.title;
+    }
     
     if (redEnDetModel.sender.ID == [AppModel sharedInstance].user_info.userId) {  // 自己
         _small_iconImageView.hidden = YES;

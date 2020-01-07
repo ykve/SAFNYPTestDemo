@@ -1,8 +1,8 @@
 //
 //  CDAlertViewController.h
-//  Project
+//  WRHB
 //
-//  Created by mac on 2019/11/7.
+//  Created by AFan on 2019/11/7.
 //  Copyright © 2018年 AFan. All rights reserved.
 //
 

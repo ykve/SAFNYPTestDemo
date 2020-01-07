@@ -1,6 +1,6 @@
 //
 //  AllUserViewController.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/16.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @class ChatsModel;
-@class SessionInfoModel;
+@class SessionInfoModels;
 
 // 群成员控制器
 @interface AllUserViewController : UIViewController
@@ -22,6 +22,6 @@
 
 @property (nonatomic, strong) ChatsModel *chatsModel;
 /// 会话信息
-@property (nonatomic, strong) SessionInfoModel *sessionModel;
+@property (nonatomic, strong) SessionInfoModels *sessionModel;
 
 @end

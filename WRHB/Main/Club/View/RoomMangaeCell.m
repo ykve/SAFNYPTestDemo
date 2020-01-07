@@ -8,11 +8,11 @@
 
 #import "RoomMangaeCell.h"
 #import "RoomMangaeModel.h"
-
+#import "FLAnimatedImageView.h"
 @interface RoomMangaeCell()
 
 /// 图片
-@property (nonatomic, strong) UIImageView *headView;
+@property (nonatomic, strong) FLAnimatedImageView *headView;
 /// title
 @property (nonatomic, strong) UILabel *titleLabel;
 /// 房间人数
@@ -51,10 +51,11 @@
     _model = model;
     
     if (model.avatar.length < kAvatarLength) {
-        UIImage *image = [[FunctionManager sharedInstance] gifImgImageStr:[NSString stringWithFormat:@"chats_gif_%@", model.avatar]];
+        FLAnimatedImage *image = [[FunctionManager sharedInstance] gifFLAnimatedImageStr:[NSString stringWithFormat:@"chats_gif_%@", model.avatar]];
         if (image) {
-            _headView.image =  image;
+            _headView.animatedImage =  image;
         } else {
+            
             _headView.image =  [UIImage imageNamed:@"cm_default_image"];
         }
     } else {
@@ -112,8 +113,7 @@
         make.bottom.equalTo(self.contentView.mas_bottom);
     }];
 
-    UIImageView *headView = [[UIImageView alloc] init];
-    headView.image = [UIImage imageNamed:@"imageName"];
+    FLAnimatedImageView *headView = [[FLAnimatedImageView alloc] init];
     headView.layer.cornerRadius = 5;
     headView.layer.masksToBounds = YES;
     [backView addSubview:headView];
@@ -122,7 +122,8 @@
     [headView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(backView.mas_left).offset(12);
         make.centerY.equalTo(backView.mas_centerY);
-        make.size.mas_equalTo(60);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(60);
     }];
 
     UILabel *titleLabel = [[UILabel alloc] init];

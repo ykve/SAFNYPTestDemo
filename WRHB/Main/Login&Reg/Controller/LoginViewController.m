@@ -13,14 +13,17 @@
 
 
 #import "DHGuidePageHUD.h"
-#import "AppDelegate.h"
+
 #import "UIDevice+BAKit.h"
 
 #import "BannerModels.h"
 #import "BannerModel.h"
 #import <SAMKeychain.h>
+#import "AppDelegate.h"
 #import "SPAlertController.h"
-
+#import "CaptchaModel.h"
+#import "UIImage+ZMAdd.h"
+#import "SessionSingle.h"
 
 @interface LoginViewController ()<SDCycleScrollViewDelegate>
 
@@ -33,12 +36,19 @@
 ///
 @property (nonatomic, strong) UITextField *accountTextField;
 ///
+@property (nonatomic, strong) UITextField *codeImageTextField;
+///
 @property (nonatomic, strong) UITextField *passwordTextField;
 ///
 @property (nonatomic, strong) UIButton *loginBtn;
 @property (nonatomic, strong) UIButton *regBtn;
 /// 试用用户 游客登录
 @property (nonatomic, strong) UIButton *trialBtn;
+
+
+@property (nonatomic, strong) UIButton *imgCodeBtn;
+@property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
+@property (nonatomic, strong) CaptchaModel *captchaModel;
 
 @end
 
@@ -67,9 +77,46 @@
     
     [self setupUI];
     [self setNavUI];
-    
+    /// 刷新会话信息
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(action_registed_login:) name:kRegistedNotification object:nil];
+    [self loadDefaultAccount];
+    [self getImgCode];
+    [self initNotif];
 }
 
+- (void)initNotif {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(textFieldDidChangeValue:)
+                                                 name:UITextFieldTextDidChangeNotification
+                                               object:nil];
+}
+
+-(void)dealloc{
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+}
+//限制手机号11位
+- (void)textFieldDidChangeValue:(NSNotification *)text {
+    UITextField *textField = (UITextField *)text.object;
+    if (textField.text.length > 11 && [textField isEqual:_accountTextField]) {
+        textField.text = [textField.text substringToIndex:11];
+        return;
+    }
+   
+}
+
+-(void)loadDefaultAccount
+{
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSString *mobile = [ud objectForKey:@"mobile"];
+    
+    if (mobile.length > 0) {
+        self.accountTextField.text = mobile;
+    }
+    
+    if([AppModel sharedInstance].isDebugMode) {
+        self.passwordTextField.text = @"111111";
+    }
+}
 - (void)setNavUI {
     if ([AppModel sharedInstance].isDebugMode) {
         UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, Height_NavBar -20-16, kSCREEN_WIDTH, 14)];
@@ -80,20 +127,14 @@
         label.textColor = [UIColor redColor];
     }
 }
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+}
 
 -(void)viewDidAppear:(BOOL)animated {
-     [super viewDidAppear:animated];
-    
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
-    NSString *mobile = [ud objectForKey:@"mobile"];
-    
-    if (mobile.length > 0) {
-        self.accountTextField.text = mobile;
-    }
-    
-    if([AppModel sharedInstance].isDebugMode) {
-        self.passwordTextField.text = @"123456";
-    }
+    [super viewDidAppear:animated];
     if (self.accountTextField.text.length == 0) {
         [self.accountTextField becomeFirstResponder];
     } else if(self.passwordTextField.text.length == 0) {
@@ -164,13 +205,12 @@
 
 - (void)setBannerUI {
     
-    CGFloat w = self.view.bounds.size.width;
-    SDCycleScrollView *cycleScrollView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(0, 0, w, 150) delegate:self placeholderImage:[UIImage imageNamed:@"placeholder"]];
-    
-    cycleScrollView.pageControlStyle = SDCycleScrollViewPageContolStyleAnimated;
+    SDCycleScrollView *cycleScrollView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, CD_Scal(150,812)) delegate:self placeholderImage:[UIImage imageNamed:@"placeholder"]];
+    cycleScrollView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleScrollView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
     cycleScrollView.pageControlAliment = SDCycleScrollViewPageContolAlimentCenter;
-    //    cycleScrollView.titlesGroup = titles;
-    cycleScrollView.currentPageDotColor = [UIColor whiteColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView.currentPageDotColor = [UIColor orangeColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView.pageDotColor = [UIColor whiteColor];
     [self.contentView addSubview:cycleScrollView];
     _cycleScrollView = cycleScrollView;
 
@@ -221,7 +261,7 @@
         make.top.equalTo(self.cycleScrollView.mas_bottom).offset(40);
         make.left.equalTo(self.contentView.mas_left);
         make.right.equalTo(self.contentView.mas_right);
-        make.height.mas_equalTo(110);
+        make.height.mas_equalTo(165);
     }];
     UIView *verView1 = [[UIView alloc] init];
     verView1.backgroundColor = [UIColor clearColor];
@@ -229,25 +269,6 @@
     
     [verView1 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.left.right.equalTo(textFieldbackView);
-        make.height.mas_equalTo(54);
-    }];
-    // 分割线
-    UIView *lingView = [[UIView alloc] init];
-    lingView.backgroundColor = [UIColor colorWithHex:@"#EDEDED"];
-    [textFieldbackView addSubview:lingView];
-    
-    [lingView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(verView1.mas_bottom);
-        make.left.equalTo(textFieldbackView.mas_left).offset(20);
-        make.right.equalTo(textFieldbackView.mas_right);
-        make.height.mas_equalTo(1);
-    }];
-    UIView *verView2 = [[UIView alloc] init];
-    verView2.backgroundColor = [UIColor clearColor];
-    [textFieldbackView addSubview:verView2];
-    
-    [verView2 mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.left.right.equalTo(textFieldbackView);
         make.height.mas_equalTo(54);
     }];
     
@@ -261,17 +282,7 @@
         make.size.mas_equalTo(CGSizeMake(15, 21));
     }];
     
-    UIImageView *psdImageView = [[UIImageView alloc] init];
-    psdImageView.image = [UIImage imageNamed:@"login_possword"];
-    [verView2 addSubview:psdImageView];
-    
-    [psdImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(verView2.mas_centerY);
-        make.left.equalTo(verView2.mas_left).offset(20);
-        make.size.mas_equalTo(CGSizeMake(15, 18));
-    }];
-    
-    
+
     UITextField *accountTextField = [[UITextField alloc] init];
     accountTextField.borderStyle = UITextBorderStyleNone;  //边框类型
     accountTextField.font = [UIFont boldSystemFontOfSize:14.0];  // 字体
@@ -292,6 +303,110 @@
         make.height.mas_equalTo(@(40));
     }];
     
+    // 分割线1
+    UIView *lingView1 = [[UIView alloc] init];
+    lingView1.backgroundColor = [UIColor colorWithHex:@"#EDEDED"];
+    [textFieldbackView addSubview:lingView1];
+    
+    [lingView1 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(verView1.mas_bottom);
+        make.left.equalTo(textFieldbackView.mas_left).offset(20);
+        make.right.equalTo(textFieldbackView.mas_right);
+        make.height.mas_equalTo(1);
+    }];
+    
+    
+    UIView *verView2 = [[UIView alloc] init];
+    verView2.backgroundColor = [UIColor clearColor];
+    [textFieldbackView addSubview:verView2];
+    
+    [verView2 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.equalTo(textFieldbackView);
+        make.top.equalTo(lingView1.mas_bottom);
+        make.height.mas_equalTo(54);
+    }];
+    
+
+    UIImageView *codeImageView = [[UIImageView alloc] init];
+    codeImageView.image = [UIImage imageNamed:@"login_codeImg"];
+    [verView2 addSubview:codeImageView];
+    
+    [codeImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(verView2.mas_centerY);
+        make.left.equalTo(verView2.mas_left).offset(20);
+        make.size.mas_equalTo(CGSizeMake(15, 12));
+    }];
+    
+    _imgCodeBtn =  [UIButton new];
+    [_imgCodeBtn addTarget:self action:@selector(updateImgCode) forControlEvents:UIControlEventTouchUpInside];
+    _imgCodeBtn.backgroundColor = BgColor;
+    [verView2 addSubview:_imgCodeBtn];
+    [_imgCodeBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+                       make.right.equalTo(verView2.mas_right).offset(-20);
+                       make.centerY.equalTo(verView2.mas_centerY);
+                       make.height.equalTo(@(30));
+                       make.width.equalTo(@(86));
+                   }];
+    
+    _activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    [_imgCodeBtn addSubview:_activityIndicator];
+    [_activityIndicator startAnimating];
+    [_activityIndicator mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.center.equalTo(_imgCodeBtn);
+    }];
+    
+    
+    UITextField *codeImageTextField = [[UITextField alloc] init];
+    codeImageTextField.borderStyle = UITextBorderStyleNone;  //边框类型
+    codeImageTextField.font = [UIFont boldSystemFontOfSize:14.0];  // 字体
+    codeImageTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    codeImageTextField.textColor = [UIColor colorWithHex:@"#333333"];  // 字体颜色
+    codeImageTextField.placeholder = @"请图形验证码"; // 占位文字
+    codeImageTextField.clearButtonMode = UITextFieldViewModeAlways; // 清空按钮
+    codeImageTextField.keyboardType = UIKeyboardTypeDefault; // 键盘类型
+    codeImageTextField.returnKeyType = UIReturnKeyGo;
+
+    [verView2 addSubview:codeImageTextField];
+    _codeImageTextField = codeImageTextField;
+    
+    [codeImageTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(verView2.mas_centerY);
+        make.left.equalTo(verView2.mas_left).offset(50);
+        make.right.equalTo(_imgCodeBtn.mas_left);
+        make.height.mas_equalTo(@(40));
+    }];
+    
+    
+    // 分割线2
+    UIView *lingView2 = [[UIView alloc] init];
+    lingView2.backgroundColor = [UIColor colorWithHex:@"#EDEDED"];
+    [textFieldbackView addSubview:lingView2];
+    
+    [lingView2 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(verView2.mas_bottom);
+        make.left.equalTo(textFieldbackView.mas_left).offset(20);
+        make.right.equalTo(textFieldbackView.mas_right);
+        make.height.mas_equalTo(1);
+    }];
+    
+    UIView *verView3 = [[UIView alloc] init];
+    verView3.backgroundColor = [UIColor clearColor];
+    [textFieldbackView addSubview:verView3];
+    
+    [verView3 mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.left.right.equalTo(textFieldbackView);
+        make.height.mas_equalTo(54);
+    }];
+    
+    UIImageView *psdImageView = [[UIImageView alloc] init];
+    psdImageView.image = [UIImage imageNamed:@"login_possword"];
+    [verView3 addSubview:psdImageView];
+    
+    [psdImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(verView3.mas_centerY);
+        make.left.equalTo(verView3.mas_left).offset(20);
+        make.size.mas_equalTo(CGSizeMake(15, 18));
+    }];
     
     UITextField *passwordTextField = [[UITextField alloc] init];
     passwordTextField.borderStyle = UITextBorderStyleNone;  //边框类型
@@ -303,13 +418,13 @@
     passwordTextField.keyboardType = UIKeyboardTypeDefault; // 键盘类型
     passwordTextField.returnKeyType = UIReturnKeyGo;
     passwordTextField.secureTextEntry = YES; // 密码
-    [verView2 addSubview:passwordTextField];
+    [verView3 addSubview:passwordTextField];
     _passwordTextField = passwordTextField;
     
     [passwordTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(verView2.mas_centerY);
-        make.left.equalTo(verView2.mas_left).offset(50);
-        make.right.equalTo(verView2.mas_right).offset(-20);
+        make.centerY.equalTo(verView3.mas_centerY);
+        make.left.equalTo(verView3.mas_left).offset(50);
+        make.right.equalTo(verView3.mas_right).offset(-20);
         make.height.mas_equalTo(@(40));
     }];
     
@@ -409,23 +524,23 @@
         make.centerX.equalTo(self.contentView.mas_centerX);
     }];
     
-    UILabel *ypLabel = [[UILabel alloc] init];
-    ypLabel.text = @"一品科技股份有限公司     www.ypgames.com";
-    ypLabel.font = [UIFont systemFontOfSize:10];
-    ypLabel.textColor = [UIColor colorWithHex:@"#999999"];
-    ypLabel.numberOfLines = 0;
-    ypLabel.textAlignment = NSTextAlignmentCenter;
-    [self.contentView addSubview:ypLabel];
-    
-    [ypLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.bottom.equalTo(self.contentView.mas_bottom).offset(-16);
-        make.centerX.equalTo(self.contentView.mas_centerX);
-    }];
+//    UILabel *ypLabel = [[UILabel alloc] init];
+//    ypLabel.text = @"一品科技股份有限公司     www.ypgames.com";
+//    ypLabel.font = [UIFont systemFontOfSize:10];
+//    ypLabel.textColor = [UIColor colorWithHex:@"#999999"];
+//    ypLabel.numberOfLines = 0;
+//    ypLabel.textAlignment = NSTextAlignmentCenter;
+//    [self.contentView addSubview:ypLabel];
+//    
+//    [ypLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.bottom.equalTo(self.contentView.mas_bottom).offset(-16);
+//        make.centerX.equalTo(self.contentView.mas_centerX);
+//    }];
     
 }
 
 - (void)accountSwitch {
-    __weak __typeof(self)weakSelf = self;
+//    __weak __typeof(self)weakSelf = self;
     [self.view endEditing:YES];
 //    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"请选择服务器地址" preferredStyle:UIAlertControllerStyleActionSheet];
     NSArray *arr = [[AppModel sharedInstance] ipArray];
@@ -481,6 +596,7 @@
 #pragma mark -  游客登录
 - (void)action_trialBtnLogin {
     
+    ///需要验证码 先取消自动登录
     NSDictionary *parameters = @{
                                  @"device_id":[UIDevice uniqueIdentifier]
                                  };
@@ -520,6 +636,18 @@
 
 
 #pragma mark -  登录
+
+-(void)action_registed_login:(NSNotification*)objc
+{
+    NSDictionary *dic = objc.object;
+    NSString *phone = [dic objectForKey:@"mobile"];
+    NSString *pwd = [dic objectForKey:@"password"];
+    self.accountTextField.text = phone;
+    self.passwordTextField.text = pwd;
+    [self action_login];
+}
+
+
 - (void)action_login {
     
     if([self.accountTextField.text isEqualToString:@"#888999"]) {
@@ -527,10 +655,16 @@
         return;
     }
     
-    if (self.accountTextField.text.length < 8) {
+    if (self.accountTextField.text.length < 11) {
         [MBProgressHUD showTipMessageInWindow:@"请输入正确的手机号"];
         return;
     }
+    
+    if (_codeImageTextField.text.length < 5 || _captchaModel==nil || _captchaModel.key.length<1) {
+        [MBProgressHUD showTipMessageInWindow:@"请入正确的图形验证码"];
+        return;
+    }
+    
     if (self.passwordTextField.text.length < 3) {
         [MBProgressHUD showTipMessageInWindow:@"请入密码"];
         return;
@@ -539,7 +673,11 @@
     NSDictionary *parameters = @{
                                  @"mobile":self.accountTextField.text,
                                  @"password":self.passwordTextField.text,
-                                 @"device_type":@"1"  // 设备类型 1 苹果 2 安卓
+                                 @"device_type":@"1",  // 设备类型 1 苹果 2 安卓
+                                 @"captcha":_codeImageTextField.text,
+                                 @"key":self.captchaModel.key,
+                                 @"device_type" : @"2",
+                                 
                                  };
     
     BADataEntity *entity = [BADataEntity new];
@@ -553,8 +691,10 @@
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            [strongSelf gamesChatsClear];
             [strongSelf updateUserInfo:response[@"data"]];
-            
+            /// 已登录通知
+            [[NSNotificationCenter defaultCenter] postNotificationName:kLoginedNotification object: nil];
             // 
         } else {
             [[AFHttpError sharedInstance] handleFailResponse:response];
@@ -570,32 +710,58 @@
     [self.navigationController pushViewController:vc animated:YES];
 }
 
+- (void)gamesChatsClear {
+    [[SessionSingle sharedInstance] gamesChatsClearSuccessBlock:^(NSDictionary *success) {
+        NSLog(@"1");
+    } failureBlock:^(NSError *error) {
+        NSLog(@"1");
+    }];
+}
+
+
 /**
  更新用户信息
  */
 -(void)updateUserInfo:(NSDictionary *)dict {
     [MBProgressHUD showSuccessMessage:@"登录成功"];
-    AppModel *appModel = [AppModel mj_objectWithKeyValues:dict];
-    
-    [AppModel sharedInstance].token = appModel.token;
-    [AppModel sharedInstance].user_info = appModel.user_info;
-    [AppModel sharedInstance].assets = appModel.assets;
-    
-    [AppModel sharedInstance].user_info.isLogined = YES;
-    
-    [[AppModel sharedInstance] saveAppModel];
-    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
-    [ud setObject:@(appModel.user_info.userId) forKey:@"userId"];
-    [ud setObject:appModel.user_info.mobile forKey:@"mobile"];
-    [ud synchronize];
-    
+    [[AppModel sharedInstance]handleModelFromDic:dict];
     [SAMKeychain setPassword:self.passwordTextField.text forService:@"password" account:self.accountTextField.text];
-    
-    
-   AppDelegate *delegate = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+    AppDelegate *delegate = (AppDelegate*)[[UIApplication sharedApplication] delegate];
     [delegate setRootViewController];
 }
 
+
+#pragma mark -  刷新图形验证码
+-(void)updateImgCode {
+    
+    [_codeImageTextField becomeFirstResponder];
+    [self getImgCode];
+}
+
+-(void)getImgCode {
+    BADataEntity *entity = [BADataEntity new];
+    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"captcha"];
+    entity.needCache = NO;
+    entity.parameters = nil;
+    [_activityIndicator startAnimating];
+     __weak __typeof(self)weakSelf = self;
+    [BANetManager ba_request_GETWithEntity:entity successBlock:^(id response) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [strongSelf.activityIndicator stopAnimating];
+        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            strongSelf.captchaModel = [CaptchaModel mj_objectWithKeyValues:[response objectForKey:@"data"]];
+            UIImage *photo = [UIImage zm_decodingBase64ToImageWithString:strongSelf.captchaModel.img];
+            [strongSelf.imgCodeBtn setImage:photo forState:UIControlStateNormal];
+        
+        } else {
+            [[AFHttpError sharedInstance] handleFailResponse:response];
+        }
+    } failureBlock:^(NSError *error) {
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [strongSelf.activityIndicator stopAnimating];
+        [[AFHttpError sharedInstance] handleFailResponse:error];
+    } progressBlock:nil];
+}
 
 @end
 

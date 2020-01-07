@@ -34,7 +34,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param ID 自动询问问题 ID
  */
 - (void)sendCSAutoAskMessage:(YPMessage *)model ID:(NSString *)ID;
-    
+#pragma mark - 客服 盈商询问
+/**
+ 客服 盈商询问
+ 
+ @param ID 盈商 ID
+ */
+- (void)sendCSYSAutoAskMessage:(YPMessage *)model ID:(NSString *)ID;
+
 #pragma mark - 发送普通文本消息
 /**
  发送普通文本消息
@@ -104,6 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param redPacketInfo 更改后的红包模型
  */
 - (void)updateRedPacketInfo:(EnvelopeMessage *)redPacketInfo;
+- (void)updateTransferInfo:(TransferModel *)transferModel;
 
 - (void)updateMessage:(NSInteger)messageId;
 

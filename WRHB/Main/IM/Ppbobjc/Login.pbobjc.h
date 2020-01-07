@@ -216,6 +216,38 @@ int32_t SLogin_Result_RawValue(SLogin *message);
  **/
 void SetSLogin_Result_RawValue(SLogin *message, int32_t value);
 
+#pragma mark - SAgainLogin
+
+typedef GPB_ENUM(SAgainLogin_FieldNumber) {
+  SAgainLogin_FieldNumber_Result = 1,
+  SAgainLogin_FieldNumber_ErrMsg = 2,
+};
+
+/**
+ * 重新登录
+ **/
+@interface SAgainLogin : GPBMessage
+
+/** 错误状态 */
+@property(nonatomic, readwrite) enum Error result;
+
+/** 错误内容 */
+@property(nonatomic, readwrite, copy, null_resettable) NSString *errMsg;
+
+@end
+
+/**
+ * Fetches the raw value of a @c SAgainLogin's @c result property, even
+ * if the value was not defined by the enum at the time the code was generated.
+ **/
+int32_t SAgainLogin_Result_RawValue(SAgainLogin *message);
+/**
+ * Sets the raw value of an @c SAgainLogin's @c result property, allowing
+ * it to be set to a value that was not defined by the enum at the time the code
+ * was generated.
+ **/
+void SetSAgainLogin_Result_RawValue(SAgainLogin *message, int32_t value);
+
 #pragma mark - SKickOut
 
 typedef GPB_ENUM(SKickOut_FieldNumber) {

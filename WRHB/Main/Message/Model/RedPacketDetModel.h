@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *grab_value;
 /// 抢包人信息
 @property (nonatomic, strong) NSArray<GrabPackageInfoModel *> *grab_logs;
+/// 抢包人信息私聊 type=6
+@property (nonatomic, strong) GrabPackageInfoModel *graber;
+
 /** 红包类型, 1: 竞抢, 2: 牛牛 */
 @property (nonatomic, readwrite, assign) RedPacketType redpacketType;
 /// 红包金额总数

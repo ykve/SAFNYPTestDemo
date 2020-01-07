@@ -12,6 +12,7 @@
 #import "PayTopupRecordCell.h"
 #import "EnvelopeNet.h"
 #import "RedPacketDetListController.h"
+#import "BillRecotdDetailsController.h"
 
 #import "BillModel.h"
 #import "BillItemModel.h"
@@ -209,12 +210,15 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
+    BillItemModel *model = self.model.dataList[indexPath.row];
     if (self.sourceType == 1) {
-        BillItemModel *model = self.model.dataList[indexPath.row];
         self.selectedId = model.ID;
         [self goto_RedPackedDetail:model  isCowCow:NO];
     } else {
-        
+        BillRecotdDetailsController *vc = [[BillRecotdDetailsController alloc] init];
+        vc.category = self.billTypeModel.category;
+        vc.billModel = model;
+        [self.navigationController pushViewController:vc animated:YES];
     }
     
 }

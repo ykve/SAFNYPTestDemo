@@ -100,7 +100,7 @@
             if (type == 2) {
                 delay = 2;
             }
-            // 可以延时调用方法
+            //  
             [strongSelf performSelector:@selector(getClubRoom) withObject:nil afterDelay:delay];
             
         } else {

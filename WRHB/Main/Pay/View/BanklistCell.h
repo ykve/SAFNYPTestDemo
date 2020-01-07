@@ -7,9 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "BankModel.h"
+#import "WithdrawBankModel.h"
 
-typedef void (^DeleteBankCardBlock)(BankModel *model);
+typedef void (^DeleteBankCardBlock)(WithdrawBankModel *model);
 
 @interface BanklistCell : UITableViewCell
 
@@ -25,7 +25,7 @@ typedef void (^DeleteBankCardBlock)(BankModel *model);
 
 @property (nonatomic, strong) UIButton *exitBtn;
 
-@property (nonatomic, strong) BankModel *model;
+@property (nonatomic, strong) WithdrawBankModel *model;
 
 
 @property (nonatomic ,copy) DeleteBankCardBlock deleteBankCardBlock;

@@ -182,9 +182,7 @@ static CGFloat const BottomViewHeight = 40 + 45;
         [strongSelf.tableView.mj_header endRefreshing];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             NSArray *modelArray = [ClubInitiator mj_objectArrayWithKeyValuesArray:response[@"data"][@"lists"]];
-            if (modelArray.count == 0) {
-                [AppModel sharedInstance].appltJoinClubNum = 0;
-            }
+            [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum = modelArray.count;
             strongSelf.bottomDataArray = [modelArray copy];
             [strongSelf.bottomTableView reloadData];
         } else {
@@ -203,7 +201,7 @@ static CGFloat const BottomViewHeight = 40 + 45;
 #pragma mark - vvUITableView
 - (UITableView *)tableView {
     if (!_tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, Height_NavBar+60, kSCREEN_WIDTH, kSCREEN_HEIGHT- Height_NavBar-60-BottomViewHeight) style:UITableViewStylePlain];
+        _tableView = [[UITableView alloc] initWithFrame:CGRectMake(0, Height_NavBar+60, kSCREEN_WIDTH, kSCREEN_HEIGHT- Height_NavBar-60-BottomViewHeight- kiPhoneX_Bottom_Height) style:UITableViewStylePlain];
         _tableView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
         _tableView.dataSource = self;
         _tableView.delegate = self;
@@ -441,9 +439,9 @@ static CGFloat const BottomViewHeight = 40 + 45;
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            [AppModel sharedInstance].appltJoinClubNum = [AppModel sharedInstance].appltJoinClubNum -1;
+            [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum -= 1;
             [MBProgressHUD showTipMessageInWindow:response[@"message"]];
-            // 可以延时调用方法
+            //  
             [strongSelf performSelector:@selector(listRloadView) withObject:nil afterDelay:1.5];
             
         } else {
@@ -460,6 +458,8 @@ static CGFloat const BottomViewHeight = 40 + 45;
 - (void)listRloadView {
     [self getClubMember];
     [self getApplicationList];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName: kApplicationJoinClubNotification object: nil];
 }
 
 #pragma mark -  修改成员信息
@@ -486,7 +486,7 @@ static CGFloat const BottomViewHeight = 40 + 45;
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
             [MBProgressHUD showTipMessageInView:response[@"message"]];
-            // 可以延时调用方法
+            //  
             [strongSelf performSelector:@selector(getClubMember) withObject:nil afterDelay:1.5];
             
         } else {

@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) ClubInfo *clubInfo;
 
 /// 是否点击 tabbar 进入的， 使用后，立即复位
-@property (nonatomic, assign) BOOL isClickTabBar;
+@property (nonatomic, assign) BOOL isClickTabBarInChat;
 
 @end
 

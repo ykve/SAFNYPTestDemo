@@ -1,6 +1,6 @@
 //
 //  BillViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -16,6 +16,7 @@
 #import "BillModel.h"
 #import "BillItemModel.h"
 #import "BillTypeModel.h"
+#import "BillRecotdDetailsController.h"
 
 @interface BillViewController ()<UITableViewDelegate,UITableViewDataSource>{
     
@@ -223,13 +224,8 @@
         cell = [BillTableViewCell cellWithTableView:tableView reusableId:@"BillTableViewCell"];
     }
     cell.model = self.model.dataList[indexPath.row];
-    if (self.sourceType == 2) {
-        cell.seeDetBtn.userInteractionEnabled = YES;
-        cell.seeDetBtn.hidden = YES;
-    } else {
-        cell.seeDetBtn.userInteractionEnabled = NO;
-        cell.seeDetBtn.hidden = NO;
-    }
+//    cell.seeDetBtn.userInteractionEnabled = YES;
+    cell.seeDetBtn.hidden = NO;
     
     __weak __typeof(self)weakSelf = self;
     [cell setOnSeeDetailsBlock:^(BillItemModel *model) {
@@ -242,12 +238,15 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    if (self.sourceType == 1) {
-        BillItemModel *model = self.model.dataList[indexPath.row];
+    BillItemModel *model = self.model.dataList[indexPath.row];
+    if (model.packet_id > 0) {
         self.selectedId = model.ID;
         [self goto_RedPackedDetail:model  isCowCow:NO];
     } else {
-        
+        BillRecotdDetailsController *vc = [[BillRecotdDetailsController alloc] init];
+        vc.category = self.self.billTypeModel.category;
+        vc.billModel = model;
+        [self.navigationController pushViewController:vc animated:YES];
     }
     
 }

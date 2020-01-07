@@ -22,6 +22,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *value;
 /// 发包者输赢结果
 @property (nonatomic, copy) NSString *result;
+/////单聊发红包新字段
+//红包总个数
+@property (nonatomic, assign) NSInteger packet_count;
+//红包剩余个数
+@property (nonatomic, copy) NSString  *remain_count;
+//红包标题
+@property (nonatomic, copy) NSString  *title;
+//红包数量
+@property (nonatomic, copy) NSString  *amount;
 
 
 @end

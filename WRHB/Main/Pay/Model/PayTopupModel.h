@@ -18,8 +18,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *icon;
 /// 额度数组
 @property (nonatomic, strong) NSArray *amounts;
-
-
+/// 是否可输入金额  1 可以  0 不可以
+@property (nonatomic, assign) BOOL can_enter_amount;
+/// 1支付宝 2微信 3银行卡
+@property (nonatomic, assign) NSInteger type;
 
 
 /// 最大金额

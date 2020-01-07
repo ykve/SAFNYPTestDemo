@@ -25,6 +25,7 @@
 #import "Msg.pbobjc.h"
 #import "Notify.pbobjc.h"
 #import "State.pbobjc.h"
+#import "Kefu.pbobjc.h"
 
 #import "NoRobSettleModel.h"
 #import "CowCowSettleVSModel.h"
@@ -39,6 +40,7 @@
 #import "YPContacts.h"
 #import "TeamMessageReceipt.h"
 #import "CServiceChatController.h"
+#import "TransferModel.h"
 
 @interface IMMessageManager ()
 
@@ -67,7 +69,7 @@
         _isConnectIM = NO;
         _isGetMyJoinGroups = NO;
         _isGetOfflineMessage = NO;
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(doneGetMyJoinedGroupsNotification) name:kDoneGetMyJoinedGroupsNotification object:nil];
+        //        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(doneGetMyJoinedGroupsNotification) name:kDoneGetMyJoinedGroupsNotification object:nil];
     }
     return self;
 }
@@ -99,7 +101,7 @@
 
 
 
-#pragma mark - 🔴socket消息处理
+#pragma mark - socket消息处理
 - (void)startConnecting:(NSString *)appKey {
     
     appKey = [[FunctionManager sharedInstance] encodedWithString:appKey];
@@ -134,24 +136,29 @@
                     NSLog(@"未知登录信息");
                 }
                 
-            } else if (command == Cmd_SmsgSendMessage) {   // 确认消息 自己发的 代表服务器收到了
+            } else if (command == Cmd_SmsgSendMessage) {
                 SSendMessage *sendMessConfirm =[SSendMessage parseFromData:myP.extend error:nil];
                 [strongSelf receiveConfirmSendMessageReqId:myP.reqId sendMessage:sendMessConfirm];
-                //                NSLog(@"确认消息 自己发的 代表服务器收到了");
                 
             } else if (command == Cmd_SmsgNotifyNewMessage) {   // 新消息 ， 别人发的
                 SNotifyNewMessage *messageModel =[SNotifyNewMessage parseFromData:myP.extend error:nil];
                 [strongSelf receiveMessageArray:messageModel.msgsArray isOfflineMsg:NO messageCount:0];
                 
-            } else if (command == Cmd_SmsgRecvMessage) {   // 系统已接收回执
+            } else if (command == Cmd_SmsgRecvMessage) {
                 SRecvMessage *sreMsg =[SRecvMessage parseFromData:myP.extend error:nil];
-                NSLog(@"****** 已读设置成功 %@******",sreMsg);
+                NSLog(@"****** 已读设置成功 服务器已接收已读 %@******",sreMsg);
                 
             } else if (command == Cmd_SmsgHello) {
                 SHello *hello =[SHello parseFromData:myP.extend error:nil];
-                // 心跳处理
                 NSLog(@"****** 心跳包接收 %@******",hello);
                 
+            } else if (command == Cmd_SmsgAgainLogin) {
+                [strongSelf sendLoginLink];
+                NSLog(@"****** 重新登录 ******" );
+            } else if (command == Cmd_SmsgInputMessage) {
+                
+                SInputMessage *sInput =[SInputMessage parseFromData:myP.extend error:nil];
+                NSLog(@"****** 输入中 ******" );
             } else if (command == Cmd_SmsgDelMessage) {   // 撤回消息
                 
                 SDelMessage *delMessage =[SDelMessage parseFromData:myP.extend error:nil];
@@ -163,80 +170,97 @@
                 // 强制下线
                 [strongSelf forcedOffline:kickOut];
                 
-                
             } else if (command == Cmd_SmsgNotifySessionAdd) { // 会话添加通知
                 NSLog(@"********* 会话添加通知 *********");
-                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionUpdateNotification object: nil];
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionListUpdateNotification object: nil];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             } else if (command == Cmd_SmsgNotifySessionDel) { // 会话删除通知
-                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionUpdateNotification object: nil];
+                
+                SNotifySessionDel *notSess =[SNotifySessionDel parseFromData:myP.extend error:nil];
+                NSDictionary *dict = @{@"sessionId" : @(notSess.sessionId)};
+                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionListUpdateNotification object: dict];
                 NSLog(@"********* 会话删除通知 *********");
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             } else if (command == Cmd_SmsgNotifySessionUpdate) { // 会话改变通知
+                SNotifySessionAdd *sessAdd =[SNotifySessionAdd parseFromData:myP.extend error:nil];
+                
                 [[NSNotificationCenter defaultCenter] postNotificationName: kSessionInfoUpdateNotification object: nil];
                 NSLog(@"********* 会话改变通知 *********");
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             } else if (command == Cmd_SmsgNotifySessionMemberAdd) { // 会话成员新增通知
                 NSLog(@"********* 会话成员新增通知 *********");
-                
                 //                SNotifySessionUpdate *seUpdate =[SNotifySessionUpdate parseFromData:myP.extend error:nil];
-                //                SNotifySessionMemberAdd *memberAdd =[SNotifySessionMemberAdd parseFromData:seUpdate.membersArray error:nil];
-                
+                SNotifySessionMemberAdd *notSess =[SNotifySessionMemberAdd parseFromData:myP.extend error:nil];
+                NSDictionary *dict = @{@"sessionId" : @(notSess.sessionId), @"MemberArray" : notSess.addMembersArray};
                 // 会话成员新增通知
-                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionMemberUpdateNotification object: nil];
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionMemberUpdateNotification object: dict];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             }  else if (command == Cmd_SmsgNotifySessionMemberDel) { // 会话成员删除通知
                 NSLog(@"********* 会话成员删除通知 *********");
+                SNotifySessionMemberDel *notSessMe =[SNotifySessionMemberDel parseFromData:myP.extend error:nil];
+                NSDictionary *dict = @{@"sessionId" : @(notSessMe.sessionId), @"MemberArray" : notSessMe.delIdsArray};
+                
                 // 会话成员删除通知
-                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionMemberUpdateNotification object: nil];
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
-            } else if (command == Cmd_SmsgNotifyAddFriends) { // 添加好友通知   申请好友通知   （添加好友->对方通过 通知）
-//                SNotifyAddFriends *notAddFri =[SNotifyAddFriends parseFromData:myP.extend error:nil];
-                [AppModel sharedInstance].sysMessageNum = [AppModel sharedInstance].sysMessageNum + 1;
+                [[NSNotificationCenter defaultCenter] postNotificationName: kSessionMemberUpdateNotification object: dict];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+            } else if (command == Cmd_SmsgNotifyAddFriends) { // 添加好友通知   申请好友通知   （添加好友->对方通过 通知）俱乐部
                 NSLog(@"********* 添加好友通知 *********");
-                // 通讯录更新
-                [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUpdateNotification object: nil];
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                SNotifyAddFriends *addFriends =[SNotifyAddFriends parseFromData:myP.extend error:nil];
+                if (addFriends.type == 1) { // 申请
+                    [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum += 1;
+                    // 通讯录会话变更更新
+                    [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUpdateNotification object: nil];
+                } else if (addFriends.type == 2) { // 同意
+                    NSLog(@"1");
+                } else if (addFriends.type == 3) { // 拒绝
+                    NSLog(@"1");
+                } else if (addFriends.type == 4) { // 删除
+                    // 通讯录会话变更更新
+                    [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUpdateNotification object: @"Delete"];
+                } else {
+                     NSLog(@"=== SNotifyAddFriends 未知类型 ====");
+                }
+                
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             } else if (command == Cmd_SmsgNotifyAnnouncement) { // 公告通知
                 NSLog(@"********* 公告通知 *********");
                 SNotifyAnnouncement *notifyAnnoun =[SNotifyAnnouncement parseFromData:myP.extend error:nil];
                 [strongSelf sysNotificationMessage:notifyAnnoun.infosArray];
                 
-            } else if (command == Cmd_SmsgNotifyUserInfoUpdate) { // 用户信息更新通知  通讯录更新
+            } else if (command == Cmd_SmsgNotifyUserInfoUpdate) {
                 NSLog(@"********* 用户信息更新通知 *********");
-                // 通讯录更新
+                // 通讯录信息更新
                 [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUpdateNotification object: nil];
                 [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
             } else if (command == Cmd_CmsgNotifyAck) { // 其它新增通知
-                /** 注意：以后新增的通知协议，旧客户端没有办法处理的，直接返回通知确认 */
                 NSLog(@"********* 其它新增通知 *********");
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
-            } else if (command == Cmd_SmsgNotifyStateChange) { // 好友在线状态改变通知
+            } else if (command == Cmd_SmsgNotifyStateChange) {
                 SNotifyStateChange *notState =[SNotifyStateChange parseFromData:myP.extend error:nil];
                 
                 for (UserState *user in notState.userStateArray) {
                     YPUserStateModel *newModel = [AppModel sharedInstance].userStateDict[@(user.userId)];
-                    newModel.state = user.state;
+                    newModel.state = (NSInteger)user.state;
                     newModel.offlineTime = user.offlineTime;
                 }
-                // 用户状态改变
+                
                 [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUserStatusUpdateNotification object: nil];
                 NSLog(@"********* 好友在线状态改变通知 *********");
-            } else if (command == Cmd_SmsgStateUser) { // 全部好友的状态
+            } else if (command == Cmd_SmsgStateUser) {
                 SStateUser *allState =[SStateUser parseFromData:myP.extend error:nil];
                 
                 NSMutableDictionary *dict = [NSMutableDictionary dictionary];
                 for (UserState *user in allState.userStateArray) {
                     YPUserStateModel *model = [[YPUserStateModel alloc] init];
                     model.userId = user.userId;
-                    model.state = user.state;
+                    model.state = (NSInteger)user.state;
                     model.offlineTime = user.offlineTime;
                     [dict setObject:model forKey:@(user.userId)];
                 }
@@ -244,18 +268,21 @@
                 // 用户状态改变
                 [[NSNotificationCenter defaultCenter] postNotificationName: kAddressBookUserStatusUpdateNotification object: nil];
                 NSLog(@"********* 全部好友的状态 *********");
-            } else if (command == Cmd_SmsgReadMessage) { // 已读消息
+            } else if (command == Cmd_SmsgReadMessage) {
                 SReadMessage *readMe =[SReadMessage parseFromData:myP.extend error:nil];
-                [self receiveReadedMessageReqId:myP.reqId readMessage:readMe];
-                //
-                NSLog(@"********* 已读消息 *********");
-            } else if (command == Cmd_SmsgKefuQueueInfo) { // 客服排队
+                [strongSelf receiveReadedMessageReqId:myP.reqId readMessage:readMe];
+                
+                NSLog(@"********* 已读消息通知 *********");
+            } else if (command == Cmd_SmsgKefuQueueInfo) {
                 //
                 NSLog(@"********* 客服排队 *********");
-            } else if (command == Cmd_SmsgDisconnectKefuSession) { // 断开客服会话
-                //
+            } else if (command == Cmd_SmsgDisconnectKefuSession) {
+                CDisconnectKefuSession *disconnect =[CDisconnectKefuSession parseFromData:myP.extend error:nil];
+                NSDictionary *parDict = @{@"KefuSessionId" : @(disconnect.sessionId)};
+                [[NSNotificationCenter defaultCenter] postNotificationName: kKefuDisconnectNotification object:nil userInfo:parDict];
+                //                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 NSLog(@"********* 断开客服会话 *********");
-            } else if (command == Cmd_SmsgNotifyPush) { // 通用通知
+            } else if (command == Cmd_SmsgNotifyPush) {
                 //
                 NSLog(@"********* 通用通知 *********");
                 
@@ -263,17 +290,40 @@
                 
                 if ([spush.action isEqualToString:@"club_join_request"]) {
                     // 俱乐部加入申请
-                    [AppModel sharedInstance].appltJoinClubNum = [AppModel sharedInstance].appltJoinClubNum + 1;
+                    [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum = [UnreadMessagesNumSingle sharedInstance].clubAppltJoinNum + 1;
+                    //
+                    [[NSNotificationCenter defaultCenter] postNotificationName: kApplicationJoinClubNotification object: nil];
+                    
+                } else if ([spush.action isEqualToString:@"club_modified"]) {
+                    //
+                    [[NSNotificationCenter defaultCenter] postNotificationName: kClubInfoUpdateNotification object: nil];
+                    
+                } else if ([spush.action isEqualToString:@"club_request_approved"]) {
+                    //
+                    //                    [[NSNotificationCenter defaultCenter] postNotificationName: kClubInfoUpdateNotification object: nil];
+                    NSLog(@"通用通知333");
+                } else {
+                    NSLog(@"俱乐部通知未知类型");
                 }
+                //                NSLog(@"通用通知323213123123");
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                
+            } else if (command == Cmd_SmsgNoSpeakKefuSession) {
                 //
-                [[NSNotificationCenter defaultCenter] postNotificationName: kApplicationJoinClubNotification object: nil];
-                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
                 
+                CNoSpeakKefuSession *noSpeak =[CNoSpeakKefuSession parseFromData:myP.extend error:nil];
+                NSDictionary *parDict = @{@"SpeakStatus" : @(noSpeak.optType)};
+                [[NSNotificationCenter defaultCenter] postNotificationName: kKefuNoSpeakSessionNotification object:nil userInfo:parDict];
+                NSLog(@"🔴***********noSpeak未知类型:%d ***********🔴",noSpeak.optType);
+                //                [self confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
+                
+            } else if (command == Cmd_SmsgNotifyTransferStatus) {   // 转账状态
+                SNotifyTransferStatus *notTrans =[SNotifyTransferStatus parseFromData:myP.extend error:nil];
+                [strongSelf transferModel:notTrans];
+                [strongSelf confirmReceivedNotificationId:myP.reqId cmd:Cmd_CmsgNotifyAck];
             } else {
-                
-                NSLog(@"🔴***********command未知类型:%zd ***********🔴",command);
+                NSLog(@"🔴***********command未知类型:%d ***********🔴",command);
             }
-            
         } else if (type == AFSocketReceiveTypeForPong){
             NSLog(@"🔴接收 类型2--%@",message);
         }
@@ -285,6 +335,36 @@
 }
 
 
+- (void)transferModel:(SNotifyTransferStatus *)model {
+    TransferModel *tran = [[TransferModel alloc] init];
+    tran.transfer = model.transferId;
+    tran.receiveId = model.operator_p;
+    tran.receiver = model.operator_p;
+    
+    NSInteger stat = 0;
+    if (model.status == 1) {
+        stat = TransferCellStatus_Refund;
+    } else if (model.status == 2) {
+        stat = TransferCellStatus_Expire;
+    } else if (model.status == 3) {
+        stat = TransferCellStatus_MyselfReceived;
+    }
+    tran.cellStatus = stat;
+    
+    BOOL isCurrentSession = NO;
+    ChatViewController *vc = [ChatViewController currentChat];
+    if (vc) {
+        if (vc.sessionId == model.sessionId) {
+            isCurrentSession = YES;
+        }
+    }
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(receiveTransferStatusModel:)] && isCurrentSession) {
+        [self.delegate receiveTransferStatusModel:tran];
+    }
+    
+    [self updateTransferInfo:tran];
+}
 
 #pragma mark -  通知确认已接收
 - (void)confirmReceivedNotificationId:(NSString *)reqId cmd:(Cmd)cmd {
@@ -312,7 +392,7 @@
     for (NSInteger index = 0; index < readMessage.msgIdsArray.count; index++) {
         NSInteger messageId = [readMessage.msgIdsArray valueAtIndex:index];
         
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId=%llu AND messageId=%ld", readMessage.sessionId,messageId];
+        NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%llu AND messageId=%ld",[AppModel sharedInstance].user_info.userId, readMessage.sessionId,(long)messageId];
         YPMessage *oldMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
         if (!oldMessage) {
             continue;
@@ -333,9 +413,6 @@
         // 是否在当前会话界面
         if (self.delegate && [self.delegate respondsToSelector:@selector(willSetReadMessages:)] && isCurrentSession) {
             [self.delegate willSetReadMessages:oldMessage];
-        } else {
-            // 更新消息列表通知
-            [[NSNotificationCenter defaultCenter] postNotificationName: kSessionUpdateNotification object: nil];
         }
         
         // 更新数据
@@ -346,6 +423,35 @@
             }
         });
     }
+    
+    // 更新消息列表通知
+    [[NSNotificationCenter defaultCenter] postNotificationName: kSessionListUpdateNotification object: nil];
+    //
+    [self confirmReceivedSessionId:readMessage.sessionId array:readMessage.msgIdsArray];
+}
+
+/**
+ 已读通知确认已接收
+ 
+ @param array 需确认的已读通知数组
+ */
+- (void)confirmReceivedSessionId:(NSUInteger)sessionId array:(GPBUInt64Array *)array {
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        
+        CReadMessageAck *readMessageAck = [[CReadMessageAck alloc] init];
+        readMessageAck.sessionId = (long)sessionId;
+        readMessageAck.msgIdsArray = [array copy];
+        
+        MyPacket *myPacket = [[MyPacket alloc] init];
+        myPacket.cmd = Cmd_CmsgReadMessageAck;
+        myPacket.uid = [AppModel sharedInstance].user_info.userId;
+        myPacket.reqId = [NSString stringWithFormat:@"%f",[FunctionManager getNowTime]/1000];
+        myPacket.extend = [readMessageAck data];
+        
+        [[AFSocketManager shareManager] af_sendData:[myPacket data]];
+        
+    });
 }
 #pragma mark - 发送已读
 /**
@@ -359,7 +465,7 @@
     
     NSArray *unreadArrayTemp = nil;
     if (isAll) {
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId=%zd AND messageFrom =2 and isRemoteRead=0", sessionId];
+        NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%zd AND messageFrom =2 and isRemoteRead=0", [AppModel sharedInstance].user_info.userId,sessionId];
         unreadArrayTemp = [WHC_ModelSqlite query:[YPMessage class] where:whereStr];
     } else {
         unreadArrayTemp = [readArray copy];
@@ -386,7 +492,7 @@
     
     
     for (YPMessage *ypMessage in unreadArrayTemp) {
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId=%lu AND messageId=%ld", sessionId,sessionId];
+        NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%lu AND messageId=%ld", [AppModel sharedInstance].user_info.userId,(long)sessionId,(long)ypMessage.messageId];
         // 更新数据
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             BOOL isSuccess =  [WHC_ModelSqlite update:ypMessage where:whereStr];
@@ -417,9 +523,9 @@
         }
     }
     
-    NSString *whereStr = [NSString stringWithFormat:@"sessionId=%llu AND messageId=%ld", sendMessage.sessionId,reqId.integerValue];
-    if (isCService) {
-        whereStr = [NSString stringWithFormat:@"sessionId=%d AND messageId=%ld", kCustomerServiceID,reqId.integerValue];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%llu AND messageId=%ld",[AppModel sharedInstance].user_info.userId,sendMessage.sessionId,reqId.integerValue];
+    if (isCService && csvc.chatSessionType == ChatSessionType_CustomerService) {
+        whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%d AND messageId=%ld",[AppModel sharedInstance].user_info.userId, kCustomerServiceID,(long)reqId.integerValue];
     }
     
     YPMessage *oldMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
@@ -435,6 +541,7 @@
         oldMessage.deliveryState = MessageDeliveryState_Successful;
     } else {
         message = [[YPMessage alloc] init];
+        message.userId = [AppModel sharedInstance].user_info.userId;
         oldMessage.deliveryState = MessageDeliveryState_Failed;
         
         if (sendMessage.result == Error_NoSpeak) {  // 不能说话
@@ -443,6 +550,12 @@
             message.text = @"发送消息过于频繁";
         } else if (sendMessage.result == Error_NotEmpty) {  // 不能空消息
             message.text = @"不能发送空消息";
+        } else if (sendMessage.result == Error_NoSpeakKefu) {
+            message.text = @"您已被客服禁言";
+        } else if (sendMessage.result == Error_SessionNoSpeak) {
+            message.text = @"会话不能讲话";
+        } else if (sendMessage.result == Error_SelfNoSpeak) {
+            message.text = @"自已不能讲话";
         } else {
             message.text = @"未知原因 发送消息失败";
             NSLog(@"**************** 未知原因 发送消息失败 %d ****************", sendMessage.result);
@@ -476,7 +589,7 @@
         message.timestamp = message.messageId;
         message.create_time = [NSDate date];
         message.isReceivedMsg = YES;
-        
+        message.uniqeid = StringUniquId(message.userId, message.sessionId, message.messageId);
         
         // 是否在当前会话界面
         if (self.delegate && [self.delegate respondsToSelector:@selector(willAppendAndDisplayMessage:)] && isCurrentSession && !isCService) {
@@ -486,10 +599,15 @@
         }
         
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            BOOL isSuccess = [WHC_ModelSqlite insert:message];
-            if (!isSuccess) {
-                [WHC_ModelSqlite removeModel:[YPMessage class]];
-                [WHC_ModelSqlite insert:message];
+            
+            NSString *queryWhere = [NSString stringWithFormat:@"uniqeid = '%@'",message.uniqeid];
+            NSArray *userGroupArray = [WHC_ModelSqlite query:[YPMessage class] where:queryWhere];
+            if (userGroupArray==nil||userGroupArray.count < 1 ) {
+                BOOL isSuccess = [WHC_ModelSqlite insert:message];
+                if (!isSuccess) {
+                    [WHC_ModelSqlite removeModel:[YPMessage class]];
+                    [WHC_ModelSqlite insert:message];
+                }
             }
         });
     }
@@ -557,11 +675,13 @@
         }
         
         YPMessage *message = [[YPMessage alloc] init];
+        message.userId = AppModel.sharedInstance.user_info.userId;
         //        message.messageType = MessageType_ChatNofitiText;   下面赋值
         message.sessionId = mess.sessionId;
         message.messageId = mess.msgId;
+        message.uniqeid =  StringUniquId(message.userId, message.sessionId, message.messageId);
         //        message.deliveryState = MessageDeliveryState_Delivering;
-        message.messageFrom = MessageDirection_RECEIVE;
+        
         message.chatSessionType = mess.sessionType;
         message.timestamp = mess.sendTime;
         message.create_time = [NSDate date];
@@ -569,9 +689,15 @@
         
         message.messageSendId = mess.sender;
         BaseUserModel *userModel = [[BaseUserModel alloc] init];
-        userModel.userId = mess.sender;
-        message.user = userModel;
-        
+        if ([AppModel sharedInstance].user_info.userId == mess.sender) {
+            message.messageFrom = MessageDirection_SEND;
+        } else {
+            message.messageFrom = MessageDirection_RECEIVE;
+            userModel.userId = mess.sender;
+            userModel.name = mess.senderName;
+            userModel.avatar = mess.senderAvatar;
+            message.user = userModel;
+        }
         
         BOOL isSysMsg = NO;
         
@@ -653,6 +779,8 @@
                 reMessage.cellStatus = RedPacketCellStatus_NoPackage;
             } else if ([self getNowTimeWithCreate:reMessage.create expire:reMessage.expire] <= 0) {
                 reMessage.cellStatus = RedPacketCellStatus_Expire;
+            } else if (reMessage.remain > 0 && [self getNowTimeWithCreate:reMessage.create expire:reMessage.expire] > 0) {
+                reMessage.cellStatus = RedPacketCellStatus_Normal;
             } else {
                 NSLog(@"********** 未知红包状态 **********");
             }
@@ -678,7 +806,7 @@
                 CowCowSettleVSModel *cowCowModel = [CowCowSettleVSModel mj_objectWithKeyValues:[messageContent.data_p mj_JSONObject]];
                 message.cowCowVSModel  = cowCowModel;
             } else {
-                NSLog(@"**************** 消息类型-结算红包  未知类型 ****************");
+                NSLog(@"**************** 消息类型-结算红包 ****************");
             }
             //            NSLog(@"**************** 消息类型-结算红包 ****************");
         } else if (content.segmentType == SegmentType_SegmentTypeSingleSettleRedpacket) {  // 单人结算红包
@@ -713,8 +841,31 @@
             
             
             //            NSLog(@"**************** 消息类型-单人结算红包 ****************");
+        } else if (content.segmentType == SegmentType_SegmentTypeSendTransfer) {
+            
+            SendTransferSegment *sendTran =[SendTransferSegment parseFromData:content.data_p error:nil];
+            TransferModel *transModel = [[TransferModel alloc] init];
+            transModel.transfer = [sendTran.id_p integerValue];
+            transModel.send_Id = sendTran.sender;
+            transModel.create = sendTran.create;
+            transModel.expire = sendTran.expire;
+            transModel.title = sendTran.title;
+            transModel.sendTime = sendTran.sendTime;
+            transModel.money = sendTran.total;
+            transModel.cellStatus = TransferCellStatus_Normal;
+            
+            message.messageType = MessageType_SendTransfer;
+            message.transferModel = transModel;
+            
+            if (message.messageSendId == [AppModel sharedInstance].user_info.userId) {
+                
+                if (self.delegate && [self.delegate respondsToSelector:@selector(receiveSendbyYourselfTransferMessage:)] && isCurrentSession && !isCService) {
+                    [self.delegate receiveSendbyYourselfTransferMessage:message];
+                }
+                continue;
+            }
         } else {
-            NSLog(@"🔴**************** 🔴未知消息类型🔴 ****************🔴");
+            NSLog(@"**************** 未知消息类型 ****************");
             continue;
         }
         
@@ -727,7 +878,7 @@
         if (self.delegate && [self.delegate respondsToSelector:@selector(willAppendAndDisplayMessage:)] && isCurrentSession && !isCService && !isSysMsg) {
             message = [self.delegate willAppendAndDisplayMessage:message];
         } else if (self.delegate && [self.delegate respondsToSelector:@selector(cService_willAppendAndDisplayMessage:)] && isCService) {
-            message = [self.delegate cService_willAppendAndDisplayMessage:message];
+            message =[self.delegate cService_willAppendAndDisplayMessage:message];
         }
         
         
@@ -755,10 +906,14 @@
         
         if (isSaveMessage) {
             dispatch_async(dispatch_get_global_queue(0, 0), ^{
-                BOOL isSuccess = [WHC_ModelSqlite insert:message];
-                if (!isSuccess) {
-                    [WHC_ModelSqlite removeModel:[YPMessage class]];
-                    [WHC_ModelSqlite insert:message];
+                NSString *queryWhere = [NSString stringWithFormat:@"uniqeid = '%@'",message.uniqeid];
+                NSArray *userGroupArray = [WHC_ModelSqlite query:[YPMessage class] where:queryWhere];
+                if (userGroupArray==nil||userGroupArray.count < 1 ) {
+                    BOOL isSuccess = [WHC_ModelSqlite insert:message];
+                    if (!isSuccess) {
+                        [WHC_ModelSqlite removeModel:[YPMessage class]];
+                        [WHC_ModelSqlite insert:message];
+                    }
                 }
             });
         }
@@ -775,7 +930,7 @@
 
 /**
  本地消息数保存
-
+ 
  @param message 消息模型
  */
 - (void)sendMessageToLocalNumSave:(YPMessage *)message {
@@ -825,7 +980,7 @@
         
         MyPacket *myPacket = [[MyPacket alloc] init];
         myPacket.cmd = Cmd_CmsgRecvMessage;
-        myPacket.uid = [AppModel sharedInstance].user_info.userId;;
+        myPacket.uid = [AppModel sharedInstance].user_info.userId;
         myPacket.reqId = [NSString stringWithFormat:@"%f",[FunctionManager getNowTime]/1000];
         myPacket.extend = [recvMessage data];
         
@@ -877,7 +1032,7 @@
     
     CSendMessage *cSendMessage = [[CSendMessage alloc] init];
     cSendMessage.sessionId = model.sessionId;
-    cSendMessage.sender = model.user.userId;
+    cSendMessage.sender = model.messageSendId;
     cSendMessage.sendTime = model.messageId;
     cSendMessage.content = content;
     
@@ -888,7 +1043,7 @@
 #pragma mark - 客服 自动询问
 /**
  客服 自动询问
-
+ 
  @param ID 自动询问问题 ID
  */
 - (void)sendCSAutoAskMessage:(YPMessage *)model ID:(NSString *)ID {
@@ -898,19 +1053,43 @@
     autoSe.text = model.text;
     
     Content *content = [[Content alloc] init];
-    content.segmentType = SegmentType_SegmentTypeText;
+    content.segmentType = SegmentType_SegmentTypeAutoReply;
     content.data_p = [autoSe data];
     
     CSendMessage *cSendMessage = [[CSendMessage alloc] init];
     cSendMessage.sessionId = model.sessionId;
-    cSendMessage.sender = model.user.userId;
+    cSendMessage.sender = model.messageSendId;
     cSendMessage.sendTime = model.messageId;
     cSendMessage.content = content;
     
     NSString *reqId = [NSString stringWithFormat:@"%zd", model.messageId];
     [self sendMessageToIMServerCmd:Cmd_CmsgSendMessage extend:[cSendMessage data] reqId:reqId];
 }
-
+#pragma mark - 客服 盈商询问
+/**
+ 客服 盈商询问
+ 
+ @param ID 盈商 ID
+ */
+- (void)sendCSYSAutoAskMessage:(YPMessage *)model ID:(NSString *)ID {
+    
+    FastReplySegment *autoSe = [[FastReplySegment alloc] init];
+    autoSe.id_p = ID;
+    autoSe.text = model.text;
+    
+    Content *content = [[Content alloc] init];
+    content.segmentType = SegmentType_SegmentTypeFastReply;
+    content.data_p = [autoSe data];
+    
+    CSendMessage *cSendMessage = [[CSendMessage alloc] init];
+    cSendMessage.sessionId = model.sessionId;
+    cSendMessage.sender = model.messageSendId;
+    cSendMessage.sendTime = model.messageId;
+    cSendMessage.content = content;
+    
+    NSString *reqId = [NSString stringWithFormat:@"%zd", model.messageId];
+    [self sendMessageToIMServerCmd:Cmd_CmsgSendMessage extend:[cSendMessage data] reqId:reqId];
+}
 
 #pragma mark - 发送普通图片
 /**
@@ -935,7 +1114,7 @@
     
     CSendMessage *cSendMessage = [[CSendMessage alloc] init];
     cSendMessage.sessionId = model.sessionId;
-    cSendMessage.sender = model.user.userId;
+    cSendMessage.sender = model.messageSendId;
     cSendMessage.sendTime = model.timestamp;
     cSendMessage.content = content;
     
@@ -966,7 +1145,7 @@
     
     CSendMessage *cSendMessage = [[CSendMessage alloc] init];
     cSendMessage.sessionId = model.sessionId;
-    cSendMessage.sender = model.user.userId;
+    cSendMessage.sender = model.messageSendId;
     cSendMessage.sendTime = model.timestamp;
     cSendMessage.content = content;
     
@@ -997,7 +1176,7 @@
     
     CSendMessage *cSendMessage = [[CSendMessage alloc] init];
     cSendMessage.sessionId = model.sessionId;
-    cSendMessage.sender = model.user.userId;
+    cSendMessage.sender = model.messageSendId;
     cSendMessage.sendTime = model.timestamp;
     cSendMessage.content = content;
     
@@ -1051,7 +1230,7 @@
     
     for (NSUInteger index = 0; index < delMessage.msgIdArray.count; index++) {
         uint64_t messageId = [delMessage.msgIdArray valueAtIndex:index];
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId=%llu AND messageId=%llu", delMessage.sessionId,messageId];
+        NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and sessionId=%llu AND messageId=%llu",[AppModel sharedInstance].user_info.userId, delMessage.sessionId,messageId];
         YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
         ypMessage.isDeleted = YES;
         ypMessage.isRecallMessage = YES;
@@ -1067,6 +1246,7 @@
         }
     }
 }
+
 
 
 /**
@@ -1109,20 +1289,35 @@
 // 更新红包信息  
 - (void)updateRedPacketInfo:(EnvelopeMessage *)redPacketInfo {
     
-    NSString *whereStr = [NSString stringWithFormat:@"redPacketInfo.redp_id=%@", redPacketInfo.redp_id];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and redPacketInfo.redp_id=%@", [AppModel sharedInstance].user_info.userId,redPacketInfo.redp_id];
     YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     ypMessage.redPacketInfo = redPacketInfo;
     if (ypMessage) {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-           BOOL isS = [WHC_ModelSqlite update:ypMessage where:whereStr];
+            BOOL isS = [WHC_ModelSqlite update:ypMessage where:whereStr];
             NSLog(@"1");
         });
     }
 }
-
+- (void)updateTransferInfo:(TransferModel *)transferModel {
+    
+    NSString *whereStr = [NSString stringWithFormat:@"transferModel.transfer=%zd", transferModel.transfer];
+    YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
+     ypMessage.transferModel.cellStatus = transferModel.cellStatus;
+     ypMessage.transferModel.receiveId = transferModel.receiveId;
+     ypMessage.transferModel.receiver = transferModel.receiver;
+    
+    ypMessage.transferModel = transferModel;
+    if (ypMessage) {
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            BOOL isS = [WHC_ModelSqlite update:ypMessage where:whereStr];
+            NSLog(@"1");
+        });
+    }
+}
 - (void)updateMessage:(NSInteger)messageId {
     
-    NSString *whereStr = [NSString stringWithFormat:@"messageId=%ld", messageId];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = %ld and messageId=%ld",[AppModel sharedInstance].user_info.userId, (long)messageId];
     YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     ypMessage.deliveryState = MessageDeliveryState_Failed;
     if (ypMessage) {
@@ -1131,8 +1326,6 @@
         });
     }
 }
-
-
 
 - (AVAudioPlayer *)player {
     if (!_player) {
@@ -1149,7 +1342,6 @@
         [_player setNumberOfLoops:0];
         //准备播放
         [_player prepareToPlay];
-        
     }
     return _player;
 }

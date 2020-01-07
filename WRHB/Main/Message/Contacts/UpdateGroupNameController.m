@@ -7,7 +7,7 @@
 //
 
 #import "UpdateGroupNameController.h"
-#import "SessionInfoModel.h"
+#import "SessionInfoModels.h"
 #import "ChatsModel.h"
 
 

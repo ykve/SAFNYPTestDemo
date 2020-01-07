@@ -79,6 +79,7 @@
     _model = model;
     self.nameLabel.text = model.name;
     self.limitCollectionView.model = model.amounts;
+    self.textField.userInteractionEnabled = model.can_enter_amount;
 }
 
 

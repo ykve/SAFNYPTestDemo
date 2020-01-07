@@ -19,11 +19,13 @@
 
 @implementation ClubRedPacketItemController
 
+
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
     
-    [self getGroupGameData];
+   
     // 下拉刷新
     __weak __typeof(self) weakSelf = self;
     self.collectionView.mj_header= [MJRefreshNormalHeader headerWithRefreshingBlock:^{
@@ -39,6 +41,8 @@
     if (![model.title isEqualToString:@"创建房间"]) {
         [self addData];
     }
+    
+    [self getGroupGameData];
 }
 
 #pragma mark -  获取游戏群组数据
@@ -57,7 +61,7 @@
     
     id cacheJson = [XHNetworkCache cacheJsonWithURL:entity.urlString params:entity.parameters];
     if (cacheJson) {
-        NSArray *array = [GamesTypeModel mj_objectArrayWithKeyValuesArray:cacheJson];
+        NSArray *array = [self sortDataWithArray:[GamesTypeModel mj_objectArrayWithKeyValuesArray:cacheJson]];
         self.dataArray = [array mutableCopy];
         [self addData];
         [self.collectionView reloadData];
@@ -73,7 +77,7 @@
         [strongSelf.collectionView.mj_header endRefreshing];
         [MBProgressHUD hideHUD];
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            NSArray *array = [GamesTypeModel mj_objectArrayWithKeyValuesArray:response[@"data"]];
+            NSArray *array = [self sortDataWithArray:[GamesTypeModel mj_objectArrayWithKeyValuesArray:response[@"data"]]];
             strongSelf.dataArray = [array mutableCopy];
             [strongSelf addData];
             [strongSelf.collectionView reloadData];
@@ -92,7 +96,22 @@
         [[AFHttpError sharedInstance] handleFailResponse:error];
     } progressBlock:nil];
 }
-
+-(NSArray*)sortDataWithArray:(NSArray*)array {
+    //用这个方法
+    if (array!=nil&&array.count>0) {
+        return [array sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+                GamesTypeModel *m1 = obj1;
+                GamesTypeModel *m2 = obj2;
+                if ([m1.items count] > [m2.items count]) {
+                    return NSOrderedAscending;
+                }
+                return NSOrderedDescending;
+        }];
+    }else {
+        return array;
+    }
+    
+}
 - (void)addData {
     
     if ([ClubManager sharedInstance].clubInfo.role == 2 || [ClubManager sharedInstance].clubInfo.role == 3 || [ClubManager sharedInstance].clubInfo.who_create_room == 1) {
@@ -102,6 +121,7 @@
         [self.dataArray insertObject:model atIndex:0];
     }
 }
+
 
 - (UIView *)setFootView {
     UIView *backView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, 300)];

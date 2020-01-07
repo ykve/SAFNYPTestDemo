@@ -16,7 +16,7 @@
 #import "ClubItemController.h"
 
 
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "ChatViewController.h"
 #import "MessageItem.h"
 #import "YPMenu.h"

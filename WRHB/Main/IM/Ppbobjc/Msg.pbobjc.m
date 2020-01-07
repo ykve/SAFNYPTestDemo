@@ -59,7 +59,7 @@ GPBEnumDescriptor *SegmentType_EnumDescriptor(void) {
         "acket\000SegmentTypeSingleSettleRedpacket\000S"
         "egmentTypeRedpacketStatus\000SegmentTypeVid"
         "eo\000SegmentTypeFastReply\000SegmentTypeAutoR"
-        "eply\000";
+        "eply\000SegmentTypeSendTransfer\000";
     static const int32_t values[] = {
         SegmentType_SegmentTypeFont,
         SegmentType_SegmentTypeText,
@@ -77,6 +77,7 @@ GPBEnumDescriptor *SegmentType_EnumDescriptor(void) {
         SegmentType_SegmentTypeVideo,
         SegmentType_SegmentTypeFastReply,
         SegmentType_SegmentTypeAutoReply,
+        SegmentType_SegmentTypeSendTransfer,
     };
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(SegmentType)
@@ -110,6 +111,7 @@ BOOL SegmentType_IsValidValue(int32_t value__) {
     case SegmentType_SegmentTypeVideo:
     case SegmentType_SegmentTypeFastReply:
     case SegmentType_SegmentTypeAutoReply:
+    case SegmentType_SegmentTypeSendTransfer:
       return YES;
     default:
       return NO;
@@ -163,6 +165,63 @@ BOOL SessionType_IsValidValue(int32_t value__) {
     case SessionType_SystemRoom:
     case SessionType_Kefu:
     case SessionType_BusinessKefu:
+      return YES;
+    default:
+      return NO;
+  }
+}
+
+#pragma mark - Enum PlayType
+
+GPBEnumDescriptor *PlayType_EnumDescriptor(void) {
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
+  if (!descriptor) {
+    static const char *valueNames =
+        "PtNone\000PtSingleMime\000PtMultiMime\000PtNnNoTi"
+        "mes\000PtNnTimes\000PtGroupNormal\000PtPersonal\000P"
+        "tRelay\000PtAlliance\000PtWelfare\000PtLucky\000";
+    static const int32_t values[] = {
+        PlayType_PtNone,
+        PlayType_PtSingleMime,
+        PlayType_PtMultiMime,
+        PlayType_PtNnNoTimes,
+        PlayType_PtNnTimes,
+        PlayType_PtGroupNormal,
+        PlayType_PtPersonal,
+        PlayType_PtRelay,
+        PlayType_PtAlliance,
+        PlayType_PtWelfare,
+        PlayType_PtLucky,
+    };
+    static const char *extraTextFormatInfo = "\013\000\006\000\001\014\000\002\013\000\003\013\000\004\t\000\005\r\000\006\n\000\007\007\000\010\n\000\t\t\000\n\007\000";
+    GPBEnumDescriptor *worker =
+        [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(PlayType)
+                                       valueNames:valueNames
+                                           values:values
+                                            count:(uint32_t)(sizeof(values) / sizeof(int32_t))
+                                     enumVerifier:PlayType_IsValidValue
+                              extraTextFormatInfo:extraTextFormatInfo];
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
+      [worker release];
+    }
+  }
+  return descriptor;
+}
+
+BOOL PlayType_IsValidValue(int32_t value__) {
+  switch (value__) {
+    case PlayType_PtNone:
+    case PlayType_PtSingleMime:
+    case PlayType_PtMultiMime:
+    case PlayType_PtNnNoTimes:
+    case PlayType_PtNnTimes:
+    case PlayType_PtGroupNormal:
+    case PlayType_PtPersonal:
+    case PlayType_PtRelay:
+    case PlayType_PtAlliance:
+    case PlayType_PtWelfare:
+    case PlayType_PtLucky:
       return YES;
     default:
       return NO;
@@ -1363,6 +1422,117 @@ typedef struct AutoReplySegment__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(AutoReplySegment__storage_)
+                                         flags:GPBDescriptorInitializationFlag_None];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
+    descriptor = localDescriptor;
+  }
+  return descriptor;
+}
+
+@end
+
+#pragma mark - SendTransferSegment
+
+@implementation SendTransferSegment
+
+@dynamic id_p;
+@dynamic sender;
+@dynamic create;
+@dynamic expire;
+@dynamic title;
+@dynamic sendTime;
+@dynamic total;
+
+typedef struct SendTransferSegment__storage_ {
+  uint32_t _has_storage_[1];
+  NSString *id_p;
+  NSString *title;
+  NSString *total;
+  uint64_t sender;
+  int64_t create;
+  int64_t expire;
+  int64_t sendTime;
+} SendTransferSegment__storage_;
+
+// This method is threadsafe because it is initially called
+// in +initialize for each subclass.
++ (GPBDescriptor *)descriptor {
+  static GPBDescriptor *descriptor = nil;
+  if (!descriptor) {
+    static GPBMessageFieldDescription fields[] = {
+      {
+        .name = "id_p",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Id_p,
+        .hasIndex = 0,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, id_p),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "sender",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Sender,
+        .hasIndex = 1,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, sender),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeUInt64,
+      },
+      {
+        .name = "create",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Create,
+        .hasIndex = 2,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, create),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "expire",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Expire,
+        .hasIndex = 3,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, expire),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "title",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Title,
+        .hasIndex = 4,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, title),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+      {
+        .name = "sendTime",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_SendTime,
+        .hasIndex = 5,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, sendTime),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeInt64,
+      },
+      {
+        .name = "total",
+        .dataTypeSpecific.className = NULL,
+        .number = SendTransferSegment_FieldNumber_Total,
+        .hasIndex = 6,
+        .offset = (uint32_t)offsetof(SendTransferSegment__storage_, total),
+        .flags = GPBFieldOptional,
+        .dataType = GPBDataTypeString,
+      },
+    };
+    GPBDescriptor *localDescriptor =
+        [GPBDescriptor allocDescriptorForClass:[SendTransferSegment class]
+                                     rootClass:[MsgRoot class]
+                                          file:MsgRoot_FileDescriptor()
+                                        fields:fields
+                                    fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
+                                   storageSize:sizeof(SendTransferSegment__storage_)
                                          flags:GPBDescriptorInitializationFlag_None];
     #if defined(DEBUG) && DEBUG
       NSAssert(descriptor == nil, @"Startup recursed!");

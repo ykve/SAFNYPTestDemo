@@ -1,6 +1,6 @@
 //
 //  GroupInfoViewController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/9.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -17,10 +17,12 @@
 #import "ImageDetailViewController.h"
 
 #import "ChatsModel.h"
-#import "SessionInfoModel.h"
+#import "SessionInfoModels.h"
 #import "SelectContactsController.h"
 #import "UpdateGroupNameController.h"
 #import "UpdateGroupInfoController.h"
+#import "SessionSingle.h"
+#import "SessionInfoModel.h"
 
 static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
 
@@ -86,7 +88,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
     SelectContactsController *vc = [[SelectContactsController alloc] init];
     vc.title = @"添加群成员";
     vc.sessionId = self.chatsModel.sessionId;
-    vc.addedArray = self.sessionModel.group_users;
+    vc.addedArray = [NSMutableArray arrayWithArray:self.sessionModel.group_users];
     
     //    vc.groupId = self.chatsModel.sessionId;
     //    vc.addType = AddType_GroupMember;
@@ -98,7 +100,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
     SelectContactsController *vc = [[SelectContactsController alloc] init];
     vc.title = @"删除成员";
     vc.sessionId = self.chatsModel.sessionId;
-    vc.addedArray = self.sessionModel.group_users;
+    vc.addedArray = [NSMutableArray arrayWithArray:self.sessionModel.group_users];
     
     //    vc.groupId = self.chatsModel.sessionId;
     //    vc.addType = AddType_GroupMember;
@@ -117,7 +119,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
         [[AlertViewCus createInstanceWithView:nil] showWithText:@"是否解散群组？" button1:@"取消" button2:@"确认解散" callBack:^(id object) {
             NSInteger tag = [object integerValue];
             if(tag == 1)
-                [weakSelf action_exitGroup:1];
+                [weakSelf exitGroupRequest:1];
         }];
         return;
     }
@@ -125,14 +127,14 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
     [[AlertViewCus createInstanceWithView:nil] showWithText:@"是否退出该群？" button1:@"取消" button2:@"退出" callBack:^(id object) {
         NSInteger tag = [object integerValue];
         if(tag == 1)
-            [weakSelf action_exitGroup:0];
+            [weakSelf exitGroupRequest:0];
     }];
 }
 
 /**
  退出群组请求  退群 | 解散
  */
-- (void)action_exitGroup:(NSInteger)type {
+- (void)exitGroupRequest:(NSInteger)type {
     
     BADataEntity *entity = [BADataEntity new];
     if (type == 1) {
@@ -152,9 +154,10 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
     [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
+            [SessionSingle sharedInstance].myJoinGameGroupSessionId = 0;
             [[NSNotificationCenter defaultCenter] postNotificationName:kReloadMyMessageGroupList object:nil];
             
-            [SqliteManage removeGroupSql:strongSelf.chatsModel.sessionId];
+            [SqliteManage removePushMessageNumModelSql:strongSelf.chatsModel.sessionId];
             NSString *msg = [NSString stringWithFormat:@"%@",[response objectForKey:@"message"]];
             [MBProgressHUD showSuccessMessage:msg];
             [strongSelf.navigationController popToViewController:[strongSelf.navigationController.viewControllers objectAtIndex:0] animated:YES];
@@ -253,11 +256,11 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         
         if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            strongSelf.sessionModel = [SessionInfoModel mj_objectWithKeyValues:response[@"data"]];
+            strongSelf.sessionModel = [SessionInfoModels mj_objectWithKeyValues:response[@"data"]];
             
             NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
             for (BaseUserModel *model in strongSelf.sessionModel.group_users) {
-                [dict setObject:model forKey:[NSString stringWithFormat:@"%ld_%ld", self.chatsModel.sessionId, model.userId]];   // 用户昵称
+                [dict setObject:model forKey:[NSString stringWithFormat:@"%ld_%ld", (long)self.chatsModel.sessionId, model.userId]];   // 用户昵称
             }
             [AppModel sharedInstance].myGroupFriendListDict = [dict copy];
             [strongSelf updateGroupUser];
@@ -316,6 +319,8 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"group"];
     
+    
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     UIColor *titleColor = [UIColor colorWithHex:@"#343434"];
     UIColor *textColor = [UIColor colorWithHex:@"#666666"];
     UIFont *textFont = [UIFont systemFontOfSize2:14];
@@ -415,13 +420,13 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
                 make.centerY.equalTo(cell.contentView);
             }];
             
-            UIImageView *imgView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"common_right_arrow"]];
-            [cell.contentView addSubview:imgView];
-            [imgView mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.width.height.equalTo(@18);
-                make.right.equalTo(cell.contentView.mas_right).offset(-17);
-                make.centerY.equalTo(cell.contentView.mas_centerY);
-            }];
+//            UIImageView *imgView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"common_right_arrow"]];
+//            [cell.contentView addSubview:imgView];
+//            [imgView mas_makeConstraints:^(MASConstraintMaker *make) {
+//                make.width.height.equalTo(@18);
+//                make.right.equalTo(cell.contentView.mas_right).offset(-17);
+//                make.centerY.equalTo(cell.contentView.mas_centerY);
+//            }];
             
             UILabel *right = [UILabel new];
             [cell.contentView addSubview:right];
@@ -455,7 +460,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
             cellee.switchButton.hidden = NO;
             cellee.leftLabel.textColor = titleColor;
             
-            NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", [AppModel sharedInstance].user_info.userId,self.chatsModel.sessionId];
+            NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", self.chatsModel.sessionId,[AppModel sharedInstance].user_info.userId];
             // 读取
             BOOL isSwitch = [[NSUserDefaults standardUserDefaults] boolForKey:switchKeyStr];
             
@@ -482,10 +487,10 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
         
         NSString *url = nil;
         if(indexPath.row == 3) {
-            ImageDetailViewController *vc = [[ImageDetailViewController alloc] init];
-            vc.imageUrl = url;
-            vc.hiddenNavBar = YES;
-            [self.navigationController pushViewController:vc animated:YES];
+//            ImageDetailViewController *vc = [[ImageDetailViewController alloc] init];
+//            vc.imageUrl = url;
+//            vc.hiddenNavBar = YES;
+//            [self.navigationController pushViewController:vc animated:YES];
         } else if(indexPath.row == 4) {
             //            url = self.groupInfo.howplayImg;
         }
@@ -513,7 +518,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
 - (void)gotoAllGroupUsers {
     AllUserViewController *vc = [AllUserViewController allUser:self.sessionModel];
     vc.title = @"全部成员";
-    vc.groupId = self.sessionModel.groupId;
+    vc.groupId = self.sessionModel.session_info.sessionId;
     [self.navigationController pushViewController:vc animated:YES];
 }
 
@@ -524,7 +529,7 @@ static NSString *CellIdentifier = @"RCDBaseSettingTableViewCell";
 
 - (void)clickNotificationBtn:(id)sender {
     UISwitch *swch = sender;
-    NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", [AppModel sharedInstance].user_info.userId,self.chatsModel.sessionId];
+    NSString *switchKeyStr = [NSString stringWithFormat:@"%ld_%ld", self.chatsModel.sessionId,[AppModel sharedInstance].user_info.userId];
     //保存
     [[NSUserDefaults standardUserDefaults] setBool:swch.on forKey:switchKeyStr];
 }

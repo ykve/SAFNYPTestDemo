@@ -116,8 +116,14 @@ static CGFloat const TableViewHeadTopHeight = 45;
                          @{@"title":@"发包金额", @"Text":@"-"},
                          @{@"title":@"累计抢包", @"Text":@"-"},
                          @{@"title":@"抢包金额", @"Text":@"-"}];
+    float heightSafeTop = 0.0;
+    if (@available(iOS 11.0, *)) {
+        heightSafeTop = [UIApplication sharedApplication].keyWindow.safeAreaInsets.top;
+    } else {
+        // Fallback on earlier versions
+    }
     
-    ClubMemberDetailsView *vvMemberView = [[ClubMemberDetailsView alloc] initWithFrame:CGRectMake(15, 160, kSCREEN_WIDTH-15*2, 146)];
+    ClubMemberDetailsView *vvMemberView = [[ClubMemberDetailsView alloc] initWithFrame:CGRectMake(15, 160+heightSafeTop, kSCREEN_WIDTH-15*2, 146)];
     vvMemberView.layer.cornerRadius = 8;
     vvMemberView.layer.masksToBounds = YES;
     vvMemberView.backgroundColor = [UIColor whiteColor];
@@ -153,7 +159,7 @@ static CGFloat const TableViewHeadTopHeight = 45;
 //    }
     
     self.nameLabel.text = [NSString stringWithFormat:@"昵称:%@", [AppModel sharedInstance].user_info.name];
-    self.idLabel.text = [NSString stringWithFormat:@"ID:%ld",[AppModel sharedInstance].user_info.userId];
+    self.idLabel.text = [NSString stringWithFormat:@"ID:%ld",(long)[AppModel sharedInstance].user_info.userId];
     
     self.moneyLabel.text = [NSString stringWithFormat:@"余额:%@元", self.memberDetailsModels.detail.asset.over_num ? self.memberDetailsModels.detail.asset.over_num: @"0.00"];
     
@@ -298,10 +304,17 @@ static CGFloat const TableViewHeadTopHeight = 45;
 
 - (void)setupUI {
     
-    UIView *headerContentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, TableViewHeadHeight)];
-    headerContentView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
-    _headerContentView = headerContentView;
-    self.tableView.tableHeaderView = headerContentView;
+    if (@available(iOS 11.0, *)) {
+        UIView *headerContentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, TableViewHeadHeight+[UIApplication sharedApplication].keyWindow.safeAreaInsets.top)];
+        headerContentView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
+        _headerContentView = headerContentView;
+        self.tableView.tableHeaderView = headerContentView;
+    } else {
+        UIView *headerContentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSCREEN_WIDTH, TableViewHeadHeight)];
+        headerContentView.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
+        _headerContentView = headerContentView;
+        self.tableView.tableHeaderView = headerContentView;
+    }
     
     
     UIImageView *backImageView = [[UIImageView alloc] init];
@@ -396,28 +409,28 @@ static CGFloat const TableViewHeadTopHeight = 45;
     }];
     
     
-    UIButton *onlineBtn = [[UIButton alloc] init];
-    [onlineBtn setTitle:@"离线" forState:UIControlStateNormal];
-//    [onlineBtn addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
-    [onlineBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    onlineBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-    [onlineBtn setImage:[UIImage imageNamed:@"club_online_no"] forState:UIControlStateNormal];
-    [onlineBtn setImagePosition:WPGraphicBtnTypeLeft spacing:5];
-    onlineBtn.tag = 1000;
-    onlineBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-    
-    onlineBtn.layer.cornerRadius = 20/2;
-    onlineBtn.layer.masksToBounds = YES;
-    onlineBtn.layer.borderWidth = 1.5;
-    onlineBtn.layer.borderColor = [UIColor whiteColor].CGColor;
-    [backImageView addSubview:onlineBtn];
-    _onlineBtn = onlineBtn;
-    
-    [onlineBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.equalTo(moneyBackBtn.mas_centerX);
-        make.top.equalTo(moneyBackBtn.mas_top);
-        make.size.mas_equalTo(CGSizeMake(60, 20));
-    }];
+//    UIButton *onlineBtn = [[UIButton alloc] init];
+//    [onlineBtn setTitle:@"离线" forState:UIControlStateNormal];
+////    [onlineBtn addTarget:self action:@selector(onSelectedIconBtn:) forControlEvents:UIControlEventTouchUpInside];
+//    [onlineBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+//    onlineBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+//    [onlineBtn setImage:[UIImage imageNamed:@"club_online_no"] forState:UIControlStateNormal];
+//    [onlineBtn setImagePosition:WPGraphicBtnTypeLeft spacing:5];
+//    onlineBtn.tag = 1000;
+//    onlineBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+//
+//    onlineBtn.layer.cornerRadius = 20/2;
+//    onlineBtn.layer.masksToBounds = YES;
+//    onlineBtn.layer.borderWidth = 1.5;
+//    onlineBtn.layer.borderColor = [UIColor whiteColor].CGColor;
+//    [backImageView addSubview:onlineBtn];
+//    _onlineBtn = onlineBtn;
+//
+//    [onlineBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.centerX.equalTo(moneyBackBtn.mas_centerX);
+//        make.top.equalTo(moneyBackBtn.mas_top);
+//        make.size.mas_equalTo(CGSizeMake(60, 20));
+//    }];
     
     
     UILabel *moneyLabel = [[UILabel alloc] init];

@@ -1,13 +1,13 @@
 //
 //  GroupHeadView.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/16.
 //  Copyright © 2018年 AFan. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
-@class SessionInfoModel;
+@class SessionInfoModels;
 
 typedef void (^HeadAddOrDeleteClick)(NSInteger index);
 
@@ -21,7 +21,7 @@ typedef void (^HeadAddOrDeleteClick)(NSInteger index);
 /// model   数据模型
 /// showRow  默认3行
 /// isGroupLord  是否群主
-+ (GroupHeadView *)headViewWithModel:(SessionInfoModel *)model showRow:(NSInteger)showRow isGroupLord:(BOOL)isGroupLord;
++ (GroupHeadView *)headViewWithModel:(SessionInfoModels *)model showRow:(NSInteger)showRow isGroupLord:(BOOL)isGroupLord;
 
 
 @end

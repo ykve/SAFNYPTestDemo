@@ -23,7 +23,7 @@
 #import "AFContactCell.h"
 #import "PinYinForObjc.h"
 
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "ChatViewController.h"
 #import "MessageItem.h"
 #import "YPMenu.h"
@@ -46,6 +46,8 @@
 #import "SystemNotificationModel.h"
 #import "SystemAlertViewController.h"
 #import "VVAlertModel.h"
+#import "SysMessageListController.h"
+#import "ZMTabBarController.h"
 
 
 
@@ -62,6 +64,7 @@
 @property (nonatomic, strong) SPPageMenu *pageMenu;
 @property (nonatomic, strong) JSBadgeView *badgeView0;
 @property (nonatomic, strong) JSBadgeView *badgeView2;
+@property (nonatomic, strong) JSBadgeView *badgeView4;
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) NSMutableArray *myChildViewControllers;
@@ -69,7 +72,7 @@
 @property (nonatomic, strong) UIView *animationView;
 
 @property (nonatomic, strong) UITableView *tableView;
-@property (nonatomic, strong) MessageNet *model;
+@property (nonatomic, strong) SessionSingle *model;
 
 @property (nonatomic, strong) NSMutableArray *menuItems;
 @property (nonatomic, strong) EnterPwdBoxView *entPwdView;
@@ -82,12 +85,17 @@
 
 @property (nonatomic, strong) NSMutableArray *searchResults;
 @property (nonatomic, strong) UISearchBar *contactsSearchBar;
-@property (nonatomic, strong) UISearchDisplayController *searchDisplayController;
+//@property (nonatomic, strong) UISearchDisplayController *searchDisplayController;
 
 @property (nonatomic, strong) NSMutableArray *kefuArray;
 @property (nonatomic, strong) NSMutableArray *haoyouArray;
 @property (nonatomic, strong) NSMutableArray *groupArray;
 @property (nonatomic, strong) NSMutableArray *sysArray;
+
+@property (nonatomic, strong) UIButton *navRightBtn;
+
+// 记录上次数
+@property (nonatomic,assign) NSInteger myMessagelastBadgeNum;
 
 @end
 
@@ -98,6 +106,7 @@
     self.navigationItem.title = @"微聊";
     self.view.backgroundColor = [UIColor colorWithHex:@"#F7F7F7"];
     self.edgesForExtendedLayout = UIRectEdgeNone;
+//    self.view.backgroundColor = [UIColor greenColor];
     
     [self setupNavUI];
     
@@ -107,46 +116,48 @@
     
     [self createTableView];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateBadgeView) name:kAddressBookUpdateNotification object:nil];
-    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(updateMessageBadgeView:)name:kUnreadMessageNumberChange object:@"kUpdateSetBadgeValue"];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateMessageBadgeView:)name:kTabBarBadgeValueUpdateNotification object:nil];
+    
 }
 
 - (void)updateMessageBadgeView:(NSNotification *)notification {
     
-    BOOL isRefresh = YES;
-    if (([AppModel sharedInstance].lastBadgeNum > 100 && [AppModel sharedInstance].unReadAllCount > 100) || [AppModel sharedInstance].lastBadgeNum == [AppModel sharedInstance].unReadAllCount) {
-        isRefresh = NO;
-    }
+    NSString *info = [notification object];
     
-    [AppModel sharedInstance].lastBadgeNum = [AppModel sharedInstance].unReadAllCount;
-    
-    if (isRefresh) {
-        NSString *value = nil;
-        if ([AppModel sharedInstance].unReadAllCount > 0) {
-            if ([AppModel sharedInstance].unReadAllCount >= kMessageMaxNum) {
-                value = @"99+";
-            } else {
-                value = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].unReadAllCount];
-            }
+    __weak __typeof(self)weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(weakSelf)strongSelf = weakSelf;
+        
+        BOOL isRefresh = YES;
+        if (([UnreadMessagesNumSingle sharedInstance].myMessagelastBadgeNum > 100 && [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount > 100) || [UnreadMessagesNumSingle sharedInstance].myMessagelastBadgeNum == [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount) {
+            isRefresh = NO;
         }
         
-        __weak __typeof(self)weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-             __strong __typeof(weakSelf)strongSelf = weakSelf;
+        [UnreadMessagesNumSingle sharedInstance].myMessagelastBadgeNum = [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount;
+        
+        if (isRefresh) {
+            NSString *value = nil;
+            if ([UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount > 0) {
+                if ([UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount >= kMessageMaxNum) {
+                    value = @"99+";
+                } else {
+                    value = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount];
+                }
+            }
             strongSelf.badgeView0.badgeText = value;
-        });
-    }
-}
-
-- (void)updateBadgeView {
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if ([AppModel sharedInstance].sysMessageNum > 0) {
-            //        self.messageMumLabel.hidden = NO;
-            self.badgeView2.badgeText = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].sysMessageNum];
+        }
+        
+        
+        if ([UnreadMessagesNumSingle sharedInstance].myFriendMessageNum > 0) {
+            strongSelf.badgeView2.badgeText = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum];
         } else {
-            //        self.messageMumLabel.hidden = YES;
-            self.badgeView2.badgeText = @"";
+            strongSelf.badgeView2.badgeText = @"";
+        }
+        
+        if ([UnreadMessagesNumSingle sharedInstance].sysMessageListNum > 0) {
+            strongSelf.badgeView4.badgeText = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].sysMessageListNum];
+        } else {
+            strongSelf.badgeView4.badgeText = @"";
         }
     });
 }
@@ -158,27 +169,34 @@
     redpiconBtn.titleLabel.font = [UIFont systemFontOfSize:12];
     [redpiconBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [redpiconBtn addTarget:self action:@selector(goto_searchBar:) forControlEvents:UIControlEventTouchUpInside];
-    
     UIBarButtonItem *exItem = [[UIBarButtonItem alloc]initWithCustomView:redpiconBtn];
-    UIButton *info = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 44, 44)];
-    [info setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [info setImage:[UIImage imageNamed:@"nav_add"] forState:UIControlStateNormal];
-    [info addTarget:self action:@selector(rightBarButtonDown:) forControlEvents:UIControlEventTouchUpInside];
-    
-    UIBarButtonItem *infoItem = [[UIBarButtonItem alloc]initWithCustomView:info];
-    
-    self.navigationItem.rightBarButtonItems = @[infoItem,exItem];
     
     
-    self.contactsSearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, Height_TabBar, self.view.bounds.size.width, 40)];
-    self.contactsSearchBar.delegate = self;
-    [self.contactsSearchBar setPlaceholder:@"搜索联系人"];
-    self.contactsSearchBar.keyboardType = UIKeyboardTypeDefault;
-    self.searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:self.contactsSearchBar contentsController:self];
     
-    self.searchDisplayController.active = NO;
-    self.searchDisplayController.searchResultsDataSource = self;
-    self.searchDisplayController.searchResultsDelegate = self;
+    UIButton *infoBtn = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 44, 44)];
+//    infoBtn.backgroundColor = [UIColor redColor];
+    [infoBtn setTitleColor:[UIColor colorWithHex:@"#333333"] forState:UIControlStateNormal];
+    [infoBtn setImage:[UIImage imageNamed:@"nav_add"] forState:UIControlStateNormal];
+    infoBtn.titleLabel.font = [UIFont systemFontOfSize:14];
+    infoBtn.titleLabel.textAlignment = NSTextAlignmentRight;
+    [infoBtn addTarget:self action:@selector(rightBarButtonDown:) forControlEvents:UIControlEventTouchUpInside];
+    _navRightBtn = infoBtn;
+    
+    UIBarButtonItem *infoItem = [[UIBarButtonItem alloc]initWithCustomView:infoBtn];
+    
+//    self.navigationItem.rightBarButtonItems = @[infoItem,exItem];
+    
+    self.navigationItem.rightBarButtonItems = @[infoItem];
+    
+//    self.contactsSearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, Height_TabBar, self.view.bounds.size.width, 40)];
+//    self.contactsSearchBar.delegate = self;
+//    [self.contactsSearchBar setPlaceholder:@"搜索联系人"];
+//    self.contactsSearchBar.keyboardType = UIKeyboardTypeDefault;
+//    self.searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:self.contactsSearchBar contentsController:self];
+//
+//    self.searchDisplayController.active = NO;
+//    self.searchDisplayController.searchResultsDataSource = self;
+//    self.searchDisplayController.searchResultsDelegate = self;
 }
 
 
@@ -233,6 +251,9 @@
     [pageMenu setItem:item4 forItemAtIndex:4];
     
     NSArray *buttons = [pageMenu valueForKey:@"_buttons"];
+    
+    
+    
     UIButton *button0 = [buttons objectAtIndex:0];
     JSBadgeView *badgeView0 = [[JSBadgeView alloc] initWithParentView:button0 alignment:JSBadgeViewAlignmentTopRight];
     badgeView0.badgePositionAdjustment = CGPointMake(-20, 20);
@@ -251,13 +272,27 @@
     badgeView2.badgeStrokeColor = [UIColor redColor];
      _badgeView2 = badgeView2;
     
-    if ([AppModel sharedInstance].sysMessageNum > 0) {
-//        self.messageMumLabel.hidden = NO;
-        badgeView2.badgeText = [NSString stringWithFormat:@"%ld", [AppModel sharedInstance].sysMessageNum];
+    if ([UnreadMessagesNumSingle sharedInstance].myFriendMessageNum > 0) {
+        badgeView2.badgeText = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum];
     } else {
-//        self.messageMumLabel.hidden = YES;
         badgeView2.badgeText = @"";
     }
+    
+    
+    UIButton *button4 = [buttons objectAtIndex:4];
+    JSBadgeView *badgeView4 = [[JSBadgeView alloc] initWithParentView:button4 alignment:JSBadgeViewAlignmentTopRight];
+    badgeView4.badgePositionAdjustment = CGPointMake(-20, 20);
+    badgeView4.badgeBackgroundColor = [UIColor redColor];
+    badgeView4.badgeOverlayColor = [UIColor clearColor];
+    badgeView4.badgeStrokeColor = [UIColor redColor];
+    _badgeView4 = badgeView4;
+    
+    if ([UnreadMessagesNumSingle sharedInstance].sysMessageListNum > 0) {
+        badgeView4.badgeText = [NSString stringWithFormat:@"%ld", [UnreadMessagesNumSingle sharedInstance].sysMessageListNum];
+    } else {
+        badgeView4.badgeText = @"";
+    }
+    
     
     
     pageMenu.delegate = self;
@@ -331,7 +366,7 @@
 
 - (void)pageMenu:(SPPageMenu *)pageMenu itemSelectedFromIndex:(NSInteger)fromIndex toIndex:(NSInteger)toIndex {
     NSLog(@"%zd------->%zd",fromIndex,toIndex);
-    
+    self.selectedItemIndex = toIndex;
     // 如果该代理方法是由拖拽self.scrollView而触发，说明self.scrollView已经在用户手指的拖拽下而发生偏移，此时不需要再用代码去设置偏移量，否则在跟踪模式为SPPageMenuTrackerFollowingModeHalf的情况下，滑到屏幕一半时会有闪跳现象。闪跳是因为外界设置的scrollView偏移和用户拖拽产生冲突
     if (!self.scrollView.isDragging) { // 判断用户是否在拖拽scrollView
         // 如果fromIndex与toIndex之差大于等于2,说明跨界面移动了,此时不动画.
@@ -344,9 +379,38 @@
     
     if (self.myChildViewControllers.count <= toIndex) {return;}
     
+    if (fromIndex == 4) {
+        if ([self.navRightBtn.titleLabel.text isEqualToString:@"完成"]) {
+            SysMessageListController *vc = self.myChildViewControllers[4];
+            [ZMTabBarController showTabBar:self.tabBarController];
+            self.view.frame = CGRectMake(0, 0, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar-Height_TabBar);
+            self.edgesForExtendedLayout = UIRectEdgeNone;
+            self.scrollView.frame = CGRectMake(0, 100, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar-kTopItemHeight-Height_TabBar);
+            vc.isShowSelectImg = NO;
+            
+            
+            [self.navRightBtn setImage:[UIImage imageNamed:@"nav_add"] forState:UIControlStateNormal];
+            [self.navRightBtn setTitle:nil forState:UIControlStateNormal];
+            self.navRightBtn.frame = CGRectMake(0, 0, 44, 44);
+        } else {
+            [self.navRightBtn setImage:[UIImage imageNamed:@"nav_add"] forState:UIControlStateNormal];
+            [self.navRightBtn setTitle:nil forState:UIControlStateNormal];
+            self.navRightBtn.frame = CGRectMake(0, 0, 44, 44);
+        }
+    }
     
-    
-    if (toIndex == 0 || toIndex == 3) {
+    if (toIndex == 0 || toIndex == 3 ||  toIndex == 4) {
+        
+        if (toIndex == 4) {
+            [self.navRightBtn setImage:nil forState:UIControlStateNormal];
+            [self.navRightBtn setTitle:@"批量操作" forState:UIControlStateNormal];
+            self.navRightBtn.frame = CGRectMake(0, 0, 44, 75);
+        } else {
+            [self.navRightBtn setImage:[UIImage imageNamed:@"nav_add"] forState:UIControlStateNormal];
+           [self.navRightBtn setTitle:nil forState:UIControlStateNormal];
+            self.navRightBtn.frame = CGRectMake(0, 0, 44, 44);
+        }
+        
         UIViewController *targetViewController = self.myChildViewControllers[toIndex];
         // 如果已经加载过，就不再加载
         //    if ([targetViewController isViewLoaded]) return;
@@ -363,10 +427,12 @@
         [_scrollView addSubview:targetViewController.view];
     }
    
-    if (toIndex == 2) {
-        self.badgeView2.badgeText = @"";
-        [AppModel sharedInstance].sysMessageNum = 0;
-    }
+    
+    
+//    if (toIndex == 2) {
+//        self.badgeView2.badgeText = @"";
+//        [UnreadMessagesNumSingle sharedInstance].myFriendMessageNum = 0;
+//    }
     
 }
 
@@ -411,12 +477,12 @@
                                              CreateGroupController *vc = [[CreateGroupController alloc] init];
                                              [weakSelf.navigationController pushViewController:vc animated:YES];
                                          }],
-                      [YPMenuItem itemWithImage:[UIImage imageNamed:@"nav_moments"]
-                                          title:@"我的圈圈"
-                                         action:^(YPMenuItem *item) {
-//                                             CreateGroupController *vc = [[CreateGroupController alloc] init];
-//                                             [weakSelf.navigationController pushViewController:vc animated:YES];
-                                         }],
+//                      [YPMenuItem itemWithImage:[UIImage imageNamed:@"nav_moments"]
+//                                          title:@"我的圈圈"
+//                                         action:^(YPMenuItem *item) {
+////                                             CreateGroupController *vc = [[CreateGroupController alloc] init];
+////                                             [weakSelf.navigationController pushViewController:vc animated:YES];
+//                                         }],
                       
                       nil];
     }
@@ -441,13 +507,35 @@
 
 //导航栏弹出
 - (void)rightBarButtonDown:(UIBarButtonItem *)sender{
-    YPMenu *menu = [[YPMenu alloc] initWithItems:self.menuItems];
-    menu.menuCornerRadiu = 5;
-    menu.showShadow = NO;
-    menu.minMenuItemHeight = 48;
-    menu.titleColor = [UIColor darkGrayColor];
-    menu.menuBackGroundColor = [UIColor whiteColor];
-    [menu showFromNavigationController:self.navigationController WithX:[UIScreen mainScreen].bounds.size.width-32];
+
+    if ([self.navRightBtn.titleLabel.text isEqualToString:@"批量操作"] && self.selectedItemIndex == 4) {
+        SysMessageListController *vc = self.myChildViewControllers[4];
+        [ZMTabBarController hideTabBar:self.tabBarController];
+        self.view.frame = CGRectMake(0, 0, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar);
+        self.edgesForExtendedLayout = UIRectEdgeBottom;
+        self.scrollView.frame = CGRectMake(0, 100, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar-kTopItemHeight);
+        vc.isShowSelectImg = YES;
+        [self.navRightBtn setTitle:@"完成" forState:UIControlStateNormal];
+        
+    } else if ([self.navRightBtn.titleLabel.text isEqualToString:@"完成"] && self.selectedItemIndex == 4) {
+        
+        SysMessageListController *vc = self.myChildViewControllers[4];
+        [ZMTabBarController showTabBar:self.tabBarController];
+        self.view.frame = CGRectMake(0, 0, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar-Height_TabBar);
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+        self.scrollView.frame = CGRectMake(0, 100, kSCREEN_WIDTH, kSCREEN_HEIGHT-Height_NavBar-kTopItemHeight-Height_TabBar);
+        vc.isShowSelectImg = NO;
+        [self.navRightBtn setTitle:@"批量操作" forState:UIControlStateNormal];
+       
+    } else {
+        YPMenu *menu = [[YPMenu alloc] initWithItems:self.menuItems];
+        menu.menuCornerRadiu = 5;
+        menu.showShadow = NO;
+        menu.minMenuItemHeight = 48;
+        menu.titleColor = [UIColor darkGrayColor];
+        menu.menuBackGroundColor = [UIColor whiteColor];
+        [menu showFromNavigationController:self.navigationController WithX:[UIScreen mainScreen].bounds.size.width-32];
+    }
 }
 
 
@@ -588,50 +676,50 @@
 
 - (NSArray *)sectionIndexTitlesForABELTableView:(YPContactsTableView *)tableView
 {
-    if (tableView == self.searchDisplayController.searchResultsTableView)
-    {
-        return nil;
-    } else {
+//    if (tableView == self.searchDisplayController.searchResultsTableView)
+//    {
+//        return nil;
+//    } else {
         if (self.selectedItemIndex == 2) {
             return self.indexTitles;
         }
         return nil;
-    }
+//    }
 }
 
 // 设置头部title
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
-    if (tableView == self.searchDisplayController.searchResultsTableView )
-    {
-        return nil;
-        
-    }
+//    if (tableView == self.searchDisplayController.searchResultsTableView )
+//    {
+//        return nil;
+//
+//    }
     return nil;
     
 }
 
 // 设置组数
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    if (tableView == self.searchDisplayController.searchResultsTableView)  // 有搜索
-    {
-        return 1;
-    } else {
+//    if (tableView == self.searchDisplayController.searchResultsTableView)  // 有搜索
+//    {
+//        return 1;
+//    } else {
         
         return 0;
-    }
+//    }
     
 }
 
 //返回列表每个分组section拥有cell行数
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (tableView == self.self.searchDisplayController.searchResultsTableView)  // 有搜索
-    {
-        return self.searchResults.count;
-    }
-    else{
+//    if (tableView == self.self.searchDisplayController.searchResultsTableView)  // 有搜索
+//    {
+//        return self.searchResults.count;
+//    }
+//    else{
         return 0;
-    }
+//    }
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -643,13 +731,13 @@
         cell = [AFContactCell cellWithTableView:tableView reusableId:CellIdentifier];
     }
     cell.delegate = self;
-    if (tableView == self.self.searchDisplayController.searchResultsTableView)
-    {
-        // 搜索结果显示
-        YPContacts *contact = self.searchResults[indexPath.row];
-        cell.model = contact;
-        
-    }
+//    if (tableView == self.self.searchDisplayController.searchResultsTableView)
+//    {
+//        // 搜索结果显示
+//        YPContacts *contact = self.searchResults[indexPath.row];
+//        cell.model = contact;
+//
+//    }
     
     return cell;
     
@@ -670,13 +758,13 @@
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    YPContacts *model;
-    if (tableView == self.self.searchDisplayController.searchResultsTableView)
-    {
-        // 搜索结果显示
-        model = self.searchResults[indexPath.row];
-        
-    }
+//    YPContacts *model;
+//    if (tableView == self.self.searchDisplayController.searchResultsTableView)
+//    {
+//        // 搜索结果显示
+//        model = self.searchResults[indexPath.row];
+//
+//    }
 //    [self goto_groupChat:model];
 }
 

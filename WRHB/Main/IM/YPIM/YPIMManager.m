@@ -1,6 +1,6 @@
 //
 //  YPIMManager.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/4/2.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -39,7 +39,7 @@ static dispatch_once_t predicate;
         [IMMessageManager sharedInstance].receiveMessageDelegate = self;
         [IMMessageManager sharedInstance].receiveMessageDelegate = self;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onConnectSocket) name:kOnConnectSocketNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onLoggedSuccess) name:kLoggedSuccessNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onLoggedSuccess) name:kLoggedIMSuccessNotification object:nil];
         
     }
     return self;
@@ -58,7 +58,9 @@ static dispatch_once_t predicate;
 - (void)updateRedPacketInfo:(EnvelopeMessage *)redPacketInfo {
     [[IMMessageManager sharedInstance] updateRedPacketInfo:redPacketInfo];
 }
-
+- (void)updateTransferInfo:(TransferModel *)transferModel {
+    [[IMMessageManager sharedInstance] updateTransferInfo:transferModel];
+}
 - (void)onConnectSocket {
     
     if ([IMMessageManager sharedInstance].isConnectIM) {
@@ -71,7 +73,7 @@ static dispatch_once_t predicate;
         [[IMMessageManager sharedInstance] initWithAppKey:[AppModel sharedInstance].token];
     } else {
         if([AppModel sharedInstance].user_info.isLogined == YES) {
-//            [[AppModel sharedInstance] logout];
+            //            [[AppModel sharedInstance] logout];
         }
     }
 }
@@ -91,7 +93,7 @@ static dispatch_once_t predicate;
     NSInteger number = 0;
     NSInteger tid = 0;
     
-    if (message.chatSessionType == ChatSessionType_CustomerService) {
+    if (message.chatSessionType == ChatSessionType_CustomerService || message.chatSessionType == ChatSessionType_YSCustomerService) {
         CServiceChatController *csvc = [CServiceChatController currentChat];
         if (csvc) {
             tid = csvc.sessionId;
@@ -122,6 +124,8 @@ static dispatch_once_t predicate;
         lastMessage = @"[禁抢红包结算]";
     } else if (message.messageType == MessageType_Nofitiction) {
         lastMessage = message.text;;
+    } else if (message.messageType == MessageType_SendTransfer) {
+        lastMessage = @"[转账]";
     } else {
         lastMessage = @"[未知消息]";
     }
@@ -135,48 +139,64 @@ static dispatch_once_t predicate;
     } else {
         curPushModel.sessionId = message.sessionId;
     }
+    curPushModel.chatSessionType = message.chatSessionType;
     curPushModel.number = number;
     curPushModel.lastMessage = lastMessage;
     curPushModel.messageCountLeft = messageCount;
     curPushModel.create_time = message.create_time;
     curPushModel.userId = [AppModel sharedInstance].user_info.userId;
+    
+    if (message.user) {
+        curPushModel.sendUserId = message.user.userId;
+        curPushModel.name = message.user.name;
+        curPushModel.avatar = message.user.avatar;
+    }
+    
     if (message.messageFrom == MessageDirection_SEND) {
         curPushModel.isYourselfSend = YES;
     } else {
-       curPushModel.isYourselfSend = NO;
+        curPushModel.isYourselfSend = NO;
     }
     
     [self updateMessageNum:curPushModel left:left];
-   
+    
 }
 
 - (void)updateMessageNum:(PushMessageNumModel *)curPushModel left:(NSInteger)left {
     
     NSString *whereStr = [NSString stringWithFormat:@"sessionId=%zd and userId=%zd",curPushModel.sessionId, [AppModel sharedInstance].user_info.userId];
-    NSString *ramQueryId = [NSString stringWithFormat:@"%ld_%ld",curPushModel.sessionId,[AppModel sharedInstance].user_info.userId];
+    NSString *ramQueryId = [NSString stringWithFormat:@"%ld_%ld",(long)curPushModel.sessionId,(long)[AppModel sharedInstance].user_info.userId];
     PushMessageNumModel *oldModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[ramQueryId];
     
     if (oldModel) {
         if (curPushModel.number == 0) {
-            [AppModel sharedInstance].unReadAllCount -= oldModel.number;
+            [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount -= oldModel.number;
             oldModel.number = 0;
         } else {
             if (oldModel.number > kMessageMaxNum) {
-                return;
+                NSLog(@"1");
+            } else {
+                oldModel.number += 1;
+                oldModel.create_time = curPushModel.create_time;
+                [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount += 1;
+                oldModel.messageCountLeft = curPushModel.messageCountLeft;
             }
-            oldModel.number += 1;
-            oldModel.create_time = curPushModel.create_time;
-            [AppModel sharedInstance].unReadAllCount += 1;
-            oldModel.messageCountLeft = curPushModel.messageCountLeft;
         }
         
         if (curPushModel.lastMessage.length > 0) {
             oldModel.lastMessage = curPushModel.lastMessage;
             oldModel.isYourselfSend = curPushModel.isYourselfSend;
+            oldModel.chatSessionType = curPushModel.chatSessionType;
+            oldModel.create_time = curPushModel.create_time;
+            
+            if (curPushModel.sendUserId) {
+                oldModel.sendUserId = curPushModel.sendUserId;
+                oldModel.name = curPushModel.name;
+                oldModel.avatar = curPushModel.avatar;
+            }
         }
         
         [[MessageSingle sharedInstance].unreadAllMessagesDict setObject:oldModel forKey:ramQueryId];
-        
         
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             BOOL isSuccess = [WHC_ModelSqlite update:oldModel where:whereStr];
@@ -190,7 +210,7 @@ static dispatch_once_t predicate;
             return;
         }
         
-        [AppModel sharedInstance].unReadAllCount += curPushModel.number;
+        [UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount += curPushModel.number;
         [[MessageSingle sharedInstance].unreadAllMessagesDict setObject:curPushModel forKey:ramQueryId];
         
         
@@ -203,14 +223,11 @@ static dispatch_once_t predicate;
         });
     }
     
-    if ((left == 0 && oldModel.number <= kMessageMaxNum) || (curPushModel.messageCountLeft > 0 && left == 0)) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kUnreadMessageNumberChange object:@"ChatspListNotification"];
-    }
-    if ([AppModel sharedInstance].unReadAllCount <= kMessageMaxNum) {
+    
+    if ([UnreadMessagesNumSingle sharedInstance].myMessageUnReadCount <= kMessageMaxNum) {
         [[NSNotificationCenter defaultCenter] postNotificationName:kUnreadMessageNumberChange object:@"kUpdateSetBadgeValue"];
     }
-    
-    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kChatspListMessageChangeNotification object:@"kChatspListMessageChangeNotification"];
     
 }
 

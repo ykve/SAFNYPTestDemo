@@ -141,7 +141,6 @@
     _tableView.delegate = self;
     _tableView.dataSource = self;
     _tableView.separatorColor = [UIColor colorWithHex:@"#F7F7F7"];
-    
     _tableView.tableHeaderView = [self headrView];
     _tableView.tableFooterView = [self footView];
 }
@@ -236,6 +235,7 @@
         cell = [[UITableViewCell alloc]initWithStyle:0 reuseIdentifier:@"cell"];
         cell.textLabel.font = [UIFont systemFontOfSize2:15];
         cell.textLabel.textColor = Color_0;
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
         if (indexPath.row == 0){
             cell.textLabel.text = @"昵称";
 //            _nickName = [UILabel new];
@@ -252,7 +252,7 @@
             
             self.nameTextField = [UITextField new];
             self.nameTextField.font = [UIFont systemFontOfSize2:14];
-            self.nameTextField.delegate = self;
+//            self.nameTextField.delegate = self;
            self.nameTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
 //            self.nameTextField.returnKeyType = UIReturnKeyNext;
             self.nameTextField.backgroundColor = [UIColor whiteColor];
@@ -518,8 +518,8 @@
     if(self.nameTextField.text.length <= 0) {
         [MBProgressHUD showTipMessageInWindow:@"请输入昵称"];
         return;
-    } else if(self.nameTextField.text.length > 8){
-        [MBProgressHUD showTipMessageInWindow:@"昵称太长"];
+    } else if(self.nameTextField.text.length > 6){
+        [MBProgressHUD showTipMessageInWindow:@"昵称不能大于6个字符"];
         return;
     }
     

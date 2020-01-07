@@ -1,6 +1,6 @@
 //
 //  JSPatchManager.h
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/9/13.
 //  Copyright © 2019 AFan. All rights reserved.

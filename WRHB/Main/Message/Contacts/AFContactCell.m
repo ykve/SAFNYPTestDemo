@@ -1,6 +1,6 @@
 //
 //  ContactCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/6/20.
 //  Copyright © 2019 AFan. All rights reserved.
@@ -25,6 +25,7 @@
 @implementation AFContactCell
 
 - (void)awakeFromNib {
+    [super awakeFromNib];
     // Initialization code
 }
 

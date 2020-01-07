@@ -48,6 +48,8 @@
 #import "XFCameraController.h"
 #import "ZJCirclePieProgressView.h"
 #import "CSAskFormModel.h"
+#import "YSTopupListModel.h"
+#import "YSReplyModel.h"
 
 
 @interface CServiceIMSessionMessageController ()<YPChatKeyBoardInputViewDelegate,UITableViewDelegate,UITableViewDataSource,AFChatBaseCellDelegate, AFChatManagerDelegate,AFSystemBaseCellDelegate, JJPhotoDelegate, UIImagePickerControllerDelegate> {
@@ -138,11 +140,42 @@
     self.isLocalData = YES;
     self.imagesSizeArr = [[NSMutableArray alloc] init];
     
-    _sessionInputView = [YPChatKeyBoardInputView new];
+    CGFloat height = YPChatKeyBoardInputViewH + YPChatKeyBoardInputUpViewH;
+    _sessionInputView = [[YPChatKeyBoardInputView alloc] initWithFrame:CGRectMake(0, YPSCREEN_Height-height-kiPhoneX_Bottom_Height, YPSCREEN_Width, height)];
+    _sessionInputView.initKefuViewHeight = YPChatKeyBoardInputUpViewH;
+    
+    //    NSMutableArray *addarr = [[NSMutableArray alloc] init];
+    //    YSReplyModel *modeaa = [[YSReplyModel alloc] init];
+    //    modeaa.type_name =@"微信支付";
+    //    modeaa.type = 2;
+    //    modeaa.ID = 8;
+    //
+    //    [addarr addObject:modeaa];
+    //    modeaa = [[YSReplyModel alloc] init];
+    //    modeaa.type_name =@"支付宝充值";
+    //    modeaa.type = 1;
+    //    modeaa.ID = 9;
+    //    [addarr addObject:modeaa];
+    //
+    //    modeaa = [[YSReplyModel alloc] init];
+    //    modeaa.type_name =@"支付宝充值";
+    //    modeaa.type = 2;
+    //    modeaa.ID = 9;
+    //    [addarr addObject:modeaa];
+    //
+    //    modeaa = [[YSReplyModel alloc] init];
+    //    modeaa.type_name =@"支付宝充值";
+    //    modeaa.type = 3;
+    //    modeaa.ID = 9;
+    //    [addarr addObject:modeaa];
+    
+    _sessionInputView.ysReplyModelArray = self.ysTopupListModel.reply;
+    //    _sessionInputView.ysReplyModelArray = addarr;
+    //    _sessionInputView.backgroundColor = [UIColor greenColor];
     _sessionInputView.delegate = self;
     [self.view addSubview:_sessionInputView];
     
-    _backViewH = YPSCREEN_Height-YPChatKeyBoardInputViewH-Height_NavBar-kiPhoneX_Bottom_Height;
+    _backViewH = YPSCREEN_Height-height-Height_NavBar-kiPhoneX_Bottom_Height;
     
     _mBackView = [UIView new];
     _mBackView.frame = CGRectMake(0, Height_NavBar, YPSCREEN_Width, _backViewH);
@@ -171,10 +204,81 @@
         [strongSelf updateTimeInVisibleCells];
     }];
     
-    NSArray<YPMessage *> *arr = nil;
-    [self sendReadedArray:arr isAll:YES];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        NSArray<YPMessage *> *arr = nil;
+        [self sendReadedArray:arr isAll:YES];
+    });
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(kefuNoSpeakActive:)name:kKefuNoSpeakSessionNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(KefuDisconnectActive:)name:kKefuDisconnectNotification object:nil];
+    
 }
 
+#pragma mark - 收到禁言消息
+- (void)kefuNoSpeakActive:(NSNotification *)notification {
+    NSDictionary *info = [notification userInfo];
+    NSInteger status = [info[@"SpeakStatus"] integerValue];
+    
+    BOOL isNoSpeak = NO;
+    if (status == 0) {
+        isNoSpeak = YES;
+    }
+    /*! 回到主线程刷新UI */
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.sessionInputView.isNoSpeak = isNoSpeak;
+    });
+    
+}
+- (void)KefuDisconnectActive:(NSNotification *)notification {
+    NSDictionary *info = [notification userInfo];
+    NSInteger sessionId = [info[@"KefuSessionId"] integerValue];
+    
+    if (sessionId == self.sessionId) {
+        /*! 回到主线程刷新UI */
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.sessionInputView.isDisconnect = YES;
+        });
+    }
+    
+}
+
+
+
+-(void)didChatKeFuTopupTypeSelectedIndex:(NSInteger)index {
+    
+    YSReplyModel *ysReplyModel = (YSReplyModel *)self.ysTopupListModel.reply[index];
+    
+    YPMessage *model = [[YPMessage alloc] init];
+    model.userId = [AppModel sharedInstance].user_info.userId;
+    model.messageType = MessageType_Text;
+    model.sessionId = self.sessionId;
+    model.messageId = [FunctionManager getNowTime];
+    model.uniqeid = StringUniquId(model.userId, model.sessionId, model.messageId);
+    
+    model.deliveryState = MessageDeliveryState_Delivering;
+    model.messageFrom = MessageDirection_SEND;
+    model.chatSessionType = self.chatSessionType;
+    
+    model.messageSendId = [AppModel sharedInstance].user_info.userId;
+    model.timestamp = model.messageId;
+    model.create_time = [NSDate date];
+    model.isReceivedMsg = NO;
+    
+    model.text =ysReplyModel.type_name;
+    
+    BaseUserModel *userInfo = [[BaseUserModel alloc] init];
+    userInfo.userId = [AppModel sharedInstance].user_info.userId; // 用户ID
+    userInfo.name = [AppModel sharedInstance].user_info.name; // 用户昵称
+    userInfo.avatar = [AppModel sharedInstance].user_info.avatar; // 用户头像
+    model.user = userInfo;
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(willSendMessage:)]) {
+        model = [self.delegate willSendMessage:model];
+    }
+    
+    [[IMMessageManager sharedInstance] sendCSYSAutoAskMessage:model ID:[NSString stringWithFormat:@"%zd", ysReplyModel.ID]];
+    [self sendMessageToLocal:model];
+}
 
 - (void)setAskModel:(CSAskFormModel *)askModel {
     _askModel = askModel;
@@ -184,9 +288,12 @@
     }
     
     YPMessage *model = [[YPMessage alloc] init];
+    model.userId = [AppModel sharedInstance].user_info.userId;
     model.messageType = MessageType_Text;
     model.sessionId = self.sessionId;
     model.messageId = [FunctionManager getNowTime];
+    model.uniqeid = StringUniquId(model.userId, model.sessionId, model.messageId);
+    
     model.deliveryState = MessageDeliveryState_Delivering;
     model.messageFrom = MessageDirection_SEND;
     model.chatSessionType = self.chatSessionType;
@@ -252,7 +359,7 @@
         }
     }
     if (unreadArray.count > 0) {
-        [self sendReadedArray:unreadArray isAll:NO];
+        //        [self sendReadedArray:unreadArray isAll:NO];
         
         self.notViewedMessagesCount = self.notViewedMessagesCount - unreadArray.count;
         
@@ -263,10 +370,17 @@
         NSString *mgsStr = [NSString stringWithFormat:@"%zd",self.notViewedMessagesCount];
         self.bottomMessageLabel.text = mgsStr;
         
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+            NSDictionary *dic = @{@"messageArray":unreadArray};
+            [self delaySendReadedDict:dic];
+        });
     }
 }
 
-
+- (void)delaySendReadedDict:(NSDictionary *)dict {
+    NSArray *array = dict[@"messageArray"];
+    [self sendReadedArray:array isAll:NO];
+}
 
 /*!
  服务器返回的用户已读信息通知
@@ -302,7 +416,7 @@
         curModel.sessionId = self.sessionId;
     }
     curModel.number = 0;
-//    curModel.lastMessage = @"暂无未读消息";
+    //    curModel.lastMessage = @"暂无未读消息";
     curModel.messageCountLeft = 0;
     
     [[YPIMManager sharedInstance] updateMessageNum:curModel left:0];
@@ -313,7 +427,7 @@
  */
 - (void)getUnreadMessageAction {
     
-    NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",self.sessionId,[AppModel sharedInstance].user_info.userId];
+    NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",(long)self.sessionId,(long)[AppModel sharedInstance].user_info.userId];
     PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
     
     self.unreadMessageNum = pmModel.number;
@@ -341,7 +455,11 @@
             
             NSInteger time = [self getNowTimeWithCreate:model.message.redPacketInfo.create expire:model.message.redPacketInfo.expire];
             if (time <= 0) {
-                model.message.redPacketInfo.expireMrak = @"1";
+                if ([cell.countDownOrDescLabel.text containsString:@"剩:"]) {
+                    model.message.redPacketInfo.expireMrak = @"1";
+                    cell.countDownOrDescLabel.text = @"";
+                    [cell reloadRedPackTimeOver:model];
+                }
             }else{
                 cell.countDownOrDescLabel.text = [NSString stringWithFormat:@"剩:%zds", time];
             }
@@ -396,10 +514,11 @@
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         NSString *pageStr = [NSString stringWithFormat:@"%zd,%zd", (strongSelf.page -1)*count,count];
-        NSString *whereStr = [NSString stringWithFormat:@"sessionId = '%ld' and isDeleted = 0", strongSelf.sessionId];
+        NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and sessionId = '%ld' and isDeleted = 0",[AppModel sharedInstance].user_info.userId, kCustomerServiceID];
         NSArray *messageArray = [WHC_ModelSqlite query:[YPMessage class] where:whereStr order:@"by timestamp desc,create_time desc" limit:pageStr];
         
         if (messageArray.count == 0) {
+            [strongSelf->_tableView.mj_header endRefreshing];
             return;
         }
         if (count != messageArray.count) {
@@ -444,6 +563,8 @@
             [strongSelf->_tableView reloadData];
             NSIndexPath *indexPath = [NSIndexPath indexPathForRow:indexCount inSection:0];
             [strongSelf->_tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
+        }else{
+            [strongSelf->_tableView.mj_header endRefreshing];
         }
     });
 }
@@ -473,7 +594,7 @@
         __strong __typeof(weakSelf)strongSelf = weakSelf;
         strongSelf.page++;
         
-        NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",strongSelf.sessionId,[AppModel sharedInstance].user_info.userId];
+        NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",(long)strongSelf.sessionId,(long)[AppModel sharedInstance].user_info.userId];
         PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
         if (pmModel.messageCountLeft > 0 || !strongSelf.isLocalData) {
             pmModel.messageCountLeft =  pmModel.messageCountLeft > 50 ? pmModel.messageCountLeft -50 : 0;
@@ -607,19 +728,44 @@
 #pragma mark - 🔴 即将接收消息
 - (YPMessage *)cService_willAppendAndDisplayMessage:(YPMessage *)message {
     
-    if (message.chatSessionType != ChatSessionType_CustomerService) {
+    if (message.chatSessionType != ChatSessionType_CustomerService && message.chatSessionType != ChatSessionType_YSCustomerService) {
         return message;
     }
-    // 如果在底部 就全部发送已读
-    if (self.isTableViewBottom) {
-        [self sendReadedArray:@[message] isAll:NO];
+    
+    NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",self.sessionId,[AppModel sharedInstance].user_info.userId];
+    PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
+    pmModel.name = self.chatsModel.name;
+    pmModel.avatar = self.chatsModel.avatar;
+    pmModel.sendUserId = self.chatsModel.userId;
+    
+    ///历史消息和推送历史消息去重复
+    if (self.dataSource.count < 40) {
+        if (self.dataSource.count > 0) {
+            // 去重复
+            BOOL isRepeat = NO;
+            for (ChatMessagelLayout *layout in self.dataSource) {
+                if(message.messageId == layout.message.messageId) {
+                    isRepeat = YES;
+                    break;
+                }
+            }
+            if (isRepeat) {
+                __weak __typeof(self)weakSelf = self;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    __strong __typeof(weakSelf)strongSelf = weakSelf;
+                    // UI更新代码
+                    [strongSelf delayReload];
+                });
+                return message;
+            }
+        }
     }
+    // 更新数据源
+    [self.dataSource addObject:[YPChatDatas receiveMessage:message]];
     
     __weak __typeof(self)weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         __strong __typeof(weakSelf)strongSelf = weakSelf;
-        // 更新数据源
-        [strongSelf.dataSource addObject:[YPChatDatas receiveMessage:message]];
         // UI更新代码
         [strongSelf delayReload];
     });
@@ -751,7 +897,7 @@
 }
 
 - (void)deleteMessageUpdateSql:(NSInteger)messageId {
-    NSString *whereStr = [NSString stringWithFormat:@"messageId='%ld'", messageId];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and messageId='%ld'", [AppModel sharedInstance].user_info.userId,messageId];
     YPMessage *ypMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     ypMessage.isDeleted = YES;
     if (ypMessage) {
@@ -783,9 +929,11 @@
 //发送文本 列表滚动至底部
 -(void)onChatKeyBoardInputViewSendText:(NSString *)text {
     YPMessage *model = [[YPMessage alloc] init];
+    model.userId = [AppModel sharedInstance].user_info.userId;
     model.messageType = MessageType_Text;
     model.sessionId = self.sessionId;
     model.messageId = [FunctionManager getNowTime];
+    model.uniqeid = StringUniquId(model.userId, model.sessionId, model.messageId);
     model.deliveryState = MessageDeliveryState_Delivering;
     model.messageFrom = MessageDirection_SEND;
     model.chatSessionType = self.chatSessionType;
@@ -814,13 +962,15 @@
     audioModel.size = (int32_t)voice.length;
     audioModel.id_p = [NSString stringWithFormat:@"%.0f", [FunctionManager getNowTime]];
     audioModel.time = (int32_t)second;
-//    audioModel.voiceData = voice;
+    //    audioModel.voiceData = voice;
     audioModel.voiceLocalPath = voicePath;
     
     YPMessage *mMessage = [[YPMessage alloc] init];
+    mMessage.userId = [AppModel sharedInstance].user_info.userId;
     mMessage.messageType = MessageType_Voice;
     mMessage.sessionId = self.sessionId;
     mMessage.messageId = [FunctionManager getNowTime];
+    mMessage.uniqeid = StringUniquId(mMessage.userId, mMessage.sessionId, mMessage.messageId);
     mMessage.deliveryState = MessageDeliveryState_Delivering;
     mMessage.messageFrom = MessageDirection_SEND;
     mMessage.chatSessionType = self.chatSessionType;
@@ -861,9 +1011,11 @@
     
     
     YPMessage *vmessage = [[YPMessage alloc] init];
+    vmessage.userId = [AppModel sharedInstance].user_info.userId;
     vmessage.messageType = MessageType_Video;
     vmessage.sessionId = self.sessionId;
     vmessage.messageId = [FunctionManager getNowTime];
+    vmessage.uniqeid = StringUniquId(vmessage.userId, vmessage.sessionId, vmessage.messageId);
     vmessage.deliveryState = MessageDeliveryState_Delivering;
     vmessage.messageFrom = MessageDirection_SEND;
     vmessage.chatSessionType = self.chatSessionType;
@@ -883,9 +1035,11 @@
     
     //    self.arrDataSources = images;
     YPMessage *mMessage = [[YPMessage alloc] init];
+    mMessage.userId = [AppModel sharedInstance].user_info.userId;
     mMessage.messageType = MessageType_Image;
     mMessage.sessionId = self.sessionId;
     mMessage.messageId = [FunctionManager getNowTime];
+    mMessage.uniqeid =  StringUniquId(mMessage.userId, mMessage.sessionId, mMessage.messageId);
     mMessage.deliveryState = MessageDeliveryState_Delivering;
     mMessage.messageFrom = MessageDirection_SEND;
     mMessage.chatSessionType = self.chatSessionType;
@@ -911,6 +1065,14 @@
     if (self.chatSessionType == ChatSessionType_CustomerService) {
         model.sessionId =  self.sessionId;
     }
+    
+    /// 在消息记录里面添加一些用户信息
+    NSString *queryId = [NSString stringWithFormat:@"%ld_%ld",self.sessionId,[AppModel sharedInstance].user_info.userId];
+    PushMessageNumModel *pmModel = (PushMessageNumModel *)[MessageSingle sharedInstance].unreadAllMessagesDict[queryId];
+    pmModel.name = self.chatsModel.name;
+    pmModel.avatar = self.chatsModel.avatar;
+    pmModel.sendUserId = self.chatsModel.userId;
+    
     
     BaseUserModel *userInfo = [[BaseUserModel alloc] init];
     userInfo.userId = [AppModel sharedInstance].user_info.userId; // 用户ID
@@ -997,6 +1159,7 @@
             if (time <= 0) {
                 model.message.redPacketInfo.expireMrak = @"1";
             } else {
+                model.message.redPacketInfo.expireMrak = nil;
                 cell.countDownOrDescLabel.text = [NSString stringWithFormat:@"剩:%zds", time];
             }
         }
@@ -1005,7 +1168,7 @@
         if (model.message.messageFrom == MessageDirection_RECEIVE) {
             
             if (![model.message.user.name isEqualToString:self.chatsModel.name] || ![model.message.user.avatar isEqualToString:self.chatsModel.avatar]) {
-                if (self.chatsModel && (self.chatsModel.sessionType == ChatSessionType_Private || self.chatsModel.sessionType == ChatSessionType_CustomerService)) {
+                if (self.chatsModel && (self.chatsModel.sessionType == ChatSessionType_Private || self.chatsModel.sessionType == ChatSessionType_CustomerService || self.chatsModel.sessionType == ChatSessionType_YSCustomerService)) {
                     model.message.user.avatar = self.chatsModel.avatar;
                     model.message.user.name = self.chatsModel.name;
                 } else {
@@ -1176,9 +1339,11 @@
     videoModel.localPath = urlStr;
     
     YPMessage *vmessage = [[YPMessage alloc] init];
+    vmessage.userId = [AppModel sharedInstance].user_info.userId;
     vmessage.messageType = MessageType_Video;
     vmessage.sessionId = self.sessionId;
     vmessage.messageId = [FunctionManager getNowTime];
+    vmessage.uniqeid = StringUniquId(vmessage.userId, vmessage.sessionId, vmessage.messageId);
     vmessage.deliveryState = MessageDeliveryState_Delivering;
     vmessage.messageFrom = MessageDirection_SEND;
     vmessage.chatSessionType = self.chatSessionType;
@@ -1372,7 +1537,7 @@
 
 
 - (void)downloadUpdateSqlMessage:(YPMessage *)message {
-    NSString *whereStr = [NSString stringWithFormat:@"sessionId = %ld and messageId='%ld'",message.sessionId, message.messageId];
+    NSString *whereStr = [NSString stringWithFormat:@"userId = '%ld' and sessionId = %ld and messageId='%ld'",[AppModel sharedInstance].user_info.userId,(long)message.sessionId, (long)message.messageId];
     YPMessage *sqlMessage = [[WHC_ModelSqlite query:[YPMessage class] where:whereStr] firstObject];
     sqlMessage.videoModel.isDownload = YES;
     sqlMessage.videoModel.localPath = message.videoModel.localPath;

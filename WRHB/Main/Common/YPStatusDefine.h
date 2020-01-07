@@ -44,7 +44,7 @@ typedef NS_ENUM(NSInteger, GameOrLMType) {
 /// 消息显示最大数量
 #define kMessageMaxNum 100
 
-#define kBannerHeight 80
+#define kBannerHeight CD_Scal(142,812)
 #define kTopItemHeight 100
 #define JJScorllTextLableHeight 30
 #define kGameTopHeight 120

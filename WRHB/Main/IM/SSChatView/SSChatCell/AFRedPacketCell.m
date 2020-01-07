@@ -1,6 +1,6 @@
 //
 //  EnvelopeCollectionViewCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/8.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -24,11 +24,11 @@
 @property (nonatomic, assign) NSInteger startCountDownNum;
 @property (nonatomic, assign) NSInteger restCountDownNum;
 
-/// <#strong注释#>
+/// 
 @property (nonatomic, strong) NSMutableArray *minesButtonArray;
 
 /// 已领取标记
-@property (nonatomic, strong) UILabel *yilingquIcon;
+@property (nonatomic, strong) UIImageView *yilingquIcon;
 /// 已领取Label
 @property (nonatomic, strong) UILabel *yilingquLabel;
 
@@ -87,27 +87,8 @@
         self.remNumber.text = [NSString stringWithFormat:@"%zd/%d个", model.message.redPacketInfo.remain, model.message.redPacketInfo.total];
     }
     
-    NSString *mes = [self cellFromStatus:cellStatus];
-    if (mes.length > 0) {
-        self.countDownOrDescLabel.text = mes;
-    }
-    
-    
     // 已过期或者已被领完
-    if (model.message.redPacketInfo.expireMrak || model.message.redPacketInfo.remain == 0 || cellStatus == RedPacketCellStatus_NoPackage) {
-        self.remNumber.hidden = YES;
-        
-        if (self.countDownOrDescLabel.text.length == 0) {
-            if (model.message.redPacketInfo.remain == 0) {
-                self.countDownOrDescLabel.text = @"已结束";
-            } else {
-                self.countDownOrDescLabel.text = @"查看红包";
-            }
-        }
-    }
-    
-    
-    
+    [self reloadRedPackTimeOver:model];
     
     self.mineNumIcon.hidden = YES;
     if (model.message.messageFrom == MessageDirection_SEND) {
@@ -167,6 +148,29 @@
             }
         }
  
+    }
+}
+
+-(void)reloadRedPackTimeOver:(ChatMessagelLayout*)model
+{
+    NSString *mes = [self cellFromStatus:model.message.redPacketInfo.cellStatus];
+    if (mes.length > 0) {
+        self.countDownOrDescLabel.text = mes;
+         if (model.message.redPacketInfo.expireMrak.integerValue == 1 || model.message.redPacketInfo.remain == 0 || model.message.redPacketInfo.cellStatus == RedPacketCellStatus_NoPackage) {
+             self.remNumber.hidden = YES;
+         }
+    }
+    // 已过期或者已被领完
+    if (model.message.redPacketInfo.expireMrak.intValue == 1 || model.message.redPacketInfo.remain == 0 || model.message.redPacketInfo.cellStatus == RedPacketCellStatus_NoPackage) {
+        if (self.countDownOrDescLabel.text.length == 0) {
+            self.remNumber.hidden = YES;
+            if (model.message.redPacketInfo.remain == 0) {
+                self.countDownOrDescLabel.text = @"已结束";
+            } else {
+                self.countDownOrDescLabel.text = @"查看红包";
+            }
+        }
+        self.remNumber.hidden = (model.message.redPacketInfo.expireMrak || model.message.redPacketInfo.remain == 0 || model.message.redPacketInfo.cellStatus == RedPacketCellStatus_NoPackage);
     }
 }
 
@@ -346,21 +350,21 @@
     if (dirFrom == MessageDirection_SEND) {
         
         if (redEnveType == RedPacketType_Fu) {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_fu_S"]:[UIImage imageNamed:@"redp_back_fu_disabled_S"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_fu_S"]:[UIImage imageNamed:@"redp_back_fu_disabled_S"];
         } else if (redEnveType == RedPacketType_CowCowNoDouble || redEnveType == RedPacketType_CowCowDouble) {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_cow_S"]:[UIImage imageNamed:@"redp_back_cow_disabled_S"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_cow_S"]:[UIImage imageNamed:@"redp_back_cow_disabled_S"];
         } else {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_S"]:[UIImage imageNamed:@"redp_back_disabled_S"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_S"]:[UIImage imageNamed:@"redp_back_disabled_S"];
         }
         
     } else {
         
         if (redEnveType == RedPacketType_Fu) {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_fu_R"]:[UIImage imageNamed:@"redp_back_fu_disabled_R"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_fu_R"]:[UIImage imageNamed:@"redp_back_fu_disabled_R"];
         } else if (redEnveType == RedPacketType_CowCowNoDouble || redEnveType == RedPacketType_CowCowDouble) {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_cow_R"]:[UIImage imageNamed:@"redp_back_cow_disabled_R"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_cow_R"]:[UIImage imageNamed:@"redp_back_cow_disabled_R"];
         } else {
-            image = (cellStatus == 0)?[UIImage imageNamed:@"redp_back_R"]:[UIImage imageNamed:@"redp_back_disabled_R"];
+            image = (cellStatus == 0 || cellStatus == 1)?[UIImage imageNamed:@"redp_back_R"]:[UIImage imageNamed:@"redp_back_disabled_R"];
         }
     }
     

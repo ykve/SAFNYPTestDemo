@@ -1,6 +1,6 @@
 //
 //  CServiceChatController.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/1.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -9,7 +9,7 @@
 #import "CServiceChatController.h"
 #import <AVFoundation/AVFoundation.h>
 #import "EnvelopeMessage.h"
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "EnvelopeTipCell.h"
 #import "EnvelopeTipMessage.h"
 
@@ -49,6 +49,8 @@
 #import "ZMTabBarController.h"
 #import "GamesTypeModel.h"
 #import "CServiceChatController.h"
+#import "CSAskFormController.h"
+#import "GameFeedbackController.h"
 
 
 
@@ -118,8 +120,6 @@ static CServiceChatController *_chatVC;
         _chatVC.title = title;
     }
     
-    
-    
     return _chatVC;
 }
 
@@ -162,10 +162,6 @@ static CServiceChatController *_chatVC;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    if (self.chatSessionType == ChatSessionType_CustomerService) {
-        [self createServiceSession];
-    }
-    
     [self updateUnreadMessage];
     
     self.leftBtn = self.navigationItem.leftBarButtonItem;
@@ -186,36 +182,6 @@ static CServiceChatController *_chatVC;
     // 解决点击 更多... 取消返回不了的bug
     self.navigationItem.leftBarButtonItem = self.leftBtn;
     self.navigationItem.rightBarButtonItems = self.rightBtnArray;
-}
-
-
-#pragma mark -  客服会话创建
-/**
- 客服会话创建
- */
-- (void)createServiceSession {
-    
-    BADataEntity *entity = [BADataEntity new];
-    entity.urlString = [NSString stringWithFormat:@"%@%@",[AppModel sharedInstance].serverApiUrl,@"chat/createServiceSession"];
-    entity.needCache = NO;
-    //    entity.parameters = parameters;
-    
-    __weak __typeof(self)weakSelf = self;
-    [BANetManager ba_request_POSTWithEntity:entity successBlock:^(id response) {
-        __strong __typeof(weakSelf)strongSelf = weakSelf;
-        
-        if ([response objectForKey:@"status"] && [[response objectForKey:@"status"] integerValue] == 1) {
-            strongSelf.sessionId = [response[@"data"][@"session"] integerValue];
-            strongSelf.chatsModel.sessionId = kCustomerServiceID;
-            strongSelf.chatsModel.name = response[@"data"][@"title"];
-            strongSelf.chatsModel.avatar = response[@"data"][@"avatar"];
-        } else {
-            [[AFHttpError sharedInstance] handleFailResponse:response];
-        }
-    } failureBlock:^(NSError *error) {
-        [MBProgressHUD hideHUD];
-        [[AFHttpError sharedInstance] handleFailResponse:error];
-    } progressBlock:nil];
 }
 
 
@@ -241,7 +207,7 @@ static CServiceChatController *_chatVC;
 #pragma mark - 点击头像事件
 // 点击头像事件
 //- (void)didTapCellPortrait:(NSString *)userId {
--(void)didTapCellChatHeaderImg:(UserInfo *)userInfo {
+-(void)didTapCellChatHeaderImg:(BaseUserModel *)userInfo {
     
     if (self.chatSessionType == ChatSessionType_Private || self.chatSessionType == ChatSessionType_CustomerService) {
         // 聊天信息页
@@ -253,7 +219,7 @@ static CServiceChatController *_chatVC;
     if (userInfo.userId == [AppModel sharedInstance].user_info.userId) {
         return;
     }
-    [self.sessionInputView addMentionedUser:userInfo];
+//    [self.sessionInputView addMentionedUser:userInfo];
 }
 
 
@@ -466,6 +432,33 @@ static CServiceChatController *_chatVC;
     vc.hidesBottomBarWhenPushed = YES;
     [self.navigationController pushViewController:vc animated:YES];
 }
+
+
+
+
+-(void)didChatGoto_kefu {
+    [self goto_CustomerService];
+}
+-(void)didChatGoto_feedbackBtn {
+    GameFeedbackController *vc = [[GameFeedbackController alloc] init];
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
+- (void)goto_CustomerService {
+    //    return;
+    ChatsModel *model = [[ChatsModel alloc] init];
+    model.sessionType = ChatSessionType_CustomerService;
+    model.sessionId = kCustomerServiceID;
+    model.name = @"在线客服";
+    model.avatar = @"105";
+    model.isJoinChatsList = YES;
+    
+    CSAskFormController *vc = [[CSAskFormController alloc] init];
+    
+    vc.chatsModel = model;
+    [self.navigationController pushViewController:vc animated:YES];
+}
+
 
 - (AVAudioPlayer *)player {
     if (!_player) {

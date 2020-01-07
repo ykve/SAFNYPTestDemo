@@ -13,28 +13,15 @@
 
 /** 是否显示Nav */
 @property (nonatomic,assign) BOOL isNavHidden;
+/// 是否加载网页的标题 默认YES加载
+@property (nonatomic,assign) BOOL isLoadWebTitle;
 
-/**
- 加载纯外部链接网页
-
- @param string URL地址
- */
 - (void)loadWebURLSring:(NSString *)string;
 
-/**
- 加载本地网页
- 
- @param string 本地HTML文件名
- */
 - (void)loadWebHTMLSring:(NSString *)string;
 
-/**
- 加载外部链接POST请求(注意检查 XFWKJSPOST.html 文件是否存在 )
- postData请求块 注意格式：@"\"username\":\"xxxx\",\"password\":\"xxxx\""
- 
- @param string 需要POST的URL地址
- @param postData post请求块
- */
+- (void)loadWebFormHTMLSring:(NSString *)string;
+
 - (void)POSTWebURLSring:(NSString *)string postData:(NSString *)postData;
 
 

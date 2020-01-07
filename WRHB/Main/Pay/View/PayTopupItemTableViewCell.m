@@ -48,8 +48,13 @@
 
 - (void)setDataArray:(NSMutableArray *)dataArray {
     _dataArray = dataArray;
-    self.topupItemCollectionView.model = dataArray;
     
+    NSInteger yuNum = dataArray.count % 3 == 0 ? 0 : 1;
+    CGFloat height = (dataArray.count / 3 + yuNum) * 81 + 30;
+    
+    self.topupItemCollectionView.frame = CGRectMake(0, 10, [UIScreen mainScreen].bounds.size.width -15*2, height -5*2-10);
+    self.topupItemCollectionView.selectedIndexPath = self.selectedIndexPath;
+    self.topupItemCollectionView.model = dataArray;
 }
 
 - (void)setModel:(PayTopupModel *)model {
@@ -61,10 +66,10 @@
     
     YCShadowView *backView = [[YCShadowView alloc] init];
     backView.backgroundColor = [UIColor whiteColor];
-//    [backView yc_shaodw];
+    //    [backView yc_shaodw];
     [backView yc_shaodwRadius:5 shadowColor:[UIColor colorWithWhite:0 alpha:0.2] shadowOffset:CGSizeMake(0, 1) byShadowSide:YCShadowSideAllSides];
     [backView yc_cornerRadius:10];
-//    backView.layer.borderColor = [UIColor colorWithHex:@"#DFDFDF"].CGColor;
+    //    backView.layer.borderColor = [UIColor colorWithHex:@"#DFDFDF"].CGColor;
     [self.contentView addSubview:backView];
     
     [backView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -74,10 +79,13 @@
         make.bottom.equalTo(self.contentView.mas_bottom).offset(-5);
     }];
     
-    PayTopupItemCollectionView *limitCollectionView = [[PayTopupItemCollectionView alloc] initWithFrame:CGRectMake(0, 10, [UIScreen mainScreen].bounds.size.width -15*2, 200)];
+    
+    
+    PayTopupItemCollectionView *limitCollectionView = [[PayTopupItemCollectionView alloc] initWithFrame:CGRectMake(0, 10, [UIScreen mainScreen].bounds.size.width -15*2, self.bounds.size.height)];
     limitCollectionView.layer.masksToBounds = YES;
     [backView addSubview:limitCollectionView];
     _topupItemCollectionView = limitCollectionView;
+    //    limitCollectionView.backgroundColor = [UIColor redColor];
     
     //    __weak __typeof(self)weakSelf = self;
     //    limitCollectionView.headClickBlock = ^(CGFloat money) {

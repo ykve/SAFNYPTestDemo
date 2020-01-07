@@ -11,7 +11,6 @@
 
 @class WitAlertHeaderView;
 
-// 定义一个 协议
 @protocol WitAlertHeaderViewDelegate <NSObject>
 
 - (void)WitAlertHeaderViewDidClickBtn:(WitAlertHeaderView *)headerView;

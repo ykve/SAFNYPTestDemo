@@ -83,6 +83,23 @@
     return (ret || ret1);
 }
 
+/// 手机号验证 比较宽松一点的
+- (BOOL)isMobileNumberLoose
+{
+    NSString *mobile = @"^[1]([3-9])[0-9]{9}$";
+    return [self isValidateByRegex:mobile];
+}
+
+/**
+ * 手机号码格式验证       稍微严 暂不使用
+ */
++(BOOL)isMobile:(NSString *)phoneNum {
+    
+    NSString *MOBILE = @"^(13[0-9]|14[5-9]|15[0-3,5-9]|16[2,5,6,7]|17[0-8]|18[0-9]|19[1,3,5,8,9])\\d{8}$";
+    NSPredicate *pred_mobile = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", MOBILE];
+    return [pred_mobile evaluateWithObject:phoneNum];
+}
+
 //邮箱
 - (BOOL)isEmailAddress{
     NSString *emailRegex = @"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}";
@@ -130,6 +147,9 @@
     NSString *taxNoRegex = @"[0-9]\\d{13}([0-9]|X)$";
     return [self isValidateByRegex:taxNoRegex];
 }
+
+
+
 
 - (BOOL)isValidWithMinLenth:(NSInteger)minLenth
                    maxLenth:(NSInteger)maxLenth

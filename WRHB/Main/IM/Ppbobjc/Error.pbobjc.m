@@ -62,7 +62,7 @@ GPBEnumDescriptor *Error_EnumDescriptor(void) {
         "ErrGetUserSsn\000CommSsnNotExist\000UserSsnNot"
         "Exist\000ErrCreateSession\000NoSpeak\000NoSendRed"
         "Packet\000NotSender\000NotDelMsg\000NotEmpty\000NoSp"
-        "eakKefu\000";
+        "eakKefu\000SelfNoSpeak\000SessionNoSpeak\000";
     static const int32_t values[] = {
         Error_Success,
         Error_InternalError,
@@ -94,8 +94,10 @@ GPBEnumDescriptor *Error_EnumDescriptor(void) {
         Error_NotDelMsg,
         Error_NotEmpty,
         Error_NoSpeakKefu,
+        Error_SelfNoSpeak,
+        Error_SessionNoSpeak,
     };
-    static const char *extraTextFormatInfo = "\036\000\007\000\001\r\000\002\n\000\003\007\000\004\014\000\005\014\000\006\016\000\007\030\000\010\017\000\t\027\000\n\032\000\013\033\000\014\031\000\r\034\000\016\026\000\017\022\000\020\017\000\021\017\000\022\016\000\023\r\000\024\r\000\025\017\000\026\017\000\027\020\000\030\007\000\031\017\000\032\t\000\033\t\000\034\010\000\035\013\000";
+    static const char *extraTextFormatInfo = " \000\007\000\001\r\000\002\n\000\003\007\000\004\014\000\005\014\000\006\016\000\007\030\000\010\017\000\t\027\000\n\032\000\013\033\000\014\031\000\r\034\000\016\026\000\017\022\000\020\017\000\021\017\000\022\016\000\023\r\000\024\r\000\025\017\000\026\017\000\027\020\000\030\007\000\031\017\000\032\t\000\033\t\000\034\010\000\035\013\000\036\013\000\037\016\000";
     GPBEnumDescriptor *worker =
         [GPBEnumDescriptor allocDescriptorForName:GPBNSStringifySymbol(Error)
                                        valueNames:valueNames
@@ -143,6 +145,8 @@ BOOL Error_IsValidValue(int32_t value__) {
     case Error_NotDelMsg:
     case Error_NotEmpty:
     case Error_NoSpeakKefu:
+    case Error_SelfNoSpeak:
+    case Error_SessionNoSpeak:
       return YES;
     default:
       return NO;

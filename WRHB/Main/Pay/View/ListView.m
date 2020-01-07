@@ -8,7 +8,7 @@
 
 #import "ListView.h"
 #import "ListViewCell.h"
-#import "BankModel.h"
+#import "WithdrawBankModel.h"
 
 @interface ListView ()
 
@@ -177,7 +177,7 @@
     if(cell == nil) {
         cell = [ListViewCell cellWithTableView:tableView reusableId:CellIdentifier];
     }
-    BankModel *model = (BankModel *)[self.dataSource objectAtIndex:indexPath.row];
+    WithdrawBankModel *model = (WithdrawBankModel *)[self.dataSource objectAtIndex:indexPath.row];
     cell.model = model;
     return cell;
 }

@@ -17,7 +17,7 @@
 #import "ClubItemController.h"
 
 
-#import "MessageNet.h"
+#import "SessionSingle.h"
 #import "ChatViewController.h"
 #import "MessageItem.h"
 #import "YPMenu.h"
@@ -384,14 +384,14 @@
 
 #pragma mark -  Banner 图片广告
 - (void)setBannerUI {
-    
-    CGFloat w = self.view.bounds.size.width;
-    SDCycleScrollView *cycleScrollView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(0, 0, w, kBannerHeight) delegate:self placeholderImage:[UIImage imageNamed:@"placeholder"]];
-    
-    cycleScrollView.pageControlStyle = SDCycleScrollViewPageContolStyleAnimated;
+    SDCycleScrollView *cycleScrollView = [SDCycleScrollView cycleScrollViewWithFrame:CGRectMake(5, 5,kSCREEN_WIDTH-10, kBannerHeight) delegate:self placeholderImage:[UIImage imageNamed:@"placeholder"]];
+    cycleScrollView.layer.cornerRadius = 5;
+    cycleScrollView.layer.masksToBounds  = YES;
+    cycleScrollView.bannerImageViewContentMode = UIViewContentModeScaleAspectFill;
+    cycleScrollView.pageControlStyle = SDCycleScrollViewPageContolStyleClassic;
     cycleScrollView.pageControlAliment = SDCycleScrollViewPageContolAlimentCenter;
-    //    cycleScrollView.titlesGroup = titles;
-    cycleScrollView.currentPageDotColor = [UIColor whiteColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView.currentPageDotColor = [UIColor orangeColor]; // 自定义分页控件小圆标颜色
+    cycleScrollView.pageDotColor = [UIColor whiteColor];
     [self.view addSubview:cycleScrollView];
     _cycleScrollView = cycleScrollView;
     
@@ -409,8 +409,6 @@
     //[vc loadWithURL:url];
     [self.navigationController pushViewController:vc animated:YES];
 }
-
-
 
 #pragma mark -  文字滚动条
 - (void)setTextScrollBarUI {
@@ -442,7 +440,7 @@
     //    label.text = @"设置滚动文字的内容";   //设置滚动文字的内容
     label.font = [UIFont systemFontOfSize:12];
     label.textColor = [UIColor colorWithHex:@"#666666"];
-    label.rate = 0.3;
+    label.rate = 0.2;
     [backView addSubview:label]; //把滚动文字的lable加到视图
     _scorllTextLable = label;
     //    label.backgroundColor= [UIColor redColor];

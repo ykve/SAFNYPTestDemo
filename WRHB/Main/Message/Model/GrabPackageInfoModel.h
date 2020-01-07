@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL got_mime;
 /// 用户名
 @property (nonatomic, copy) NSString *name;
+/// 中雷赔付
+@property (nonatomic, copy) NSString *mime;
 /// 头像
 @property (nonatomic, copy) NSString *avatar;
 /// 是否是免死机器人

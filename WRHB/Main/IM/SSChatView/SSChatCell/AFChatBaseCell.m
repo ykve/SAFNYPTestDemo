@@ -168,8 +168,14 @@
         if (model.message.chatSessionType == ChatSessionType_SystemRoom || model.message.chatSessionType == ChatSessionType_ManyPeople_Game || model.message.chatSessionType == ChatSessionType_ManyPeople_NormalChat) {
             NSString *queryId = [NSString stringWithFormat:@"%ld_%ld", model.message.sessionId, model.message.messageSendId];
             BaseUserModel *userModel = [AppModel sharedInstance].myGroupFriendListDict[queryId];
-            name = userModel.name;
-            avatar = userModel.avatar;
+            if (userModel) {
+                name = userModel.name;
+                avatar = userModel.avatar;
+            } else {
+                name = model.message.user.name;
+                avatar = model.message.user.avatar;
+            }
+           
         } else {
             name = model.message.user.name;
             avatar = model.message.user.avatar;

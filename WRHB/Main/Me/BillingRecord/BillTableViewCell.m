@@ -1,6 +1,6 @@
 //
 //  BillTableViewCell.m
-//  Project
+//  WRHB
 //
 //  Created by AFan on 2019/11/14.
 //  Copyright © 2018年 AFan. All rights reserved.
@@ -110,6 +110,7 @@
     [seeDetBtn setImage:[UIImage imageNamed:@"me_bill_arrow_right"] forState:UIControlStateNormal];
     [seeDetBtn addTarget:self action:@selector(onSeeDetails) forControlEvents:UIControlEventTouchUpInside];
     [seeDetBtn setImagePosition:WPGraphicBtnTypeRight spacing:2];
+    seeDetBtn.userInteractionEnabled = NO;
     [self.contentView addSubview:seeDetBtn];
     _seeDetBtn = seeDetBtn;
     

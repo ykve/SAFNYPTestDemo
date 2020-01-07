@@ -22,10 +22,8 @@
  */
 
 #define YPChatKeyBoardInputViewH      49     //输入部分的高度
-#define YPChatKeyBordBottomHeight     220    //底部视图的高度
-
-//键盘总高度
-#define YPChatKeyBordHeight   YPChatKeyBoardInputViewH + YPChatKeyBordBottomHeight
+#define YPChatKeyBoardInputUpViewH      60     //输入框上面部分的高度 客服才有
+#define YPChatKeyBordBottomHeight     240    //底部视图的高度
 
 
 #define YPChatLineHeight        0.5          //线条高度
@@ -59,6 +57,10 @@
 
 //多功能视图按钮点击回调
 -(void)chatFunctionBoardClickedItemWithTag:(NSInteger)tag;
+-(void)didChatKeFuTopupTypeSelectedIndex:(NSInteger)index;
+-(void)didChatGoto_kefu;
+-(void)didChatGoto_feedbackBtn;
+
 
 @end
 
@@ -90,8 +92,30 @@
 @property (nonatomic, strong) UIButton     *mTextBtn;
 @property (nonatomic, strong) UITextView   *mTextView;
 @property (nonatomic, strong) NSString     *textString;
-//输入框的高度
+/// 输入框的高度
 @property (nonatomic, assign) CGFloat   textH;
+
+/// ************ 客服 ************
+/// 输入框上面的高度， 客服才有
+@property (nonatomic, assign) CGFloat   initKefuViewHeight;
+/// 客服充值支持
+@property (nonatomic, strong) NSArray *ysReplyModelArray;
+/// 客服View
+@property (nonatomic, strong) UIView *topBackView;
+/// 支付View
+@property (nonatomic, strong) UIView *payBgView;
+/// 客服提示msg View
+@property (nonatomic, strong) UIView *textBgView;
+/// 客服是否禁言
+@property (nonatomic, assign) BOOL isNoSpeak;
+/// 客服是否断开链接
+@property (nonatomic, assign) BOOL isDisconnect;
+
+
+
+
+/// 初始化总高度
+@property (nonatomic, assign, readonly) CGFloat   initViewHeight;
 
 //添加表情
 @property (nonatomic, strong) NSObject       *emojiText;

@@ -1,14 +1,14 @@
 //
 //  ActivityDetail2ViewController.m
-//  Project
+//  WRHB
 //
-//  Created by fangyuan on 2019/3/30.
+//  Created by AFan on 2019/3/30.
 //  Copyright © 2019 AFan. All rights reserved.
 //
 
 #import "ActivityDetail2ViewController.h"
 #import "ActivityDetailCell.h"
-#import "UIView+AZGradient.h"
+#import "UIView+AZGradient.h"   // 渐变色
 #import "UIImageView+WebCache.h"
 
 @interface ActivityDetail2ViewController ()<UITableViewDelegate,UITableViewDataSource,UIGestureRecognizerDelegate>{
